@@ -21,15 +21,15 @@ interface StoreTrustBadgesProps {
   settings?: StoreSettings;
 }
 
-const ICON_MAP: Record<string, { icon: LucideIcon; color: string }> = {
-  zap: { icon: Zap, color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
-  package: { icon: PackageCheck, color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
-  message: { icon: MessageCircle, color: 'text-sky-500 bg-sky-500/10 border-sky-500/20' },
-  shield: { icon: ShieldCheck, color: 'text-violet-500 bg-violet-500/10 border-violet-500/20' },
-  clock: { icon: Clock, color: 'text-orange-500 bg-orange-500/10 border-orange-500/20' },
-  check: { icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
-  sparkles: { icon: Sparkles, color: 'text-pink-500 bg-pink-500/10 border-pink-500/20' },
-  heart: { icon: Heart, color: 'text-rose-500 bg-rose-500/10 border-rose-500/20' },
+const ICON_MAP: Record<string, { icon: LucideIcon }> = {
+  zap: { icon: Zap },
+  package: { icon: PackageCheck },
+  message: { icon: MessageCircle },
+  shield: { icon: ShieldCheck },
+  clock: { icon: Clock },
+  check: { icon: CheckCircle2 },
+  sparkles: { icon: Sparkles },
+  heart: { icon: Heart },
 };
 
 export const StoreTrustBadges: React.FC<StoreTrustBadgesProps> = ({ className = '', settings }) => {
@@ -51,9 +51,9 @@ export const StoreTrustBadges: React.FC<StoreTrustBadgesProps> = ({ className = 
           return (
             <div
               key={badge.id || idx}
-              className="p-2.5 rounded-btn bg-surface border border-border flex items-start gap-2 shadow-2xs hover:border-accent/30 transition-colors select-none"
+              className="p-2.5 rounded-[12px] bg-surface border border-border flex items-start gap-2 shadow-2xs hover:border-accent/30 transition-colors select-none"
             >
-              <div className={`w-7 h-7 rounded-[8px] flex items-center justify-center shrink-0 border ${conf.color}`}>
+              <div className="w-7 h-7 rounded-[8px] flex items-center justify-center shrink-0 border border-accent/20 bg-accent/10 text-accent">
                 <Icon className="w-3.5 h-3.5" />
               </div>
               <div className="min-w-0 flex-1">
@@ -84,9 +84,9 @@ export const StoreTrustBadges: React.FC<StoreTrustBadgesProps> = ({ className = 
         return (
           <div
             key={badge.id || idx}
-            className="p-2.5 rounded-btn bg-surface border border-border flex items-start gap-2 shadow-2xs hover:border-accent/30 transition-colors select-none"
+            className="p-2.5 rounded-[12px] bg-surface border border-border flex items-start gap-2 shadow-2xs hover:border-accent/30 transition-colors select-none"
           >
-            <div className={`w-7 h-7 rounded-[8px] flex items-center justify-center shrink-0 border ${conf.color}`}>
+            <div className="w-7 h-7 rounded-[8px] flex items-center justify-center shrink-0 border border-accent/20 bg-accent/10 text-accent">
               <Icon className="w-3.5 h-3.5" />
             </div>
             <div className="min-w-0 flex-1">

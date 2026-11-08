@@ -1,4 +1,4 @@
-import { Category, Order, Product, StoreSettings, StoreNiche, TrustBadgeItem, StoreReview } from '@/types';
+import { Category, Order, Product, StoreSettings, StoreNiche, TrustBadgeItem, StoreReview, ShopData } from '@/types';
 
 export const ACCENT_COLOR_PRESETS = [
   {
@@ -120,7 +120,7 @@ export const BUTTON_TEXT_PRESETS = [
 export const MOCK_STORE_SETTINGS: StoreSettings = {
   id: 'store-1',
   slug: 'tashkent_drip',
-  store_name: 'TASHKENT DRIP',
+  store_name: 'Tashkent Drip',
   description: 'Премиальный streetwear, обувь и селективный парфюм в Ташкенте. Быстрая доставка по всему Узбекистану.',
   avatar_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=400&q=80',
   banner_url: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1200&q=80',
@@ -136,6 +136,7 @@ export const MOCK_STORE_SETTINGS: StoreSettings = {
   hide_branding: false,
   is_verified: true,
   plan: 'pro',
+  niche: 'clothing',
   theme_settings: {
     preset: 'minimal',
     accent_color: '#111827',
@@ -149,10 +150,17 @@ export const MOCK_STORE_SETTINGS: StoreSettings = {
     announcement_active: false,
     announcement_text: '',
     hide_branding: false,
+    niche: 'clothing',
   },
   promo_codes: [
     { code: 'VESNA10', discount_percent: 10, active: true },
     { code: 'DRIP20', discount_percent: 20, active: true },
+  ],
+  custom_links: [
+    { id: 'link-td-tg', title: 'Наш Telegram-канал', icon: 'telegram', url: 'https://t.me/tashkent_drip', is_active: true },
+    { id: 'link-td-ig', title: 'Instagram с новинками', icon: 'instagram', url: 'https://instagram.com/tashkent_drip', is_active: true },
+    { id: 'link-td-yt', title: 'YouTube лукбуки и обзоры', icon: 'youtube', url: 'https://youtube.com/@tashkent_drip', is_active: true },
+    { id: 'link-td-ph', title: 'Позвонить менеджеру', icon: 'phone', url: 'tel:+998901234567', is_active: true },
   ],
 };
 
@@ -497,3 +505,378 @@ export const DEFAULT_STORE_REVIEWS: StoreReview[] = [
     is_verified: true,
   },
 ];
+
+// =====================================================================
+// DEMO PRESETS: VOLT GADGETS (Electronics)
+// =====================================================================
+export const VOLT_GADGETS_SETTINGS: StoreSettings = {
+  id: 'store-volt-gadgets',
+  slug: 'volt_gadgets',
+  store_name: 'Volt Gadgets',
+  description: 'Гаджеты, наушники и зарядные станции с гарантией и проверкой при курьере в Ташкенте.',
+  avatar_url: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80',
+  banner_url: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1200&q=80',
+  instagram_url: 'https://instagram.com/volt_gadgets',
+  telegram_username: 'volt_gadgets',
+  phone: '+998 90 765 43 21',
+  currency: 'сум',
+  delivery_info: '',
+  accent_color: '#4F46E5',
+  theme: 'light',
+  catalog_layout: 'grid',
+  hide_branding: false,
+  is_verified: true,
+  plan: 'pro',
+  niche: 'electronics',
+  theme_settings: {
+    preset: 'minimal',
+    accent_color: '#4F46E5',
+    theme: 'light',
+    avatar_url: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80',
+    banner_url: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1200&q=80',
+    catalog_layout: 'grid',
+    radii_preset: 'medium',
+    button_text: 'cart',
+    show_old_price: true,
+    announcement_active: true,
+    announcement_text: '⚡ Экспресс-доставка по Ташкенту за 2 часа • Проверка перед оплатой',
+    hide_branding: false,
+    niche: 'electronics',
+  },
+  promo_codes: [
+    { code: 'VOLT10', discount_percent: 10, active: true },
+  ],
+  reviews: [
+    {
+      id: 'rev-vg-1',
+      author_name: 'Джасур Умаров',
+      rating: 5,
+      date: 'Вчера',
+      text: 'Заказывал наушники с курьерской доставкой по Ташкенту. Привезли за 40 минут! Проверил звук и микрофон на месте до оплаты. Звучание шикарное, бас чистый.',
+      is_verified: true,
+    },
+    {
+      id: 'rev-vg-2',
+      author_name: 'Тимур К.',
+      rating: 5,
+      date: '3 дня назад',
+      text: 'Отличный магазин! Чек пришел сразу в Telegram, гарантийный талон в комплекте. Повербанк заряжает моментально.',
+      is_verified: true,
+    },
+    {
+      id: 'rev-vg-3',
+      author_name: 'Azizbek',
+      rating: 5,
+      date: '5 дней назад',
+      text: 'Juda tez yetkazib berishdi! Mahsulot original va kafolati bor. Yigitlarga gap yo‘q!',
+      is_verified: true,
+    },
+  ],
+  custom_links: [
+    { id: 'link-vg-tg', title: 'Telegram канал со скидками', icon: 'telegram', url: 'https://t.me/volt_gadgets', is_active: true },
+    { id: 'link-vg-yt', title: 'YouTube распаковки гаджетов', icon: 'youtube', url: 'https://youtube.com/@volt_gadgets', is_active: true },
+    { id: 'link-vg-ph', title: 'Сервисный отдел и гарантия', icon: 'phone', url: 'tel:+998907654321', is_active: true },
+  ],
+};
+
+export const VOLT_GADGETS_CATEGORIES: Category[] = [
+  { id: 'cat-vg-all', name: 'Все', slug: 'all', sort_order: 0 },
+  { id: 'cat-vg-audio', name: 'Наушники', slug: 'headphones', sort_order: 1 },
+  { id: 'cat-vg-power', name: 'Повербанки', slug: 'powerbanks', sort_order: 2 },
+  { id: 'cat-vg-watches', name: 'Смарт-часы', slug: 'smartwatches', sort_order: 3 },
+  { id: 'cat-vg-acc', name: 'Аксессуары', slug: 'accessories', sort_order: 4 },
+];
+
+export const VOLT_GADGETS_PRODUCTS: Product[] = [
+  {
+    id: 'prod-vg-1',
+    category_id: 'cat-vg-audio',
+    title: 'Беспроводные наушники Volt Pods Max ANC',
+    description: 'Активное шумоподавление до 40 дБ, режим прозрачности и пространственное аудио. До 36 часов работы с кейсом.',
+    price: 420000,
+    old_price: 490000,
+    images: [
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: 'Цвет',
+    sizes: ['Space Gray', 'Silver', 'Midnight'],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 40).toISOString(),
+  },
+  {
+    id: 'prod-vg-2',
+    category_id: 'cat-vg-power',
+    title: 'Повербанк MagSafe Magnetic 10 000 mAh',
+    description: 'Магнитная беспроводная зарядка 15W + быстрая зарядка PD 20W через Type-C. Компактный алюминиевый корпус.',
+    price: 260000,
+    old_price: 310000,
+    images: [
+      'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: 'Цвет',
+    sizes: ['Титановый', 'Черный'],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 30).toISOString(),
+  },
+  {
+    id: 'prod-vg-3',
+    category_id: 'cat-vg-power',
+    title: 'Сетевое зарядное GaN 65W Dual Type-C + USB-A',
+    description: 'Технология GaN Pro: в 2 раза меньше стандартных зарядок. Подходит для ноутбуков, планшетов и телефонов.',
+    price: 190000,
+    old_price: 230000,
+    images: [
+      'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: '',
+    sizes: [],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 25).toISOString(),
+  },
+  {
+    id: 'prod-vg-4',
+    category_id: 'cat-vg-watches',
+    title: 'Смарт-часы Volt Fit Pro AMOLED',
+    description: 'Яркий Always-On дисплей, измерение пульса, SpO2 и сна. Водонепроницаемость IP68, более 100 спорт-режимов.',
+    price: 540000,
+    old_price: 650000,
+    images: [
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: 'Ремешок',
+    sizes: ['Black Silicon', 'Orange Trail'],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 20).toISOString(),
+  },
+  {
+    id: 'prod-vg-5',
+    category_id: 'cat-vg-acc',
+    title: 'Кабель силиконовый Type-C to Type-C 100W 1.5m',
+    description: 'Мягкий нескользящий силикон с защитой от перегибов. Поддержка быстрой зарядки до 100W Power Delivery.',
+    price: 75000,
+    old_price: null,
+    images: [
+      'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: '',
+    sizes: [],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 15).toISOString(),
+  },
+  {
+    id: 'prod-vg-6',
+    category_id: 'cat-vg-acc',
+    title: 'Автомобильный держатель MagSafe 15W',
+    description: 'Мощные неодимовые магниты, надежная фиксация в дефлекторе воздуховода, шарнир 360 градусов.',
+    price: 180000,
+    old_price: 220000,
+    images: [
+      'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: '',
+    sizes: [],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 10).toISOString(),
+  },
+];
+
+// =====================================================================
+// DEMO PRESETS: AURA PERFUME (Beauty & Fragrance)
+// =====================================================================
+export const AURA_PERFUME_SETTINGS: StoreSettings = {
+  id: 'store-aura-perfume',
+  slug: 'aura_perfume',
+  store_name: 'Aura Perfume',
+  description: 'Селективная парфюмерия и распивы в Ташкенте. Только оригиналы, фирменный пробник в подарок к каждому заказу.',
+  avatar_url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80',
+  banner_url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80',
+  instagram_url: 'https://instagram.com/aura_perfume',
+  telegram_username: 'aura_perfume',
+  phone: '+998 90 999 88 77',
+  currency: 'сум',
+  delivery_info: '',
+  accent_color: '#7C3AED',
+  theme: 'light',
+  catalog_layout: 'grid',
+  hide_branding: false,
+  is_verified: true,
+  plan: 'pro',
+  niche: 'beauty',
+  theme_settings: {
+    preset: 'boutique',
+    accent_color: '#7C3AED',
+    theme: 'light',
+    avatar_url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=400&q=80',
+    banner_url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80',
+    catalog_layout: 'grid',
+    radii_preset: 'round',
+    button_text: 'order',
+    show_old_price: true,
+    announcement_active: true,
+    announcement_text: '✨ Пробник селективного аромата в подарок к каждому заказу!',
+    hide_branding: false,
+    niche: 'beauty',
+  },
+  promo_codes: [
+    { code: 'AURA15', discount_percent: 15, active: true },
+  ],
+  reviews: [
+    {
+      id: 'rev-ap-1',
+      author_name: 'Диёра Саидова',
+      rating: 5,
+      date: 'Вчера',
+      text: 'Аромат просто потрясающий, стойкость невероятная — держится весь день! Приложили фирменный пробник в подарок. 100% оригинал, очень довольна!',
+      is_verified: true,
+    },
+    {
+      id: 'rev-ap-2',
+      author_name: 'Мадина К.',
+      rating: 5,
+      date: '2 дня назад',
+      text: 'Заказывала распив Baccarat. Упаковано в красивую бархатную коробочку, шлейф сумасшедший. Теперь за парфюмом только к вам!',
+      is_verified: true,
+    },
+    {
+      id: 'rev-ap-3',
+      author_name: 'Shahzoda',
+      rating: 5,
+      date: '4 дня назад',
+      text: 'Ajoyib atir! Hidi juda yoqimli va uzoq vaqt ketmaydi. Sovg‘a uchun berilgan probnik ham zo‘r chiqdi. Rahmat!',
+      is_verified: true,
+    },
+  ],
+  custom_links: [
+    { id: 'link-ap-tg', title: 'Telegram парфюмерный гид', icon: 'telegram', url: 'https://t.me/aura_perfume', is_active: true },
+    { id: 'link-ap-ig', title: 'Instagram новинки ароматов', icon: 'instagram', url: 'https://instagram.com/aura_perfume', is_active: true },
+    { id: 'link-ap-ph', title: 'Консультация парфюмера', icon: 'phone', url: 'tel:+998909998877', is_active: true },
+  ],
+};
+
+export const AURA_PERFUME_CATEGORIES: Category[] = [
+  { id: 'cat-ap-all', name: 'Все', slug: 'all', sort_order: 0 },
+  { id: 'cat-ap-select', name: 'Селектив', slug: 'selective', sort_order: 1 },
+  { id: 'cat-ap-decants', name: 'Распивы', slug: 'decants', sort_order: 2 },
+  { id: 'cat-ap-unisex', name: 'Унисекс', slug: 'unisex', sort_order: 3 },
+  { id: 'cat-ap-home', name: 'Для дома', slug: 'home', sort_order: 4 },
+];
+
+export const AURA_PERFUME_PRODUCTS: Product[] = [
+  {
+    id: 'prod-ap-1',
+    category_id: 'cat-ap-select',
+    title: 'Парфюмерная вода Tashkent Night',
+    description: 'Селективный пряно-древесный унисекс аромат. Ноты табачного листа, ванили, кардамона и белого кедра.',
+    price: 450000,
+    old_price: 520000,
+    images: [
+      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: 'Объём',
+    sizes: ['30ml', '50ml', '100ml'],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 35).toISOString(),
+  },
+  {
+    id: 'prod-ap-2',
+    category_id: 'cat-ap-decants',
+    title: 'Распив Baccarat Rouge 540 Extrait',
+    description: 'Легендарный шлейфовый аромат в фирменном стеклянном атомайзере со спреем. Шафран, горький миндаль и серая амбра.',
+    price: 210000,
+    old_price: 250000,
+    images: [
+      'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: 'Объём',
+    sizes: ['5ml', '10ml', '15ml'],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 28).toISOString(),
+  },
+  {
+    id: 'prod-ap-3',
+    category_id: 'cat-ap-select',
+    title: 'Парфюмерная вода Tobacco & Vanille Imperial',
+    description: 'Богатый восточный аромат теплого табака, бобов тонка, какао и сладкой мадагаскарской ванили.',
+    price: 590000,
+    old_price: 690000,
+    images: [
+      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: 'Объём',
+    sizes: ['50ml', '100ml'],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 22).toISOString(),
+  },
+  {
+    id: 'prod-ap-4',
+    category_id: 'cat-ap-decants',
+    title: 'Распив Fleur Narcotique Eau de Parfum',
+    description: 'Цветочно-фруктовый шедевр. Бергамот, сочный персик, жасмин и пион с гипнотическим древесным шлейфом.',
+    price: 195000,
+    old_price: 230000,
+    images: [
+      'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: 'Объём',
+    sizes: ['5ml', '10ml'],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 18).toISOString(),
+  },
+  {
+    id: 'prod-ap-5',
+    category_id: 'cat-ap-home',
+    title: 'Аромадиффузор Black Amber & Plum',
+    description: 'Премиальный парфюм для дома с ротанговыми палочками (100ml). Стойкость аромата до 3 месяцев.',
+    price: 145000,
+    old_price: null,
+    images: [
+      'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: '',
+    sizes: [],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+  },
+  {
+    id: 'prod-ap-6',
+    category_id: 'cat-ap-unisex',
+    title: 'Набор пробников Discovery Box (5 x 3ml)',
+    description: '5 самых популярных нишевых ароматов в подарочной коробке: идеальный вариант для знакомства с коллекцией.',
+    price: 180000,
+    old_price: 220000,
+    images: [
+      'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=800&q=80',
+    ],
+    variant_type: '',
+    sizes: [],
+    in_stock: true,
+    created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
+  },
+];
+
+// =====================================================================
+// REGISTRY OF ALL OFFICIAL DEMO SHOPS
+// =====================================================================
+export const DEMO_PRESET_SHOPS: Record<string, ShopData> = {
+  tashkent_drip: {
+    settings: MOCK_STORE_SETTINGS,
+    categories: MOCK_CATEGORIES,
+    products: MOCK_PRODUCTS,
+    orders: MOCK_ORDERS,
+  },
+  volt_gadgets: {
+    settings: VOLT_GADGETS_SETTINGS,
+    categories: VOLT_GADGETS_CATEGORIES,
+    products: VOLT_GADGETS_PRODUCTS,
+    orders: [],
+  },
+  aura_perfume: {
+    settings: AURA_PERFUME_SETTINGS,
+    categories: AURA_PERFUME_CATEGORIES,
+    products: AURA_PERFUME_PRODUCTS,
+    orders: [],
+  },
+};

@@ -57,6 +57,7 @@ interface StorefrontClientProps {
   initialSettings?: StoreSettings;
   initialCategories?: Category[];
   initialProducts?: Product[];
+  isDemo?: boolean;
 }
 
 export function StorefrontClient({
@@ -64,6 +65,7 @@ export function StorefrontClient({
   initialSettings,
   initialCategories,
   initialProducts,
+  isDemo = false,
 }: StorefrontClientProps) {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -84,6 +86,7 @@ export function StorefrontClient({
     removeFromCart,
     updateQuantity,
     clearCart,
+    clearShopCart,
     getCartTotal,
     getCartCount,
     isCartDrawerOpen,
@@ -131,24 +134,27 @@ export function StorefrontClient({
   }, [shopSlug, getShopData]);
 
   // Merge shopData with initialSettings fallback
-  const currentSettings = shopData?.settings || initialSettings;
+  const currentSettings = isDemo && initialSettings ? initialSettings : (shopData?.settings || initialSettings);
   const currentCategories = useMemo(() => {
-    if (initialCategories && initialCategories.length > 0) {
-      const hasAll = initialCategories.some((c) => c.slug === 'all');
-      if (!hasAll) {
-        return [{ id: 'cat-all', name: 'Все', slug: 'all', sort_order: 0 }, ...initialCategories];
-      }
-      return initialCategories;
+    const source = isDemo && initialCategories && initialCategories.length > 0
+      ? initialCategories
+      : (initialCategories && initialCategories.length > 0 ? initialCategories : (shopData?.categories || []));
+    const hasAll = source.some((c) => c.slug === 'all');
+    if (!hasAll && source.length > 0) {
+      return [{ id: 'cat-all', name: 'Все', slug: 'all', sort_order: 0 }, ...source];
     }
-    return shopData?.categories || [];
-  }, [initialCategories, shopData]);
+    return source;
+  }, [isDemo, initialCategories, shopData]);
 
   const currentProducts = useMemo(() => {
+    if (isDemo && initialProducts && initialProducts.length > 0) {
+      return initialProducts;
+    }
     if (initialProducts && initialProducts.length > 0) {
       return initialProducts;
     }
     return shopData?.products || [];
-  }, [initialProducts, shopData]);
+  }, [isDemo, initialProducts, shopData]);
 
   // Effective unified theme settings (Priority: URL query > Local save override > SSR initialSettings > Zustand)
   const queryAccent = searchParams?.get('accent');
@@ -156,11 +162,13 @@ export function StorefrontClient({
   const queryPreset = searchParams?.get('preset') as any;
 
   const themeSettings = useMemo(() => {
-    const merged = {
-      ...(currentSettings?.theme_settings || {}),
-      ...(initialSettings?.theme_settings || {}),
-      ...(localThemeOverride || {}),
-    };
+    const merged = isDemo && initialSettings?.theme_settings
+      ? initialSettings.theme_settings
+      : {
+          ...(currentSettings?.theme_settings || {}),
+          ...(initialSettings?.theme_settings || {}),
+          ...(localThemeOverride || {}),
+        };
     const effective = getEffectiveThemeSettings(merged, currentSettings);
     return {
       ...effective,
@@ -168,7 +176,7 @@ export function StorefrontClient({
       theme: queryTheme || effective.theme,
       preset: queryPreset || effective.preset,
     };
-  }, [currentSettings, initialSettings, localThemeOverride, queryAccent, queryTheme, queryPreset]);
+  }, [isDemo, currentSettings, initialSettings, localThemeOverride, queryAccent, queryTheme, queryPreset]);
 
   // Apply default store settings (Theme, Layout, Language)
   useEffect(() => {
@@ -230,6 +238,17 @@ export function StorefrontClient({
     root.style.setProperty('--accent-hover', tokens.accentHover);
     root.style.setProperty('--accent-soft', tokens.accentSoft);
     root.style.setProperty('--accent-text', tokens.onAccent);
+
+    return () => {
+      root.style.removeProperty('--store-accent');
+      root.style.removeProperty('--store-accent-hover');
+      root.style.removeProperty('--store-accent-soft');
+      root.style.removeProperty('--store-on-accent');
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--accent-hover');
+      root.style.removeProperty('--accent-soft');
+      root.style.removeProperty('--accent-text');
+    };
   }, [isClient, tokens]);
 
   // Auto-open product modal & scroll to product if directed (?product=ID or ?item=ID)
@@ -291,7 +310,7 @@ export function StorefrontClient({
   }, [currentProducts, currentCategories]);
 
   const handleQuickAdd = (product: Product) => {
-    addToCart(product, null, 1);
+    addToCart(product, null, 1, shopSlug);
     setFlyAnimation({ x: 0, y: 0 });
     setTimeout(() => setFlyAnimation(null), 500);
   };
@@ -302,6 +321,7 @@ export function StorefrontClient({
 
   const handleOrderSuccess = (order: Order) => {
     addShopOrder(shopSlug, order);
+    clearShopCart(shopSlug);
     setLastCompletedOrder(order);
     setOrderSuccessOpen(true);
   };
@@ -313,12 +333,22 @@ export function StorefrontClient({
     } catch {}
   };
 
+  // Cart scoped strictly to current shop
+  const currentCart = useMemo(() => {
+    return cart.filter((item) => !item.shop_slug || item.shop_slug === shopSlug);
+  }, [cart, shopSlug]);
+
+  const cartTotal = useMemo(() => {
+    return currentCart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  }, [currentCart]);
+
+  const cartCount = useMemo(() => {
+    return currentCart.reduce((count, item) => count + item.quantity, 0);
+  }, [currentCart]);
+
   if (!isClient && !initialSettings) {
     return <StorefrontSkeleton />;
   }
-
-  const cartTotal = getCartTotal();
-  const cartCount = getCartCount();
 
   const themePreset = themeSettings.preset || 'minimal';
   const radiiPreset = themeSettings.radii_preset || 'medium';
@@ -362,7 +392,7 @@ export function StorefrontClient({
         {/* 1. Store Header Profile with Banner & Announcement */}
         <StoreHeader
           settings={effectiveSettings}
-          isDemo={shopSlug === 'tashkent_drip'}
+          isDemo={isDemo || shopSlug === 'tashkent_drip' || shopSlug === 'volt_gadgets' || shopSlug === 'aura_perfume'}
           totalProducts={currentProducts.length}
         />
 
@@ -420,7 +450,7 @@ export function StorefrontClient({
           ) : (
             <div className={catalogLayout === 'grid' && effectiveSettings.card_style !== 'single' ? 'grid grid-cols-2 gap-2.5' : 'flex flex-col gap-2.5'}>
               {filteredProducts.map((product) => {
-                const isInCart = cart.some((c) => c.product.id === product.id);
+                const isInCart = currentCart.some((c) => c.product.id === product.id);
                 return (
                   <ProductCard
                     key={product.id}
@@ -460,7 +490,7 @@ export function StorefrontClient({
           product={activeProductModal}
           storeSettings={effectiveSettings}
           onClose={() => setActiveProductModal(null)}
-          onAddToCart={addToCart}
+          onAddToCart={(p, s, q) => addToCart(p, s, q, shopSlug)}
           onBuyOneClick={(p) => {
             setActiveProductModal(null);
             setOneClickProduct(p);
@@ -479,11 +509,11 @@ export function StorefrontClient({
         <CartCheckoutDrawer
           isOpen={isCartDrawerOpen}
           onClose={() => setCartDrawerOpen(false)}
-          items={cart}
+          items={currentCart}
           storeSettings={effectiveSettings}
           onUpdateQuantity={updateQuantity}
           onRemoveItem={removeFromCart}
-          onClearCart={clearCart}
+          onClearCart={() => clearShopCart(shopSlug)}
           onOrderSuccess={handleOrderSuccess}
         />
 

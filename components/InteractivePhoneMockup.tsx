@@ -69,7 +69,7 @@ export const InteractivePhoneMockup: React.FC = () => {
             <div className="bg-surface border-b border-border text-content-primary text-[11px] font-medium py-1.5 px-3 flex items-center justify-between">
               <div className="flex items-center gap-1.5 font-mono text-[10px] text-content-secondary">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                <span>biomart.vercel.app/tashkent_drip</span>
+                <span>{process.env.NEXT_PUBLIC_SITE_DOMAIN || 'biomart.uz'}/tashkent_drip</span>
               </div>
               <span className="text-[9px] text-accent font-semibold px-1.5 py-0.5 rounded bg-accent-soft">ДЕМО</span>
             </div>
@@ -95,16 +95,10 @@ export const InteractivePhoneMockup: React.FC = () => {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1">
-                    <h4 className="text-xs font-semibold text-content-primary truncate">
-                      TASHKENT DRIP
-                    </h4>
-                    <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-full bg-brand-soft text-brand text-[8px] font-semibold border border-brand-border shrink-0 select-none">
-                      <Check className="w-2 h-2 stroke-[3]" />
-                      <span>подтверждено BioMart</span>
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-content-secondary truncate">
+                  <h4 className="text-xs font-semibold text-content-primary truncate">
+                    TASHKENT DRIP
+                  </h4>
+                  <p className="text-[10px] text-content-secondary truncate mt-0.5">
                     Streetwear & Sneakers в Ташкенте
                   </p>
                 </div>

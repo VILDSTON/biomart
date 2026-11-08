@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { X, Check, AlertCircle, ChevronLeft, ChevronRight, ShoppingBag, Share2 } from 'lucide-react';
+import { X, Check, AlertCircle, ChevronLeft, ChevronRight, ShoppingBag, Share2, Flag } from 'lucide-react';
 import { Product, StoreSettings } from '@/types';
 import { calculateDiscount, formatPrice, getContrastTextColor } from '@/lib/utils';
 import { useBioMartStore } from '@/store/useStore';
 import { translations } from '@/lib/i18n';
+import { ComplaintModal } from '@/components/ComplaintModal';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -31,6 +32,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [variantError, setVariantError] = useState(false);
   const [isAddedFeedback, setIsAddedFeedback] = useState(false);
   const [isLinkCopied, setIsLinkCopied] = useState(false);
+  const [isComplaintOpen, setIsComplaintOpen] = useState(false);
 
   const handleShareProduct = () => {
     if (!product) return;
@@ -349,6 +351,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </p>
               </div>
             )}
+
+            {/* Report product button */}
+            <div className="pt-2 border-t border-border flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsComplaintOpen(true)}
+                className="text-[11px] text-content-secondary hover:text-red-500 flex items-center gap-1 transition-colors"
+              >
+                <Flag className="w-3 h-3" />
+                <span>{language === 'uz' ? 'Shikoyat qilish' : 'Пожаловаться на товар'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -398,6 +412,16 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Complaint Modal */}
+        <ComplaintModal
+          isOpen={isComplaintOpen}
+          onClose={() => setIsComplaintOpen(false)}
+          storeSlug={storeSettings.slug}
+          storeName={storeSettings.store_name}
+          productId={product.id}
+          productTitle={product.title}
+        />
       </div>
     </div>
   );

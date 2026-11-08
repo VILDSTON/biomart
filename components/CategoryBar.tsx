@@ -61,19 +61,19 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
           )}
         </div>
 
-        {/* Layout Switcher */}
+        {/* Layout Switcher (Strict Concentric Radius Segments) */}
         <div 
-          className="flex items-center p-0.5 border border-border bg-page shrink-0 gap-0.5"
-          style={{ borderRadius: 'var(--radius-btn, 10px)' }}
+          className="flex items-center p-1 rounded-lg border border-border bg-page shrink-0 gap-1"
+          role="radiogroup"
+          aria-label="Переключение вида каталога"
         >
           <button
             type="button"
             onClick={() => onToggleLayout('grid')}
-            style={{ borderRadius: 'max(2px, calc(var(--radius-btn, 10px) - 2px))' }}
-            className={`p-1.5 transition-all flex items-center justify-center ${
+            className={`w-7 h-7 rounded-[6px] transition-all flex items-center justify-center ${
               layout === 'grid'
                 ? 'bg-surface text-accent shadow-xs'
-                : 'text-content-secondary hover:text-content-primary'
+                : 'text-content-secondary hover:text-content-primary hover:bg-surface/50'
             }`}
             title="Сетка"
             aria-label="Сетка"
@@ -83,11 +83,10 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
           <button
             type="button"
             onClick={() => onToggleLayout('list')}
-            style={{ borderRadius: 'max(2px, calc(var(--radius-btn, 10px) - 2px))' }}
-            className={`p-1.5 transition-all flex items-center justify-center ${
+            className={`w-7 h-7 rounded-[6px] transition-all flex items-center justify-center ${
               layout === 'list'
                 ? 'bg-surface text-accent shadow-xs'
-                : 'text-content-secondary hover:text-content-primary'
+                : 'text-content-secondary hover:text-content-primary hover:bg-surface/50'
             }`}
             title="Список"
             aria-label="Список"

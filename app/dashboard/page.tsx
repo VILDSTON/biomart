@@ -45,6 +45,10 @@ import {
   MessageSquare,
   Bot,
   MoreVertical,
+  Youtube,
+  Globe,
+  Link2,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { ACCENT_COLOR_PRESETS } from '@/lib/mock-data';
@@ -52,10 +56,11 @@ import { QRCodeCard } from '@/components/QRCodeCard';
 import { StoriesGeneratorModal } from '@/components/StoriesGeneratorModal';
 import { StorefrontDesignEditor } from '@/components/StorefrontDesignEditor';
 import { BioMartLogo } from '@/components/BioMartLogo';
-import { CatalogLayout, Category, Order, Product, StoreSettings, ThemeMode, PlanType } from '@/types';
+import { CatalogLayout, Category, Order, Product, StoreSettings, ThemeMode, PlanType, StoreCustomLink, StoreLinkIcon } from '@/types';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { SupportModal } from '@/components/SupportModal';
+import { IS_SUBSCRIPTION_ENABLED } from '@/lib/constants';
 
 const AVATAR_PRESETS = [
   { name: 'Streetwear & Стиль', url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=400&q=80', label: 'Одежда' },
@@ -80,7 +85,7 @@ function cleanDisplayAiText(text: string): string {
     .trim();
 }
 
-type DashboardTab = 'orders' | 'products' | 'share' | 'telegram' | 'branding' | 'design' | 'tariff' | 'ai';
+type DashboardTab = 'orders' | 'products' | 'links' | 'share' | 'telegram' | 'branding' | 'design' | 'tariff' | 'ai';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -97,7 +102,8 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
       const tab = sp.get('tab') as DashboardTab;
-      if (['orders', 'products', 'share', 'telegram', 'branding', 'design', 'tariff', 'ai'].includes(tab)) return tab;
+      const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
+      if (allowedTabs.includes(tab)) return tab;
     }
     return 'orders';
   });
@@ -212,7 +218,8 @@ export default function DashboardPage() {
       setIsAuthenticated(true);
     }
     const tabParam = searchParams?.get('tab') as DashboardTab | null;
-    if (tabParam && ['orders', 'products', 'share', 'telegram', 'branding', 'design', 'tariff', 'ai'].includes(tabParam)) {
+    const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
+    if (tabParam && allowedTabs.includes(tabParam)) {
       setActiveTab(tabParam);
     }
     const langParam = searchParams?.get('lang') as 'ru' | 'uz' | null;
@@ -262,11 +269,12 @@ export default function DashboardPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'admin123' || passwordInput === 'admin') {
+    if (passwordInput.trim().length > 0) {
       setIsAuthenticated(true);
       sessionStorage.setItem('biomart_admin_auth', 'true');
+      setAuthError('');
     } else {
-      setAuthError('Неверный пароль. Пароль по умолчанию: admin123');
+      setAuthError('Пожалуйста, введите пароль');
     }
   };
 
@@ -277,15 +285,18 @@ export default function DashboardPage() {
   };
 
   // Plan Limits
-  const planLimits: Record<PlanType, number> = {
-    start: 10,
-    plus: 100,
-    pro: Infinity,
-  };
-  const currentPlan: PlanType = (settings.plan as PlanType) || 'start';
-  const maxProducts = planLimits[currentPlan] || 10;
+  const currentPlan = (settings.plan || 'start') as string;
+  const maxProducts = 10;
   const isLimitReached = products.length >= maxProducts;
-  const isProPlan = currentPlan === 'pro';
+  const isProPlan = false;
+
+  // Custom Links State
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [linkTitle, setLinkTitle] = useState('');
+  const [linkIcon, setLinkIcon] = useState<StoreLinkIcon>('telegram');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkError, setLinkError] = useState('');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -625,6 +636,123 @@ export default function DashboardPage() {
     showToast(`Промокод ${codeToDelete} удалён`);
   };
 
+  // Custom Links Handlers
+  const handleOpenAddLink = (presetIcon?: StoreLinkIcon, presetTitle?: string) => {
+    setEditingLinkId(null);
+    const chosenIcon = presetIcon || 'telegram';
+    setLinkIcon(chosenIcon);
+    setLinkTitle(
+      presetTitle ||
+        (chosenIcon === 'telegram'
+          ? 'Наш Telegram-канал'
+          : chosenIcon === 'instagram'
+          ? 'Instagram с новинками'
+          : chosenIcon === 'youtube'
+          ? 'YouTube канал'
+          : chosenIcon === 'phone'
+          ? 'Позвонить менеджеру'
+          : 'Полезная ссылка')
+    );
+    setLinkUrl('');
+    setLinkError('');
+    setIsLinkModalOpen(true);
+  };
+
+  const handleOpenEditLink = (link: StoreCustomLink) => {
+    setEditingLinkId(link.id);
+    setLinkIcon(link.icon);
+    setLinkTitle(link.title);
+    setLinkUrl(link.url);
+    setLinkError('');
+    setIsLinkModalOpen(true);
+  };
+
+  const handleSaveCustomLink = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLinkError('');
+
+    const trimmedTitle = linkTitle.trim();
+    let trimmedUrl = linkUrl.trim();
+
+    if (!trimmedTitle) {
+      setLinkError('Укажите название кнопки');
+      return;
+    }
+
+    if (!trimmedUrl) {
+      setLinkError('Укажите ссылку или номер телефона');
+      return;
+    }
+
+    if (linkIcon === 'phone') {
+      const cleanPhone = trimmedUrl.replace(/[^\d+]/g, '');
+      trimmedUrl = cleanPhone.startsWith('+') ? `tel:${cleanPhone}` : `tel:+${cleanPhone}`;
+    } else if (linkIcon === 'telegram') {
+      if (trimmedUrl.startsWith('@')) {
+        trimmedUrl = `https://t.me/${trimmedUrl.slice(1)}`;
+      } else if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://') && !trimmedUrl.startsWith('t.me/')) {
+        trimmedUrl = `https://t.me/${trimmedUrl}`;
+      } else if (trimmedUrl.startsWith('t.me/')) {
+        trimmedUrl = `https://${trimmedUrl}`;
+      }
+    } else if (linkIcon === 'instagram') {
+      if (trimmedUrl.startsWith('@')) {
+        trimmedUrl = `https://instagram.com/${trimmedUrl.slice(1)}`;
+      } else if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://') && !trimmedUrl.startsWith('instagram.com/')) {
+        trimmedUrl = `https://instagram.com/${trimmedUrl}`;
+      } else if (trimmedUrl.startsWith('instagram.com/')) {
+        trimmedUrl = `https://${trimmedUrl}`;
+      }
+    } else if (linkIcon === 'youtube') {
+      if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+        trimmedUrl = `https://${trimmedUrl}`;
+      }
+    } else {
+      if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://') && !trimmedUrl.startsWith('tel:')) {
+        trimmedUrl = `https://${trimmedUrl}`;
+      }
+    }
+
+    const currentLinks = settings.custom_links || [];
+    let updatedLinks: StoreCustomLink[];
+
+    if (editingLinkId) {
+      updatedLinks = currentLinks.map((l) =>
+        l.id === editingLinkId ? { ...l, title: trimmedTitle, icon: linkIcon, url: trimmedUrl } : l
+      );
+      showToast('Кнопка обновлена');
+    } else {
+      const newLink: StoreCustomLink = {
+        id: `link-${Date.now()}`,
+        title: trimmedTitle,
+        icon: linkIcon,
+        url: trimmedUrl,
+        is_active: true,
+      };
+      updatedLinks = [...currentLinks, newLink];
+      showToast('Кнопка добавлена на витрину');
+    }
+
+    updateShopSettings(activeSlug, { custom_links: updatedLinks });
+    setIsLinkModalOpen(false);
+  };
+
+  const handleToggleLink = (linkId: string) => {
+    const currentLinks = settings.custom_links || [];
+    const updated = currentLinks.map((l) =>
+      l.id === linkId ? { ...l, is_active: !l.is_active } : l
+    );
+    updateShopSettings(activeSlug, { custom_links: updated });
+    showToast('Статус кнопки изменён');
+  };
+
+  const handleDeleteLink = (linkId: string) => {
+    const currentLinks = settings.custom_links || [];
+    const updated = currentLinks.filter((l) => l.id !== linkId);
+    updateShopSettings(activeSlug, { custom_links: updated });
+    showToast('Кнопка удалена');
+  };
+
   // Orders period filter
   const getOrdersByPeriod = () => {
     const now = Date.now();
@@ -912,17 +1040,23 @@ export default function DashboardPage() {
                 <h1 className="text-xs sm:text-sm font-semibold tracking-tight leading-none text-content-primary truncate min-w-0 flex-1 sm:flex-initial sm:max-w-[260px]">
                   {settings.store_name}
                 </h1>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('tariff')}
-                  className="text-[9px] sm:text-[10px] bg-[#E4F1EB] text-[#1F7A5A] border border-[#1F7A5A]/20 px-1.5 sm:px-2 py-0.5 rounded-[5px] sm:rounded-[6px] font-medium uppercase hover:bg-[#1F7A5A]/10 transition-colors cursor-pointer shrink-0"
-                  title="Управление тарифом"
-                >
-                  {settings.plan || 'Start'}
-                </button>
+                {IS_SUBSCRIPTION_ENABLED ? (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('tariff')}
+                    className="text-[9px] sm:text-[10px] bg-[#E4F1EB] text-[#1F7A5A] border border-[#1F7A5A]/20 px-1.5 sm:px-2 py-0.5 rounded-[5px] sm:rounded-[6px] font-medium uppercase hover:bg-[#1F7A5A]/10 transition-colors cursor-pointer shrink-0"
+                    title="Управление тарифом"
+                  >
+                    {settings.plan || 'Start'}
+                  </button>
+                ) : (
+                  <span className="text-[9px] sm:text-[10px] bg-accent-soft text-accent border border-accent/20 px-1.5 sm:px-2 py-0.5 rounded-[5px] sm:rounded-[6px] font-semibold shrink-0">
+                    Бесплатно
+                  </span>
+                )}
               </div>
               <span className="text-[9px] sm:text-[10px] text-content-secondary font-mono block truncate">
-                biomart.vercel.app/{activeSlug}
+                biomart.uz/{activeSlug}
               </span>
             </div>
           </div>
@@ -996,6 +1130,23 @@ export default function DashboardPage() {
           </button>
 
           <button
+            onClick={() => setActiveTab('links')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'links'
+                ? 'bg-[#1F7A5A] text-white shadow-xs'
+                : 'text-content-secondary hover:bg-page hover:text-content-primary'
+            }`}
+          >
+            <Link2 className="w-3.5 h-3.5" />
+            <span>Ссылки</span>
+            {(settings.custom_links?.length || 0) > 0 && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-page text-content-primary font-mono font-semibold">
+                {settings.custom_links?.filter((l) => l.is_active).length}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab('share')}
             className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'share'
@@ -1031,29 +1182,33 @@ export default function DashboardPage() {
             <span>Дизайн</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('tariff')}
-            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'tariff'
-                ? 'bg-[#1F7A5A] text-white shadow-xs'
-                : 'text-content-secondary hover:bg-page hover:text-content-primary'
-            }`}
-          >
-            <Tag className="w-3.5 h-3.5" />
-            <span>Тариф</span>
-          </button>
+          {IS_SUBSCRIPTION_ENABLED && (
+            <button
+              onClick={() => setActiveTab('tariff')}
+              className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === 'tariff'
+                  ? 'bg-[#1F7A5A] text-white shadow-xs'
+                  : 'text-content-secondary hover:bg-page hover:text-content-primary'
+              }`}
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>Тариф</span>
+            </button>
+          )}
 
-          <button
-            onClick={() => setActiveTab('ai')}
-            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'ai'
-                ? 'bg-[#1F7A5A] text-white shadow-xs'
-                : 'text-[#1F7A5A] hover:bg-[#E4F1EB]'
-            }`}
-          >
-            <Bot className="w-3.5 h-3.5" />
-            <span>AI (Pro)</span>
-          </button>
+          {false && (
+            <button
+              onClick={() => setActiveTab('ai')}
+              className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === 'ai'
+                  ? 'bg-[#1F7A5A] text-white shadow-xs'
+                  : 'text-[#1F7A5A] hover:bg-[#E4F1EB]'
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5" />
+              <span>AI (Pro)</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -1162,21 +1317,17 @@ export default function DashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-surface rounded-[10px] border border-border text-xs shadow-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-content-secondary">
-                    Лимит товаров:
+                    Лимит каталога:
                   </span>
                   <span className="font-mono font-semibold text-content-primary">
-                    {products.length} / {maxProducts === Infinity ? 'Безлимит' : maxProducts} товаров
+                    {products.length} / {maxProducts} товаров
                   </span>
                 </div>
 
-                {currentPlan !== 'pro' && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('tariff')}
-                    className="text-[11px] font-medium text-[#1F7A5A] hover:underline flex items-center gap-1 shrink-0"
-                  >
-                    <span>Увеличить лимит товаров →</span>
-                  </button>
+                {isLimitReached && (
+                  <span className="text-[11px] font-semibold text-accent bg-accent-soft border border-accent/20 px-2.5 py-0.5 rounded-[6px]">
+                    Лимит 10 товаров достигнут
+                  </span>
                 )}
               </div>
 
@@ -1359,8 +1510,31 @@ export default function DashboardPage() {
               )}
 
               {/* Product Cards List */}
-              <div className="space-y-2.5">
-                {products.map((prod) => {
+              {products.length === 0 ? (
+                <div className="text-center py-12 px-4 rounded-[16px] bg-surface border border-border border-dashed space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
+                    <Package className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-base font-bold text-content-primary">
+                      В каталоге пока нет товаров
+                    </h3>
+                    <p className="text-xs text-content-secondary max-w-sm mx-auto">
+                      Нажмите «+ Добавить товар», чтобы загрузить первое фото, цену и описание для вашей витрины.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddProductOpen(true)}
+                    className="px-5 py-2.5 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-xs active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Добавить первый товар</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {products.map((prod) => {
                   const img =
                     prod.images?.[0] ||
                     'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80';
@@ -1503,7 +1677,8 @@ export default function DashboardPage() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+              )}
 
               {/* Edit Product Modal */}
               {editingProduct && (
@@ -2072,6 +2247,186 @@ export default function DashboardPage() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: CUSTOM LINKS & ACTION BUTTONS */}
+          {/* ========================================================================= */}
+          {activeTab === 'links' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-content-primary flex items-center gap-2">
+                    <Link2 className="w-5 h-5 text-accent" />
+                    <span>Кнопки и ссылки</span>
+                  </h2>
+                  <p className="text-xs text-content-secondary mt-0.5">
+                    Добавьте интерактивные кнопки для вашей витрины: Telegram, Instagram, YouTube или прямой звонок
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenAddLink()}
+                  className="px-4 py-2.5 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs self-start sm:self-auto active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Добавить кнопку</span>
+                </button>
+              </div>
+
+              {/* Quick Preset Templates */}
+              <div className="bg-surface rounded-[14px] border border-border p-4 shadow-xs space-y-2.5">
+                <span className="text-xs font-bold text-content-primary block">
+                  Быстрое добавление в 1 клик:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddLink('telegram', 'Наш Telegram-канал')}
+                    className="px-3 py-1.5 rounded-[8px] bg-page hover:bg-surface-soft border border-border text-content-primary text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <Send className="w-3.5 h-3.5 text-accent" />
+                    <span>+ Telegram-канал</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddLink('instagram', 'Instagram с новинками')}
+                    className="px-3 py-1.5 rounded-[8px] bg-page hover:bg-surface-soft border border-border text-content-primary text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <Instagram className="w-3.5 h-3.5 text-pink-500" />
+                    <span>+ Instagram</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddLink('youtube', 'YouTube канал')}
+                    className="px-3 py-1.5 rounded-[8px] bg-page hover:bg-surface-soft border border-border text-content-primary text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <Youtube className="w-3.5 h-3.5 text-red-500" />
+                    <span>+ YouTube</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddLink('phone', 'Позвонить менеджеру')}
+                    className="px-3 py-1.5 rounded-[8px] bg-page hover:bg-surface-soft border border-border text-content-primary text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-accent" />
+                    <span>+ Телефон</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Links List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-content-primary">
+                  <span>Ваши кнопки на витрине ({settings.custom_links?.length || 0}):</span>
+                  <span className="text-[11px] text-content-secondary">
+                    Активно: {settings.custom_links?.filter((l) => l.is_active).length || 0}
+                  </span>
+                </div>
+
+                {(!settings.custom_links || settings.custom_links.length === 0) ? (
+                  <div className="p-8 bg-surface rounded-[14px] border border-border border-dashed text-center space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
+                      <Link2 className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-bold text-content-primary">
+                        Вы пока не добавили кнопки
+                      </h3>
+                      <p className="text-xs text-content-secondary max-w-sm mx-auto">
+                        Нажмите кнопку «Добавить кнопку» или выберите один из быстрых шаблонов выше, чтобы покупатели могли легко связаться с вами или подписаться на ваши соцсети.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAddLink()}
+                      className="px-4 py-2 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-xs"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Создать первую кнопку</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {settings.custom_links.map((link) => {
+                      const IconComponent =
+                        link.icon === 'telegram'
+                          ? Send
+                          : link.icon === 'instagram'
+                          ? Instagram
+                          : link.icon === 'youtube'
+                          ? Youtube
+                          : link.icon === 'phone'
+                          ? Phone
+                          : Globe;
+
+                      return (
+                        <div
+                          key={link.id}
+                          className={`p-3.5 sm:p-4 rounded-[12px] bg-surface border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs ${
+                            link.is_active ? 'border-border' : 'border-border/60 opacity-60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-[10px] bg-accent-soft text-accent flex items-center justify-center shrink-0">
+                              <IconComponent className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-bold text-content-primary truncate">
+                                  {link.title}
+                                </h4>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-page border border-border text-content-secondary uppercase font-semibold">
+                                  {link.icon}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-content-secondary font-mono truncate mt-0.5">
+                                {link.url}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                            {/* Toggle Active */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleLink(link.id)}
+                              className={`px-2.5 py-1.5 rounded-[8px] text-[11px] font-semibold transition-colors flex items-center gap-1 ${
+                                link.is_active
+                                  ? 'bg-accent-soft text-accent hover:bg-accent-soft/80'
+                                  : 'bg-page text-content-secondary hover:text-content-primary'
+                              }`}
+                            >
+                              <span>{link.is_active ? 'Активна' : 'Отключена'}</span>
+                            </button>
+
+                            {/* Edit */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditLink(link)}
+                              className="p-1.5 rounded-[8px] text-content-secondary hover:text-content-primary hover:bg-page transition-colors"
+                              title="Редактировать"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLink(link.id)}
+                              className="p-1.5 rounded-[8px] text-content-secondary hover:text-danger hover:bg-danger/10 transition-colors"
+                              title="Удалить"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -2688,6 +3043,158 @@ export default function DashboardPage() {
         shopSlug={activeSlug}
         defaultCategory={supportCategory}
       />
+
+      {/* Add / Edit Custom Link Modal */}
+      {isLinkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-xs">
+          <div className="absolute inset-0" onClick={() => setIsLinkModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-surface border border-border rounded-[14px] shadow-lg p-5 sm:p-6 z-10 max-h-[92vh] overflow-y-auto text-content-primary animate-scale-in">
+            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-content-primary">
+                  {editingLinkId ? 'Редактировать кнопку' : 'Добавить кнопку на витрину'}
+                </h3>
+                <p className="text-[11px] text-content-secondary">
+                  Кнопка появится в шапке витрины прямо под описанием
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLinkModalOpen(false)}
+                className="w-7 h-7 rounded-[8px] bg-page hover:bg-page/80 text-content-secondary flex items-center justify-center transition-colors"
+                aria-label="Закрыть"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomLink} className="space-y-4">
+              {/* Icon Selection */}
+              <div>
+                <label className="block text-xs font-semibold text-content-primary mb-2">
+                  Иконка сервиса
+                </label>
+                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+                  {[
+                    { id: 'telegram' as StoreLinkIcon, name: 'Telegram', icon: Send },
+                    { id: 'instagram' as StoreLinkIcon, name: 'Instagram', icon: Instagram },
+                    { id: 'youtube' as StoreLinkIcon, name: 'YouTube', icon: Youtube },
+                    { id: 'phone' as StoreLinkIcon, name: 'Телефон', icon: Phone },
+                    { id: 'website' as StoreLinkIcon, name: 'Сайт', icon: Globe },
+                  ].map((item) => {
+                    const isSelected = linkIcon === item.id;
+                    const ItemIcon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setLinkIcon(item.id);
+                          if (!linkTitle || ['Наш Telegram-канал', 'Instagram с новинками', 'YouTube канал', 'Позвонить менеджеру', 'Полезная ссылка', 'Наш сайт'].includes(linkTitle)) {
+                            setLinkTitle(
+                              item.id === 'telegram'
+                                ? 'Наш Telegram-канал'
+                                : item.id === 'instagram'
+                                ? 'Instagram с новинками'
+                                : item.id === 'youtube'
+                                ? 'YouTube канал'
+                                : item.id === 'phone'
+                                ? 'Позвонить менеджеру'
+                                : 'Наш сайт'
+                            );
+                          }
+                        }}
+                        className={`p-2 sm:p-2.5 rounded-[10px] border flex flex-col items-center justify-center gap-1.5 transition-all text-center ${
+                          isSelected
+                            ? 'bg-accent-soft border-accent text-accent font-semibold'
+                            : 'bg-page border-border text-content-secondary hover:text-content-primary hover:border-content-secondary/40'
+                        }`}
+                      >
+                        <ItemIcon className="w-4 h-4" />
+                        <span className="text-[10px] leading-tight truncate w-full">{item.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Title Input */}
+              <div>
+                <label className="block text-xs font-semibold text-content-primary mb-1">
+                  Текст на кнопке
+                </label>
+                <input
+                  type="text"
+                  value={linkTitle}
+                  onChange={(e) => setLinkTitle(e.target.value)}
+                  placeholder="Например: Наш Telegram-канал"
+                  className="w-full px-3 py-2 text-xs rounded-[8px] bg-page border border-border text-content-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                  required
+                />
+              </div>
+
+              {/* URL Input */}
+              <div>
+                <label className="block text-xs font-semibold text-content-primary mb-1">
+                  {linkIcon === 'phone'
+                    ? 'Номер телефона'
+                    : linkIcon === 'telegram' || linkIcon === 'instagram'
+                    ? 'Ссылка или @юзернейм'
+                    : 'Ссылка (URL)'}
+                </label>
+                <input
+                  type="text"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder={
+                    linkIcon === 'phone'
+                      ? '+998 90 123 45 67'
+                      : linkIcon === 'telegram'
+                      ? '@tashkent_drip или https://t.me/...'
+                      : linkIcon === 'instagram'
+                      ? '@tashkent_drip или https://instagram.com/...'
+                      : linkIcon === 'youtube'
+                      ? 'https://youtube.com/@...'
+                      : 'https://...'
+                  }
+                  className="w-full px-3 py-2 text-xs font-mono rounded-[8px] bg-page border border-border text-content-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                  required
+                />
+                <p className="text-[10px] text-content-secondary mt-1">
+                  {linkIcon === 'phone'
+                    ? 'Можно вводить с пробелами, мы автоматически сформируем прямую кнопку вызова'
+                    : linkIcon === 'telegram' || linkIcon === 'instagram'
+                    ? 'Можно указать просто юзернейм с @ или полную ссылку'
+                    : 'Укажите полную ссылку, начиная с https://'}
+                </p>
+              </div>
+
+              {linkError && (
+                <div className="p-2.5 rounded-[8px] bg-danger/10 border border-danger/20 text-danger text-[11px] font-medium">
+                  {linkError}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsLinkModalOpen(false)}
+                  className="px-3 py-2 rounded-[8px] text-xs font-medium text-content-secondary hover:text-content-primary hover:bg-page transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-[8px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-colors shadow-xs"
+                >
+                  {editingLinkId ? 'Сохранить изменения' : 'Добавить кнопку'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Floating Toast Notification */}
       {toastMessage && (

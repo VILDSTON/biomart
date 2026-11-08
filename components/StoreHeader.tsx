@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Instagram, Send, Phone, ShieldCheck, Check, Store, Zap, ChevronDown, Bell } from 'lucide-react';
+import { Instagram, Send, Phone, ShieldCheck, Check, Zap, ChevronDown, Bell, Flag, Youtube, Globe, Link2, ArrowUpRight } from 'lucide-react';
 import { StoreSettings } from '@/types';
 import { useBioMartStore } from '@/store/useStore';
 import { translations } from '@/lib/i18n';
+import { ComplaintModal } from '@/components/ComplaintModal';
 
 interface StoreHeaderProps {
   settings: StoreSettings;
@@ -17,6 +18,7 @@ interface StoreHeaderProps {
 export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = false, totalProducts }) => {
   const [avatarError, setAvatarError] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isComplaintOpen, setIsComplaintOpen] = useState(false);
   const { language, setLanguage } = useBioMartStore();
   const t = translations[language];
 
@@ -41,22 +43,6 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
 
   return (
     <header className="relative bg-surface border-b border-border text-content-primary transition-colors">
-      {/* Top Demo Banner if demo */}
-      {isDemo && (
-        <div className="bg-accent-soft border-b border-accent/20 py-1.5 px-3 flex items-center justify-between text-xs text-accent font-medium">
-          <div className="flex items-center gap-1.5 truncate">
-            <Store className="w-3.5 h-3.5 text-accent shrink-0" />
-            <span className="truncate">Демо-витрина <b>{settings.store_name}</b></span>
-          </div>
-          <Link
-            href="/dashboard"
-            className="shrink-0 text-accent underline font-semibold hover:opacity-80 text-[11px]"
-            aria-label="Перейти в панель управления магазином"
-          >
-            Управление →
-          </Link>
-        </div>
-      )}
 
       {/* Hero Banner Cover */}
       {hasBanner && (
@@ -101,48 +87,56 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
 
           {/* Title & Controls */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-1">
-              <div className="flex items-center gap-1.5 truncate">
-                <h1 className="text-base font-semibold text-content-primary truncate tracking-tight">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg font-bold text-content-primary tracking-tight truncate">
                   {settings.store_name}
                 </h1>
-                {(isDemo || Boolean(settings.is_verified)) && (
+                {!isDemo && Boolean(settings.is_verified) && (
                   <span
-                    title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon' : 'Проверенный продавец платформы BioMart'}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-brand-soft text-brand text-[10px] font-semibold border border-brand-border shrink-0 select-none shadow-2xs"
+                    title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon' : 'Проверенный продавец BioMart'}
+                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-accent text-white shrink-0 select-none shadow-2xs"
                   >
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    <span className="hidden xs:inline text-[9px] sm:text-[10px]">
-                      {language === 'uz' ? 'BioMart tasdiqlagan' : 'подтверждено BioMart'}
-                    </span>
                   </span>
                 )}
               </div>
 
-              {/* Header Right: Language Switcher (RU | UZ) */}
-              <div className="flex items-center rounded-[10px] p-0.5 text-[10px] font-medium border border-border bg-page">
+              {/* Header Right: Language Switcher (RU | UZ) & Complaint */}
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setLanguage('ru')}
-                  className={`px-2 py-0.5 rounded-[8px] transition-colors ${
-                    language === 'ru'
-                      ? 'bg-surface text-content-primary font-semibold border border-border shadow-xs'
-                      : 'text-content-secondary hover:text-content-primary'
-                  }`}
+                  onClick={() => setIsComplaintOpen(true)}
+                  title={language === 'uz' ? 'Shikoyat qilish' : 'Пожаловаться модераторам'}
+                  className="p-1.5 rounded-[8px] text-content-secondary hover:text-red-500 hover:bg-page transition-colors"
                 >
-                  RU
+                  <Flag className="w-3.5 h-3.5" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setLanguage('uz')}
-                  className={`px-2 py-0.5 rounded-[8px] transition-colors ${
-                    language === 'uz'
-                      ? 'bg-surface text-content-primary font-semibold border border-border shadow-xs'
-                      : 'text-content-secondary hover:text-content-primary'
-                  }`}
-                >
-                  UZ
-                </button>
+
+                <div className="flex items-center rounded-[10px] p-0.5 text-[10px] font-medium border border-border bg-page">
+                  <button
+                    type="button"
+                    onClick={() => setLanguage('ru')}
+                    className={`px-2 py-0.5 rounded-[8px] transition-colors ${
+                      language === 'ru'
+                        ? 'bg-surface text-content-primary font-semibold border border-border shadow-xs'
+                        : 'text-content-secondary hover:text-content-primary'
+                    }`}
+                  >
+                    RU
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLanguage('uz')}
+                    className={`px-2 py-0.5 rounded-[8px] transition-colors ${
+                      language === 'uz'
+                        ? 'bg-surface text-content-primary font-semibold border border-border shadow-xs'
+                        : 'text-content-secondary hover:text-content-primary'
+                    }`}
+                  >
+                    UZ
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -208,6 +202,48 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
           )}
         </div>
 
+        {/* Custom Quick Links Buttons (configured in Dashboard -> Ссылки) */}
+        {settings.custom_links && settings.custom_links.filter((l) => l.is_active).length > 0 && (
+          <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {settings.custom_links
+                .filter((l) => l.is_active)
+                .map((link) => {
+                  const IconComponent =
+                    link.icon === 'telegram'
+                      ? Send
+                      : link.icon === 'instagram'
+                      ? Instagram
+                      : link.icon === 'youtube'
+                      ? Youtube
+                      : link.icon === 'phone'
+                      ? Phone
+                      : Globe;
+
+                  const isPhone = link.icon === 'phone' || link.url.startsWith('tel:');
+
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target={isPhone ? undefined : '_blank'}
+                      rel={isPhone ? undefined : 'noopener noreferrer'}
+                      className="min-h-[42px] px-3.5 py-2 rounded-btn bg-surface hover:bg-surface-soft border border-border text-content-primary flex items-center justify-between gap-2.5 text-xs font-semibold transition-all hover:border-accent/50 active:scale-[0.99] shadow-xs group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-6 h-6 rounded-[7px] bg-accent-soft text-accent flex items-center justify-center shrink-0">
+                          <IconComponent className="w-3.5 h-3.5 shrink-0" />
+                        </div>
+                        <span className="truncate">{link.title}</span>
+                      </div>
+                      <ArrowUpRight className="w-3.5 h-3.5 text-content-secondary group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
+                    </a>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
         {/* Announcement Banner (Design Setting 8) */}
         {settings.announcement_active && settings.announcement_text && (
           <div className="mt-3 py-2 px-3 rounded-btn border border-accent/20 bg-accent-soft text-accent text-xs font-medium flex items-center gap-2 shadow-xs">
@@ -215,6 +251,14 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
             <span className="overflow-wrap-anywhere">{settings.announcement_text}</span>
           </div>
         )}
+
+        {/* Complaint Modal */}
+        <ComplaintModal
+          isOpen={isComplaintOpen}
+          onClose={() => setIsComplaintOpen(false)}
+          storeSlug={settings.slug}
+          storeName={settings.store_name}
+        />
       </div>
     </header>
   );

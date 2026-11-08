@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { isSlugValid } from '@/lib/security';
+import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -54,6 +55,15 @@ export async function POST(req: NextRequest) {
     const cleanSlug = slug?.toLowerCase().replace(/[^a-z0-9_-]/g, '');
     if (!cleanSlug || !isSlugValid(cleanSlug)) {
       return NextResponse.json({ error: 'Недопустимый адрес витрины' }, { status: 400 });
+    }
+
+    if (isSlugBanned(cleanSlug)) {
+      return NextResponse.json({ error: 'Этот адрес заблокирован администрацией платформы' }, { status: 403 });
+    }
+
+    const modCheck = validateStoreContent({ store_name, slug: cleanSlug, description });
+    if (!modCheck.isValid) {
+      return NextResponse.json({ error: modCheck.error || 'Обнаружены недопустимые слова' }, { status: 400 });
     }
 
     // Check if exists

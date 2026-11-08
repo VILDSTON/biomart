@@ -8,6 +8,7 @@ import { useBioMartStore } from '@/store/useStore';
 import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
 import { BioMartLogo } from '@/components/BioMartLogo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -125,7 +126,7 @@ export default function RegisterPage() {
       if (existingSlug && shops[existingSlug]) {
         setActiveSlug(existingSlug);
         sessionStorage.setItem('biomart_admin_auth', 'true');
-        router.push('/dashboard');
+        router.push(`/dashboard?shop=${encodeURIComponent(existingSlug)}`);
         return;
       }
 
@@ -179,6 +180,18 @@ export default function RegisterPage() {
       return;
     }
 
+    // Moderation and ban check
+    const modCheck = validateStoreContent({ store_name: trimmedName, slug: trimmedSlug });
+    if (!modCheck.isValid) {
+      setErrorMsg(modCheck.error || 'Название содержит недопустимые слова');
+      return;
+    }
+
+    if (isSlugBanned(trimmedSlug)) {
+      setErrorMsg('Этот адрес заблокирован администрацией платформы');
+      return;
+    }
+
     if (isSlugAvailable === false) {
       setErrorMsg(slugError || 'Пожалуйста, выберите доступный адрес');
       return;
@@ -209,7 +222,7 @@ export default function RegisterPage() {
         console.warn('Store creation sync warning:', e);
       }
 
-      router.push('/dashboard');
+      router.push(`/dashboard?shop=${encodeURIComponent(trimmedSlug)}`);
     } catch (err: any) {
       setErrorMsg(err?.message || 'Не удалось зарегистрировать магазин');
       setIsSubmitting(false);
@@ -243,7 +256,7 @@ export default function RegisterPage() {
           <p className="text-xs text-content-secondary mt-1 leading-relaxed">
             {isGoogleClaimStep
               ? 'Магазин создаётся по указанному адресу после нажатия «Создать витрину».'
-              : 'Витрина создаётся бесплатно с тестовыми товарами для быстрой настройки каталога.'}
+              : 'Создайте персональную онлайн-витрину за 2 минуты бесплатно. Каталог, прием заказов в Telegram и ссылка для Instagram.'}
           </p>
         </div>
 
@@ -384,6 +397,26 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {/* Platform Rules Consent */}
+          <label className="flex items-start gap-2 text-[11px] text-content-secondary cursor-pointer select-none">
+            <input
+              type="checkbox"
+              required
+              defaultChecked
+              className="mt-0.5 rounded text-accent accent-[#1F7A5A]"
+            />
+            <span>
+              Я принимаю{' '}
+              <Link href="/rules" target="_blank" className="text-accent underline font-medium hover:text-accent-hover">
+                Правила платформы
+              </Link>{' '}
+              и{' '}
+              <Link href="/terms" target="_blank" className="text-accent underline font-medium hover:text-accent-hover">
+                Пользовательское соглашение
+              </Link>
+            </span>
+          </label>
+
           <button
             type="submit"
             disabled={isSubmitting || isSlugAvailable === false}
@@ -399,7 +432,7 @@ export default function RegisterPage() {
             href="/demo"
             className="text-xs text-content-secondary hover:text-content-primary underline"
           >
-            Посмотреть готовое демо без регистрации
+            Посмотреть примеры витрин
           </Link>
         </div>
       </div>

@@ -1,21 +1,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { CartItem, CatalogLayout, Category, Order, Product, StoreSettings } from '@/types';
+import { CartItem, CatalogLayout, Category, Order, Product, StoreSettings, ShopData } from '@/types';
 import { StoreLanguage } from '@/lib/i18n';
 import {
   MOCK_CATEGORIES,
   MOCK_ORDERS,
   MOCK_PRODUCTS,
   MOCK_STORE_SETTINGS,
+  DEMO_PRESET_SHOPS,
   getStarterProductsForShop,
 } from '@/lib/mock-data';
 
-export interface ShopData {
-  settings: StoreSettings;
-  categories: Category[];
-  products: Product[];
-  orders: Order[];
-}
+export type { ShopData };
 
 interface BioMartMultiStoreState {
   // Current active shop for dashboard / storefront session
@@ -36,6 +32,9 @@ interface BioMartMultiStoreState {
   updateShopOrderStatus: (slug: string, orderId: number | string, status: 'new' | 'completed' | 'cancelled') => void;
   addShopCategory: (slug: string, name: string) => Category;
   deleteShopCategory: (slug: string, categoryId: string) => void;
+  renameShopSlug: (oldSlug: string, newSlug: string) => boolean;
+  addStoreMember: (slug: string, member: { name: string; phone: string; role: import('@/types').StoreMemberRole }) => void;
+  removeStoreMember: (slug: string, memberId: string) => void;
 
   // Multi-lingual state for customer storefront
   language: StoreLanguage;
@@ -43,12 +42,16 @@ interface BioMartMultiStoreState {
 
   // Cart (Scoped to active session / current shop)
   cart: CartItem[];
-  addToCart: (product: Product, size?: string | null, quantity?: number) => void;
+  addToCart: (product: Product, size?: string | null, quantity?: number, shopSlug?: string) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, delta: number) => void;
   clearCart: () => void;
+  clearShopCart: (shopSlug: string) => void;
   getCartTotal: () => number;
   getCartCount: () => number;
+  getShopCart: (shopSlug: string) => CartItem[];
+  getShopCartTotal: (shopSlug: string) => number;
+  getShopCartCount: (shopSlug: string) => number;
 
   // UI state for storefront modal / bottom sheet
   isCartDrawerOpen: boolean;
@@ -86,7 +89,9 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
       setActiveSlug: (slug) => set({ activeSlug: slug }),
 
       shops: {
-        tashkent_drip: DEFAULT_DEMO_SHOP,
+        tashkent_drip: DEMO_PRESET_SHOPS.tashkent_drip || DEFAULT_DEMO_SHOP,
+        volt_gadgets: DEMO_PRESET_SHOPS.volt_gadgets,
+        aura_perfume: DEMO_PRESET_SHOPS.aura_perfume,
       },
 
       registerShop: (rawSlug, storeName, instagramUsername = '') => {
@@ -137,7 +142,7 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
             { id: 'cat-all', name: 'Все', slug: 'all', sort_order: 0 },
             { id: 'cat-new', name: 'Новинки', slug: 'new', sort_order: 1 },
           ],
-          products: getStarterProductsForShop(),
+          products: [],
           orders: [],
         };
 
@@ -157,8 +162,11 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         if (get().shops[clean]) {
           return get().shops[clean];
         }
+        if (DEMO_PRESET_SHOPS[clean]) {
+          return DEMO_PRESET_SHOPS[clean];
+        }
         // Fallback to default demo shop
-        return get().shops['tashkent_drip'] || DEFAULT_DEMO_SHOP;
+        return get().shops['tashkent_drip'] || DEMO_PRESET_SHOPS.tashkent_drip || DEFAULT_DEMO_SHOP;
       },
 
       updateShopSettings: (slug, newSettings) => {
@@ -372,14 +380,69 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         });
       },
 
+      renameShopSlug: (oldSlug, newSlug) => {
+        const cleanOld = oldSlug.toLowerCase().trim();
+        const cleanNew = newSlug.toLowerCase().replace(/[^a-z0-9_-]/g, '').trim();
+        if (!cleanNew || cleanNew.length < 3) return false;
+        if (cleanOld === cleanNew) return true;
+        const shops = { ...get().shops };
+        if (shops[cleanNew]) return false; // collision
+        const shop = shops[cleanOld];
+        if (!shop) return false;
+
+        const updatedSettings = {
+          ...shop.settings,
+          slug: cleanNew,
+        };
+        shops[cleanNew] = {
+          ...shop,
+          settings: updatedSettings,
+        };
+        delete shops[cleanOld];
+
+        set({
+          shops,
+          activeSlug: get().activeSlug === cleanOld ? cleanNew : get().activeSlug,
+        });
+        return true;
+      },
+
+      addStoreMember: (slug, member) => {
+        const clean = slug?.toLowerCase();
+        const shop = get().shops[clean];
+        if (!shop) return;
+        const currentMembers = shop.settings.team_members || [];
+        const newMember = {
+          id: `mem-${Date.now()}`,
+          name: member.name,
+          phone: member.phone,
+          role: member.role,
+          addedAt: new Date().toISOString().slice(0, 10),
+        };
+        get().updateShopSettings(clean, {
+          team_members: [...currentMembers, newMember],
+        });
+      },
+
+      removeStoreMember: (slug, memberId) => {
+        const clean = slug?.toLowerCase();
+        const shop = get().shops[clean];
+        if (!shop) return;
+        const currentMembers = shop.settings.team_members || [];
+        get().updateShopSettings(clean, {
+          team_members: currentMembers.filter((m) => m.id !== memberId),
+        });
+      },
+
       // Multi-lingual
       language: 'ru',
       setLanguage: (lang) => set({ language: lang }),
 
       // Cart
       cart: [],
-      addToCart: (product, size = null, quantity = 1) => {
-        const cartItemId = `${product.id}_${size || 'default'}`;
+      addToCart: (product, size = null, quantity = 1, shopSlug?: string) => {
+        const cleanSlug = (shopSlug || get().activeSlug || 'tashkent_drip').toLowerCase();
+        const cartItemId = `${cleanSlug}_${product.id}_${size || 'default'}`;
         const existingItemIndex = get().cart.findIndex(
           (item) => item.cart_item_id === cartItemId
         );
@@ -394,6 +457,7 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
               ...get().cart,
               {
                 cart_item_id: cartItemId,
+                shop_slug: cleanSlug,
                 product,
                 selected_size: size,
                 quantity,
@@ -423,6 +487,12 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         }
       },
       clearCart: () => set({ cart: [] }),
+      clearShopCart: (shopSlug: string) => {
+        const clean = shopSlug.toLowerCase();
+        set({
+          cart: get().cart.filter((item) => item.shop_slug && item.shop_slug !== clean),
+        });
+      },
       getCartTotal: () => {
         return get().cart.reduce(
           (sum, item) => sum + item.product.price * item.quantity,
@@ -431,6 +501,22 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
       },
       getCartCount: () => {
         return get().cart.reduce((count, item) => count + item.quantity, 0);
+      },
+      getShopCart: (shopSlug: string) => {
+        const clean = shopSlug.toLowerCase();
+        return get().cart.filter((item) => !item.shop_slug || item.shop_slug === clean);
+      },
+      getShopCartTotal: (shopSlug: string) => {
+        const clean = shopSlug.toLowerCase();
+        return get().cart
+          .filter((item) => !item.shop_slug || item.shop_slug === clean)
+          .reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+      },
+      getShopCartCount: (shopSlug: string) => {
+        const clean = shopSlug.toLowerCase();
+        return get().cart
+          .filter((item) => !item.shop_slug || item.shop_slug === clean)
+          .reduce((count, item) => count + item.quantity, 0);
       },
 
       // UI State
@@ -455,7 +541,9 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         set({
           activeSlug: 'tashkent_drip',
           shops: {
-            tashkent_drip: DEFAULT_DEMO_SHOP,
+            tashkent_drip: DEMO_PRESET_SHOPS.tashkent_drip || DEFAULT_DEMO_SHOP,
+            volt_gadgets: DEMO_PRESET_SHOPS.volt_gadgets,
+            aura_perfume: DEMO_PRESET_SHOPS.aura_perfume,
           },
           cart: [],
         });

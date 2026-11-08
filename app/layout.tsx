@@ -17,8 +17,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#F7F6F2' },
@@ -50,7 +48,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-[100dvh] bg-page text-content-primary antialiased m-0 p-0 selection:bg-accent/20">
+      <body className="min-h-[100dvh] bg-page text-content-primary antialiased m-0 p-0 selection:bg-accent/20 overflow-x-clip">
         {children}
       </body>
     </html>

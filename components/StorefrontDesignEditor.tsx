@@ -47,6 +47,7 @@ import { StoreSettings, StoreThemePreset, CatalogLayout, ThemeMode, StoreRadiiPr
 import { formatPrice } from '@/lib/utils';
 import { designTranslations } from '@/lib/i18n';
 import { STORE_NICHE_PRESETS } from '@/lib/mock-data';
+import { IS_SUBSCRIPTION_ENABLED } from '@/lib/constants';
 
 interface StorefrontDesignEditorProps {
   settings: StoreSettings;
@@ -170,7 +171,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
 
   // Custom color handler (Plus check)
   const handleCustomColorInput = (hex: string) => {
-    const isFreePlan = (settings.plan || 'start') === 'start';
+    const isFreePlan = IS_SUBSCRIPTION_ENABLED ? (settings.plan || 'start') === 'start' : false;
     if (isFreePlan) {
       setCustomColorTooltip(t.customColorPlusHint);
       return;
@@ -374,52 +375,54 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
         {/* SETTINGS COLUMN: 5 MAIN CONTROLS + ACCORDION (7 COLS ON DESKTOP) */}
         {/* ========================================================================= */}
         <div className={`lg:col-span-7 space-y-5 sm:space-y-6 ${mobileViewTab === 'settings' ? 'block' : 'hidden lg:block'}`}>
-          {/* AI Assistant Banner (Pro Tier) - BioMart Brand Colors & Fully Functional Generator */}
-          <div className="bg-brand-soft/40 border border-brand-border rounded-[14px] p-3.5 sm:p-4 shadow-xs">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-xs font-bold text-content-primary">AI-дизайнер витрины</h3>
-                    <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.2 rounded border border-brand/20">
-                      Pro
-                    </span>
+          {/* AI Assistant Banner (Hidden per request) */}
+          {false && (
+            <div className="bg-brand-soft/40 border border-brand-border rounded-[14px] p-3.5 sm:p-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Sparkles className="w-4 h-4" />
                   </div>
-                  <p className="text-[11px] text-content-secondary mt-0.5 leading-snug">
-                    Умный подбор идеальной палитры, шрифта и баннера под ваши фото товаров.
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-xs font-bold text-content-primary">AI-дизайнер витрины</h3>
+                      <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.2 rounded border border-brand/20">
+                        Pro
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-content-secondary mt-0.5 leading-snug">
+                      Умный подбор идеальной палитры, шрифта и баннера под ваши фото товаров.
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="button"
-                disabled={isGeneratingAi}
-                onClick={handleAiGenerateStyle}
-                className="w-full sm:w-auto justify-center px-3.5 py-2 rounded-[10px] bg-brand hover:bg-brand-hover text-white text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50 text-center"
-              >
-                {isGeneratingAi ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>AI подбирает стиль...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Сгенерировать стиль через AI</span>
-                  </>
-                )}
-              </button>
-            </div>
-            {aiSuccessMsg && (
-              <div className="mt-2.5 p-2.5 rounded-[8px] bg-brand-soft border border-brand-border text-brand text-[11px] flex items-start gap-1.5 animate-fade-in">
-                <Check className="w-3.5 h-3.5 shrink-0 mt-0.5 text-brand" />
-                <span>{aiSuccessMsg}</span>
+                <button
+                  type="button"
+                  disabled={isGeneratingAi}
+                  onClick={handleAiGenerateStyle}
+                  className="w-full sm:w-auto justify-center px-3.5 py-2 rounded-[10px] bg-brand hover:bg-brand-hover text-white text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50 text-center"
+                >
+                  {isGeneratingAi ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>AI подбирает стиль...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Сгенерировать стиль через AI</span>
+                    </>
+                  )}
+                </button>
               </div>
-            )}
-          </div>
+              {aiSuccessMsg && (
+                <div className="mt-2.5 p-2.5 rounded-[8px] bg-brand-soft border border-brand-border text-brand text-[11px] flex items-start gap-1.5 animate-fade-in">
+                  <Check className="w-3.5 h-3.5 shrink-0 mt-0.5 text-brand" />
+                  <span>{aiSuccessMsg}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ===================================================================== */}
           {/* 1. СТИЛЬ (4 ГОТОВЫХ ШАБЛОНА) */}
@@ -563,7 +566,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                     maxLength={7}
                     className="w-full px-3 py-2 bg-page border border-border rounded-[10px] text-xs font-mono text-content-primary uppercase focus:outline-none focus:border-brand"
                   />
-                  {(settings.plan || 'start') === 'start' && (
+                  {IS_SUBSCRIPTION_ENABLED && (settings.plan || 'start') === 'start' && (
                     <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">
                       Plus
                     </span>
@@ -1098,48 +1101,19 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                   )}
                 </div>
 
-                {/* 5. Водяной знак BioMart (с понятной подсказкой тарифа Plus) */}
+                {/* 5. Водяной знак BioMart (активен на бесплатном тарифе) */}
                 <div className="pt-2 border-t border-border">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-content-primary block">{t.hideBrandingTitle}</span>
-                        {(settings.plan || 'start') === 'start' && (
-                          <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.2 rounded">
-                            Plus
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-content-secondary">{t.hideBrandingDesc}</span>
+                      <span className="font-semibold text-content-primary block text-xs">{t.hideBrandingTitle}</span>
+                      <span className="text-[11px] text-content-secondary">
+                        Бейдж «Сделано в BioMart.uz» внизу витрины
+                      </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if ((settings.plan || 'start') === 'start') {
-                          setWatermarkTooltip(t.hideBrandingPlusHint);
-                          return;
-                        }
-                        setWatermarkTooltip(null);
-                        setForm((prev) => ({ ...prev, hide_branding: !prev.hide_branding }));
-                      }}
-                      className={`w-11 h-6 rounded-full transition-colors relative ${
-                        form.hide_branding ? 'bg-brand' : 'bg-[#E7E4DC]'
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                          form.hide_branding ? 'right-1' : 'left-1'
-                        }`}
-                      />
-                    </button>
+                    <span className="text-[10px] font-semibold text-content-secondary px-2.5 py-1 rounded-[6px] bg-page border border-border select-none">
+                      Включен
+                    </span>
                   </div>
-
-                  {watermarkTooltip && (
-                    <div className="mt-2.5 p-2 rounded-[8px] bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-start gap-1.5">
-                      <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
-                      <span>{watermarkTooltip}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             )}

@@ -50,6 +50,27 @@ export interface ThemeSettings {
   show_reviews?: boolean;
 }
 
+export type StoreStatus = 'pending' | 'published' | 'rejected' | 'needs_changes';
+export type StoreMemberRole = 'owner' | 'admin' | 'manager';
+
+export type StoreLinkIcon = 'instagram' | 'telegram' | 'youtube' | 'phone' | 'website';
+
+export interface StoreCustomLink {
+  id: string;
+  title: string;
+  url: string;
+  icon: StoreLinkIcon;
+  is_active: boolean;
+}
+
+export interface StoreMember {
+  id: string;
+  name: string;
+  phone: string;
+  role: StoreMemberRole;
+  addedAt: string;
+}
+
 export interface StoreSettings {
   id: string;
   slug: string;
@@ -69,6 +90,14 @@ export interface StoreSettings {
   hide_branding?: boolean;
   plan?: PlanType;
   promo_codes?: PromoCode[];
+
+  // Custom Action / Social Links
+  custom_links?: StoreCustomLink[];
+
+  // Moderation & Status
+  status?: StoreStatus;
+  moderation_comment?: string;
+  team_members?: StoreMember[];
 
   // Unified single theme_settings object
   theme_settings?: ThemeSettings;
@@ -115,7 +144,8 @@ export interface Product {
 }
 
 export interface CartItem {
-  cart_item_id: string; // unique id combining product.id and selected_size
+  cart_item_id: string; // unique id combining shop_slug, product.id and selected_size
+  shop_slug?: string;
   product: Product;
   selected_size?: string | null;
   quantity: number;
@@ -158,4 +188,11 @@ export interface ShopAccount {
   username: string;
   password?: string;
   shop_slug: string;
+}
+
+export interface ShopData {
+  settings: StoreSettings;
+  categories: Category[];
+  products: Product[];
+  orders: Order[];
 }

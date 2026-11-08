@@ -12,10 +12,19 @@ export default function LoginPage() {
   const router = useRouter();
   const { shops, setActiveSlug } = useBioMartStore();
 
-  const [shopSlug, setShopSlug] = useState('tashkent_drip');
-  const [password, setPassword] = useState('admin123');
+  const [shopSlug, setShopSlug] = useState('');
+  const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  React.useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('biomart_current_slug');
+      if (saved && !shopSlug) {
+        setShopSlug(saved);
+      }
+    } catch (_) {}
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,14 +36,14 @@ export default function LoginPage() {
       return;
     }
 
-    const shop = shops[clean];
-    if (!shop && clean !== 'tashkent_drip') {
-      setErrorMsg(`Магазин "${clean}" не найден. Проверьте адрес или создайте новый.`);
+    if (!password.trim()) {
+      setErrorMsg('Введите пароль');
       return;
     }
 
-    if (password !== 'admin123' && password !== 'admin') {
-      setErrorMsg('Неверный пароль. Пароль по умолчанию: admin123');
+    const shop = shops[clean];
+    if (!shop && clean !== 'tashkent_drip') {
+      setErrorMsg(`Магазин "${clean}" не найден. Проверьте адрес или создайте новый.`);
       return;
     }
 
@@ -86,19 +95,12 @@ export default function LoginPage() {
         err?.error_code === 'validation_failed';
 
       if (isProviderNotEnabled) {
-        setErrorMsg('Google-вход ожидает включения в Supabase Dashboard (Authentication → Providers → Google). Вы можете войти по ссылке магазина или нажать «Демо-магазин» ниже.');
+        setErrorMsg('Google-вход ожидает включения в Supabase Dashboard (Authentication → Providers → Google). Вы можете войти по ссылке магазина или создать витрину.');
       } else {
         setErrorMsg(err?.message || 'Не удалось войти через Google');
       }
       setIsGoogleLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    setActiveSlug('tashkent_drip');
-    sessionStorage.setItem('biomart_admin_auth', 'true');
-    sessionStorage.setItem('biomart_current_slug', 'tashkent_drip');
-    router.push('/dashboard');
   };
 
   return (
@@ -221,15 +223,14 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="pt-2 border-t border-border">
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            className="w-full min-h-[40px] py-2 rounded-btn bg-page hover:bg-surface-soft text-content-primary text-xs font-semibold flex items-center justify-center gap-2 transition-colors border border-border"
+        <div className="pt-2 border-t border-border text-center">
+          <Link
+            href="/demo"
+            className="w-full min-h-[40px] py-2 rounded-btn bg-page hover:bg-surface-soft text-content-primary text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors border border-border"
           >
             <Store className="w-3.5 h-3.5 text-accent" />
-            <span>Демо-магазин «Tashkent Drip»</span>
-          </button>
+            <span>Посмотреть примеры работающих витрин →</span>
+          </Link>
         </div>
       </div>
 

@@ -1,12 +1,15 @@
 import React from 'react';
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { MOCK_STORE_SETTINGS } from '@/lib/mock-data';
+import { AlertCircle } from 'lucide-react';
+import { MOCK_STORE_SETTINGS, DEMO_PRESET_SHOPS } from '@/lib/mock-data';
 import { computeStoreTokens, getEffectiveThemeSettings, ThemeSettings } from '@/lib/theme';
 import { StoreSettings } from '@/types';
 import { StorefrontClient, StorefrontSkeleton } from '@/components/StorefrontClient';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { isSlugBanned } from '@/lib/moderation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -21,10 +24,14 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const rawSlug = params?.slug || 'tashkent_drip';
   const cleanSlug = rawSlug.toLowerCase();
-  const isDefaultDemo = cleanSlug === 'tashkent_drip';
+  const demoPreset = DEMO_PRESET_SHOPS[cleanSlug];
 
-  const storeName = isDefaultDemo ? MOCK_STORE_SETTINGS.store_name : cleanSlug.toUpperCase();
-  const description = isDefaultDemo ? MOCK_STORE_SETTINGS.description : `Онлайн-витрина ${storeName} на платформе BioMart`;
+  const storeName = demoPreset
+    ? demoPreset.settings.store_name
+    : (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.store_name : cleanSlug.replace(/_/g, ' ').toUpperCase());
+  const description = demoPreset
+    ? demoPreset.settings.description
+    : `Онлайн-витрина ${storeName} на платформе BioMart`;
 
   return {
     title: `${storeName} — Витрина товаров в Instagram и Telegram`,
@@ -99,18 +106,48 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     console.warn('Supabase fetch exception for slug:', cleanSlug, err);
   }
 
+  const demoPreset = DEMO_PRESET_SHOPS[cleanSlug];
+  const fallbackSettings = demoPreset?.settings || MOCK_STORE_SETTINGS;
+
   // 3. Fallback to mock settings for demo store or new stores
   const storeSettings = {
-    ...(dbStore || MOCK_STORE_SETTINGS),
+    ...(dbStore || fallbackSettings),
     slug: cleanSlug,
     store_name:
       dbStore?.store_name ||
       cookieContacts?.store_name ||
-      (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.store_name : cleanSlug.replace(/_/g, ' ').toUpperCase()),
-    instagram_url: cookieContacts?.instagram_url ?? dbStore?.instagram_url ?? (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.instagram_url : ''),
-    telegram_username: cookieContacts?.telegram_username ?? dbStore?.telegram_username ?? (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.telegram_username : ''),
-    phone: cookieContacts?.phone ?? dbStore?.phone ?? (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.phone : ''),
+      (demoPreset ? demoPreset.settings.store_name : cleanSlug.replace(/_/g, ' ').toUpperCase()),
+    instagram_url: cookieContacts?.instagram_url ?? dbStore?.instagram_url ?? (demoPreset ? demoPreset.settings.instagram_url : ''),
+    telegram_username: cookieContacts?.telegram_username ?? dbStore?.telegram_username ?? (demoPreset ? demoPreset.settings.telegram_username : ''),
+    phone: cookieContacts?.phone ?? dbStore?.phone ?? (demoPreset ? demoPreset.settings.phone : ''),
   };
+
+  // 4. Check moderation status: if banned or rejected, show polite unavailable screen
+  if (storeSettings.status === 'rejected' || isSlugBanned(cleanSlug)) {
+    return (
+      <div className="min-h-screen bg-[#F7F6F2] dark:bg-[#121212] text-[#1A1A1A] dark:text-[#F7F6F2] flex flex-col items-center justify-center p-4 text-center">
+        <div className="max-w-md w-full bg-white dark:bg-[#1E1E1E] border border-[#E7E4DC] dark:border-[#2C2C2C] rounded-[20px] p-6 sm:p-8 space-y-4 shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-[#E4F1EB] dark:bg-[#163629] text-[#1F7A5A] flex items-center justify-center mx-auto">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight">
+            Витрина временно недоступна
+          </h1>
+          <p className="text-xs sm:text-sm text-[#6B6B66] dark:text-[#A0A09A] leading-relaxed">
+            Магазин находится на проверке безопасности модерацией платформы или временно приостановил приём заказов.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+            <Link
+              href="/"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-[10px] bg-[#1F7A5A] hover:bg-[#17634A] text-white text-xs font-semibold transition-colors"
+            >
+              На главную BioMart
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Merge theme settings: Database -> Cookie -> Query Overrides
   const baseTheme = getEffectiveThemeSettings(
@@ -234,8 +271,9 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
         <StorefrontClient
           initialSlug={cleanSlug}
           initialSettings={effectiveStoreSettings}
-          initialCategories={dbCategories || undefined}
-          initialProducts={dbProducts || undefined}
+          initialCategories={dbCategories || demoPreset?.categories || undefined}
+          initialProducts={dbProducts || demoPreset?.products || undefined}
+          isDemo={Boolean(demoPreset)}
         />
       </React.Suspense>
     </>
