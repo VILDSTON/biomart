@@ -55,6 +55,7 @@ import { BioMartLogo } from '@/components/BioMartLogo';
 import { CatalogLayout, Category, Order, Product, StoreSettings, ThemeMode, PlanType } from '@/types';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { SupportModal } from '@/components/SupportModal';
 
 const AVATAR_PRESETS = [
   { name: 'Streetwear & Стиль', url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=400&q=80', label: 'Одежда' },
@@ -88,6 +89,8 @@ export default function DashboardPage() {
   });
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [supportCategory, setSupportCategory] = useState<'billing' | 'bug' | 'orders' | 'feature' | 'other'>('bug');
   const [language, setLanguage] = useState<'ru' | 'uz'>(() => {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
@@ -256,7 +259,7 @@ export default function DashboardPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleImageUpload = (
+  const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (val: string) => void
   ) => {
@@ -266,14 +269,30 @@ export default function DashboardPage() {
       showToast('Размер файла превышает 5 МБ');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (typeof ev.target?.result === 'string') {
-        setter(ev.target.result);
-        showToast('Изображение загружено');
-      }
-    };
-    reader.readAsDataURL(file);
+    showToast('Загрузка фото в облако...');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('folder', `products/${activeSlug}`);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Ошибка загрузки');
+      setter(data.url);
+      showToast('Фото успешно сохранено в облако!');
+    } catch (err: any) {
+      console.warn('Upload fallback to local preview:', err);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (typeof ev.target?.result === 'string') {
+          setter(ev.target.result);
+          showToast('Фото загружено');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleCreateProduct = (e: React.FormEvent) => {
@@ -811,39 +830,53 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-semibold tracking-tight leading-none text-content-primary">
+                <h1 className="text-sm font-semibold tracking-tight leading-none text-content-primary truncate max-w-[130px] sm:max-w-[220px]">
                   {settings.store_name}
                 </h1>
                 <button
                   type="button"
                   onClick={() => setActiveTab('tariff')}
-                  className="text-[10px] bg-[#E4F1EB] text-[#1F7A5A] border border-[#1F7A5A]/20 px-2 py-0.5 rounded-[6px] font-medium uppercase hover:bg-[#1F7A5A]/10 transition-colors cursor-pointer"
+                  className="text-[10px] bg-[#E4F1EB] text-[#1F7A5A] border border-[#1F7A5A]/20 px-2 py-0.5 rounded-[6px] font-medium uppercase hover:bg-[#1F7A5A]/10 transition-colors cursor-pointer shrink-0"
                   title="Управление тарифом"
                 >
                   {settings.plan || 'Start'}
                 </button>
               </div>
-              <span className="text-[10px] text-content-secondary font-mono">
+              <span className="text-[10px] text-content-secondary font-mono block truncate max-w-[150px] sm:max-w-none">
                 biomart.vercel.app/{activeSlug}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSupportCategory('bug');
+                setIsSupportOpen(true);
+              }}
+              className="text-xs bg-[#E4F1EB] hover:bg-[#d5eade] text-[#1F7A5A] border border-[#1F7A5A]/20 px-2.5 py-1.5 rounded-[10px] flex items-center gap-1 font-medium transition-colors shrink-0"
+              title="Поддержка и связь с основателем"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Поддержка</span>
+            </button>
+
             <Link
               href={`/${activeSlug}`}
               target="_blank"
-              className="text-xs bg-surface hover:bg-page text-content-primary border border-border px-3 py-1.5 rounded-[10px] flex items-center gap-1.5 font-medium transition-colors"
+              className="text-xs bg-surface hover:bg-page text-content-primary border border-border px-2.5 sm:px-3 py-1.5 rounded-[10px] flex items-center gap-1 font-medium transition-colors shrink-0"
+              title="Открыть витрину"
             >
-              <span>Открыть витрину</span>
-              <ExternalLink className="w-3 h-3" />
+              <span className="hidden sm:inline">Открыть витрину</span>
+              <ExternalLink className="w-3.5 h-3.5" />
             </Link>
 
             <button
               onClick={handleLogout}
-              className="p-1.5 text-content-secondary hover:text-content-primary rounded-[10px] transition-colors"
+              className="p-1.5 text-content-secondary hover:text-content-primary rounded-[10px] transition-colors shrink-0"
               title="Выйти"
             >
               <LogOut className="w-4 h-4" />
@@ -940,6 +973,18 @@ export default function DashboardPage() {
           >
             <Bot className="w-3.5 h-3.5" />
             <span>AI (Pro)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSupportCategory('bug');
+              setIsSupportOpen(true);
+            }}
+            className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium text-content-secondary hover:bg-page hover:text-content-primary transition-colors whitespace-nowrap shrink-0"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-[#1F7A5A]" />
+            <span>Поддержка</span>
           </button>
         </div>
 
@@ -2233,6 +2278,33 @@ export default function DashboardPage() {
                   </ul>
                 </div>
               </div>
+
+              {/* Help & Billing Support Box */}
+              <div className="p-4 rounded-[14px] bg-surface border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] flex items-center justify-center shrink-0">
+                    <HelpCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-content-primary">
+                      Возникли сложности с оплатой или подпиской?
+                    </h3>
+                    <p className="text-[11px] text-content-secondary">
+                      Если подписка не работает, списались средства или не обновился лимит товаров — напишите нам.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSupportCategory('billing');
+                    setIsSupportOpen(true);
+                  }}
+                  className="px-3.5 py-2 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium rounded-[10px] transition-colors whitespace-nowrap shrink-0"
+                >
+                  Сообщить о проблеме с подпиской
+                </button>
+              </div>
             </div>
           )}
 
@@ -2382,6 +2454,14 @@ export default function DashboardPage() {
         storeSettings={settings}
         isOpen={Boolean(selectedStoriesProduct)}
         onClose={() => setSelectedStoriesProduct(null)}
+      />
+
+      {/* Support & Feedback Modal */}
+      <SupportModal
+        isOpen={isSupportOpen}
+        onClose={() => setIsSupportOpen(false)}
+        shopSlug={activeSlug}
+        defaultCategory={supportCategory}
       />
 
       {/* Floating Toast Notification */}

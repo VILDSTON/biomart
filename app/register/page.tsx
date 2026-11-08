@@ -7,6 +7,7 @@ import { Check, ArrowRight, Store, AlertCircle, Sparkles, CheckCircle2 } from 'l
 import { useBioMartStore } from '@/store/useStore';
 import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
 import { BioMartLogo } from '@/components/BioMartLogo';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -100,15 +101,24 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, [slug, shops]);
 
-  // BUG 8 FIX: When user continues with Google, do NOT create store automatically!
-  // Show "Выберите адрес вашего магазина" step first!
+  // Google OAuth sign-up via Supabase
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
     setErrorMsg('');
 
-    setTimeout(() => {
-      setIsGoogleLoading(false);
-      // If user already had a saved shop in session, redirect directly
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (error) throw error;
+        return;
+      }
+
+      // Demo fallback if Supabase auth is in mock mode
       const existingSlug = sessionStorage.getItem('biomart_current_slug');
       if (existingSlug && shops[existingSlug]) {
         setActiveSlug(existingSlug);
@@ -117,17 +127,20 @@ export default function RegisterPage() {
         return;
       }
 
-      // Otherwise show Google Store Address Claim step
       setGoogleUserEmail('seller.uz@gmail.com');
       const suggestedName = 'Мой Магазин';
       const suggestedSlug = 'my_shop';
       setStoreName(suggestedName);
       setSlug(suggestedSlug);
       setIsGoogleClaimStep(true);
-    }, 400);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Не удалось войти через Google');
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
-  const handleCreateStore = (e: React.FormEvent) => {
+  const handleCreateStore = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -152,11 +165,27 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
+      // 1. Save in local state
       registerShop(trimmedSlug, trimmedName, instagram.trim());
       setActiveSlug(trimmedSlug);
 
       sessionStorage.setItem('biomart_admin_auth', 'true');
       sessionStorage.setItem('biomart_current_slug', trimmedSlug);
+
+      // 2. Persist to Supabase if configured
+      try {
+        await fetch('/api/stores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug: trimmedSlug,
+            store_name: trimmedName,
+            instagram_url: instagram ? `https://instagram.com/${instagram.replace('@', '')}` : '',
+          }),
+        });
+      } catch (e) {
+        console.warn('Store creation sync warning:', e);
+      }
 
       router.push('/dashboard');
     } catch (err: any) {

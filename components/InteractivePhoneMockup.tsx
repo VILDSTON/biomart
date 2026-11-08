@@ -56,7 +56,7 @@ export const InteractivePhoneMockup: React.FC = () => {
   return (
     <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-6 lg:gap-8">
       {/* Smartphone Frame */}
-      <div className="relative mx-auto w-full max-w-[320px] sm:max-w-[340px] shrink-0">
+      <div className="relative mx-auto w-full max-w-[290px] xs:max-w-[320px] sm:max-w-[340px] shrink-0">
         <div className="relative rounded-[32px] border-[6px] border-[#1A1A1A] bg-surface shadow-card overflow-hidden">
           {/* Speaker / Notch */}
           <div className="absolute top-2 inset-x-0 z-40 flex justify-center pointer-events-none">
@@ -255,7 +255,7 @@ export const InteractivePhoneMockup: React.FC = () => {
       </div>
 
       {/* Animated Telegram Bot Receipt Message (ШАГ 1: Появляется рядом или под телефоном за 300-400 мс) */}
-      <div className="w-full max-w-[340px] sm:max-w-[360px]">
+      <div className="w-full max-w-[290px] xs:max-w-[340px] sm:max-w-[360px]">
         {showTelegramReceipt ? (
           <div className="animate-receipt bg-surface border border-border rounded-[18px] p-4 shadow-card text-content-primary space-y-3 relative overflow-hidden">
             {/* Telegram Header */}

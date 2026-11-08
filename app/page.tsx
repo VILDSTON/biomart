@@ -22,10 +22,12 @@ import {
 import { InteractivePhoneMockup } from '@/components/InteractivePhoneMockup';
 import { DirectLossCalculator } from '@/components/DirectLossCalculator';
 import { BioMartLogo } from '@/components/BioMartLogo';
+import { SupportModal } from '@/components/SupportModal';
 
 export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -71,7 +73,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-page text-content-primary">
+    <div className="min-h-[100dvh] bg-page text-content-primary overflow-x-hidden">
       {/* Top Navigation (BUG 3: Sticky working with overflow-x: clip) */}
       <nav className="border-b border-border bg-surface/90 backdrop-blur-md sticky top-0 z-50 transition-colors">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -80,12 +82,12 @@ export default function LandingPage() {
             <span className="tracking-tight">BioMart</span>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Theme Toggle Button */}
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-[10px] border border-border bg-page hover:bg-surface-soft text-content-secondary hover:text-content-primary transition-colors"
+              className="p-1.5 sm:p-2 rounded-[10px] border border-border bg-page hover:bg-surface-soft text-content-secondary hover:text-content-primary transition-colors shrink-0"
               title={isDark ? 'Включить светлую тему' : 'Включить тёмную тему'}
               aria-label="Переключить тему"
             >
@@ -94,19 +96,19 @@ export default function LandingPage() {
 
             <Link
               href="/demo"
-              className="text-xs sm:text-sm font-medium text-content-secondary hover:text-content-primary px-3 py-2 rounded-[10px] hover:bg-surface-soft transition-colors"
+              className="text-xs sm:text-sm font-medium text-content-secondary hover:text-content-primary px-2.5 py-1.5 rounded-[10px] hover:bg-surface-soft transition-colors hidden md:inline"
             >
               Демо-витрина
             </Link>
             <Link
               href="/login"
-              className="text-xs sm:text-sm font-medium text-content-secondary hover:text-content-primary px-3 py-2 rounded-[10px] hover:bg-surface-soft transition-colors hidden sm:inline"
+              className="text-xs sm:text-sm font-medium text-content-secondary hover:text-content-primary px-2.5 py-1.5 rounded-[10px] hover:bg-surface-soft transition-colors hidden sm:inline"
             >
               Вход
             </Link>
             <Link
               href="/register"
-              className="bg-accent hover:bg-accent-hover text-white text-xs sm:text-sm font-medium px-4 py-2 rounded-[10px] transition-colors shadow-xs"
+              className="bg-accent hover:bg-accent-hover text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-[10px] transition-colors shadow-xs shrink-0 whitespace-nowrap"
             >
               Создать витрину
             </Link>
@@ -554,11 +556,11 @@ export default function LandingPage() {
             <span className="tracking-tight">BioMart</span>
           </div>
 
-          <div>
+          <div className="text-center sm:text-left">
             Витрины для продавцов в Instagram и Telegram в Узбекистане
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link href="/demo" className="hover:text-content-primary transition-colors">
               Демо
             </Link>
@@ -568,9 +570,29 @@ export default function LandingPage() {
             <Link href="/register" className="hover:text-content-primary transition-colors">
               Регистрация
             </Link>
+            <Link href="/terms" className="hover:text-content-primary transition-colors">
+              Оферта
+            </Link>
+            <Link href="/privacy" className="hover:text-content-primary transition-colors">
+              Конфиденциальность
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsSupportOpen(true)}
+              className="text-[#1F7A5A] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Поддержка</span>
+            </button>
           </div>
         </div>
       </footer>
+
+      <SupportModal
+        isOpen={isSupportOpen}
+        onClose={() => setIsSupportOpen(false)}
+        defaultCategory="other"
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, Lock, Store, AlertCircle } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { BioMartLogo } from '@/components/BioMartLogo';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,30 +45,41 @@ export default function LoginPage() {
     router.push('/dashboard');
   };
 
-  // BUG 8 FIX: Google Sign-in does NOT auto-create a random shop
-  const handleGoogleSignIn = () => {
+  // Google OAuth sign-in via Supabase
+  const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     setErrorMsg('');
 
-    setTimeout(() => {
-      setIsGoogleLoading(false);
-      // Check if user already has an active shop
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (error) throw error;
+        return;
+      }
+
+      // Demo fallback if Supabase auth is in mock mode
       const savedSlug = sessionStorage.getItem('biomart_current_slug');
       if (savedSlug && shops[savedSlug]) {
         setActiveSlug(savedSlug);
         sessionStorage.setItem('biomart_admin_auth', 'true');
         router.push('/dashboard');
       } else if (shops['tashkent_drip']) {
-        // Direct login to existing demo shop if present
         setActiveSlug('tashkent_drip');
         sessionStorage.setItem('biomart_admin_auth', 'true');
         sessionStorage.setItem('biomart_current_slug', 'tashkent_drip');
         router.push('/dashboard');
       } else {
-        // New user must pick their store slug first
         router.push('/register');
       }
-    }, 400);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Не удалось войти через Google');
+      setIsGoogleLoading(false);
+    }
   };
 
   const handleDemoLogin = () => {

@@ -107,7 +107,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                   {settings.store_name}
                 </h1>
                 <span
-                  title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon' : 'Проверенный продавец платформы BioMart.uz'}
+                  title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon' : 'Проверенный продавец платформы BioMart'}
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-brand-soft text-brand text-[10px] font-semibold border border-brand-border shrink-0 select-none shadow-2xs"
                 >
                   <Check className="w-2.5 h-2.5 stroke-[3]" />
