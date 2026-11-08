@@ -83,9 +83,9 @@ export default function LandingPage() {
     <div className="min-h-[100dvh] bg-page text-content-primary">
       {/* Top Navigation: sticky top-0 */}
       <nav className="border-b border-border bg-surface/90 backdrop-blur-md sticky top-0 z-50 transition-colors">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-[1px] font-bold text-lg sm:text-xl text-content-primary">
-            <BioMartLogo className="w-9 h-9 sm:w-10 sm:h-10 shrink-0" color="#1F7A5A" />
+            <BioMartLogo className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 shrink-0" color="#1F7A5A" />
             <span className="tracking-tight">BioMart</span>
           </Link>
 
@@ -115,7 +115,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/register"
-              className="bg-accent hover:bg-accent-hover text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-[10px] transition-colors shadow-xs shrink-0 whitespace-nowrap"
+              className="bg-accent hover:bg-accent-hover text-white text-xs sm:text-sm font-medium px-2.5 xs:px-4 py-2 rounded-[10px] transition-colors shadow-xs shrink-0 whitespace-nowrap"
             >
               Создать витрину
             </Link>
@@ -124,20 +124,20 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-10 pb-14 sm:py-16 px-4 border-b border-border bg-page">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      <section className="pt-8 pb-12 sm:pt-10 sm:pb-16 px-3.5 sm:px-4 border-b border-border bg-page">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center">
           {/* Left Column */}
-          <div className="lg:col-span-6 space-y-5 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[10px] bg-accent-soft text-accent text-xs font-semibold">
-              <Zap className="w-3.5 h-3.5" />
-              <span>Витрина для Instagram и Telegram за 2 минуты</span>
+          <div className="lg:col-span-6 space-y-4 sm:space-y-5 text-center lg:text-left">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-[10px] bg-accent-soft text-accent text-[10px] xs:text-[11px] sm:text-xs font-semibold max-w-full">
+              <Zap className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-normal leading-tight">Витрина для Instagram и Telegram за 2 минуты</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-semibold tracking-tight text-content-primary leading-[1.15]">
+            <h1 className="text-2xl xs:text-3xl sm:text-5xl font-semibold tracking-tight text-content-primary leading-[1.18] sm:leading-[1.15]">
               Хватит отвечать «цена?» в директе.
             </h1>
 
-            <p className="text-sm sm:text-base text-content-secondary max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-xs sm:text-base text-content-secondary max-w-xl mx-auto lg:mx-0 leading-relaxed">
               Покупатель выбирает товар по ссылке из шапки профиля и оформляет заказ без регистрации. Вы получаете готовый чек прямо в Telegram.
             </p>
 
@@ -161,11 +161,11 @@ export default function LandingPage() {
             </div>
 
             {/* Single Calm Trust Line */}
-            <div className="pt-3 text-xs text-content-secondary flex flex-wrap items-center justify-center lg:justify-start gap-2">
+            <div className="pt-3 text-xs text-content-secondary flex flex-wrap items-center justify-center lg:justify-start gap-x-3 gap-y-1">
               <span>0% комиссии с продаж</span>
-              <span>•</span>
+              <span className="hidden xs:inline text-content-secondary/40">•</span>
               <span>Оплата в сумах Payme & Click</span>
-              <span>•</span>
+              <span className="hidden xs:inline text-content-secondary/40">•</span>
               <span>Без привязки карт</span>
             </div>
           </div>
@@ -231,16 +231,16 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-stretch">
             {/* Left: Before (Хаотичный директ) */}
-            <div className="bg-surface border border-border rounded-[14px] p-6 flex flex-col justify-between shadow-xs">
+            <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-6 flex flex-col justify-between shadow-xs">
               <div className="space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-border">
+                <div className="flex flex-wrap items-center justify-between gap-1.5 pb-3 border-b border-border">
                   <span className="text-xs font-semibold text-danger flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5" />
+                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                     <span>Было: хаос в Direct</span>
                   </span>
-                  <span className="text-[11px] text-danger font-medium bg-red-100 dark:bg-red-950/40 px-2 py-0.5 rounded">
+                  <span className="text-[10px] sm:text-[11px] text-danger font-medium bg-red-100 dark:bg-red-950/40 px-2 py-0.5 rounded">
                     Потери 2-3 часа в день
                   </span>
                 </div>
@@ -269,41 +269,41 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border text-xs text-content-secondary">
+              <div className="mt-5 pt-3.5 border-t border-border text-xs text-content-secondary">
                 ❌ Рутина, путаница в размерах, адреса частями, потерянные продажи.
               </div>
             </div>
 
             {/* Right: After (Один чистый заказ в BioMart) */}
-            <div className="bg-surface border-2 border-accent rounded-[14px] p-6 flex flex-col justify-between shadow-card relative">
+            <div className="bg-surface border-2 border-accent rounded-[14px] p-4 sm:p-6 flex flex-col justify-between shadow-card relative">
               <div className="space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-border">
+                <div className="flex flex-wrap items-center justify-between gap-1.5 pb-3 border-b border-border">
                   <span className="text-xs font-semibold text-accent flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Стало: один чистый заказ в Telegram</span>
+                    <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                    <span>Стало: чистый чек в Telegram</span>
                   </span>
-                  <span className="text-[11px] text-accent font-semibold bg-accent-soft px-2 py-0.5 rounded">
+                  <span className="text-[10px] sm:text-[11px] text-accent font-semibold bg-accent-soft px-2 py-0.5 rounded">
                     За 30 секунд
                   </span>
                 </div>
 
-                <div className="bg-page border border-border p-4 rounded-[12px] space-y-2.5 text-xs font-mono">
-                  <div className="flex items-center justify-between font-semibold text-content-primary">
+                <div className="bg-page border border-border p-3.5 sm:p-4 rounded-[12px] space-y-2.5 text-xs font-mono">
+                  <div className="flex flex-wrap items-center justify-between font-semibold text-content-primary gap-1">
                     <span className="flex items-center gap-1.5">
-                      <Package className="w-3.5 h-3.5 text-accent" />
+                      <Package className="w-3.5 h-3.5 text-accent shrink-0" />
                       <span>ЗАКАЗ #1042</span>
                     </span>
                     <span className="text-accent text-sm font-bold">320 000 сум</span>
                   </div>
 
                   <div className="space-y-1 text-content-secondary text-[11px] font-sans">
-                    <div className="text-content-primary font-medium">🛍 Худи Оверсайз «Ташкент» (M) × 1 шт.</div>
-                    <div>👤 Клиент: <b className="text-content-primary">Сардор Алимов</b> (+998 90 123 45 67)</div>
-                    <div>📍 Адрес: Ташкент, Чиланзар 9, д. 14, кв. 28</div>
-                    <div>🚚 Доставка: Курьер Yandex • Оплата Click</div>
+                    <div className="text-content-primary font-medium break-words">🛍 Худи Оверсайз «Ташкент» (M) × 1 шт.</div>
+                    <div className="break-words">👤 Клиент: <b className="text-content-primary">Сардор Алимов</b> (+998 90 123 45 67)</div>
+                    <div className="break-words">📍 Адрес: Ташкент, Чиланзар 9, д. 14, кв. 28</div>
+                    <div className="break-words">🚚 Доставка: Курьер Yandex • Оплата Click</div>
                   </div>
 
-                  <div className="pt-2 flex gap-2">
+                  <div className="pt-2 flex flex-wrap gap-2">
                     <span className="bg-accent-soft text-accent px-2 py-1 rounded-[6px] text-[10px] font-sans font-semibold flex items-center gap-1">
                       <Check className="w-3 h-3 stroke-[2.5]" />
                       <span>Готово к передаче курьеру</span>
@@ -312,7 +312,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border text-xs text-accent font-medium">
+              <div className="mt-5 pt-3.5 border-t border-border text-xs text-accent font-medium">
                 ✅ Покупатель выбирает сам без лишних вопросов. Вы сразу отправляете заказ.
               </div>
             </div>
@@ -391,9 +391,9 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-stretch">
             {/* Start */}
-            <div className="bg-surface border border-border rounded-[14px] p-6 flex flex-col justify-between shadow-xs">
+            <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-6 flex flex-col justify-between shadow-xs">
               <div className="space-y-4">
                 <div>
                   <h3 className="text-base font-semibold text-content-primary">Start</h3>
@@ -404,15 +404,15 @@ export default function LandingPage() {
                 </div>
                 <ul className="space-y-2 text-xs text-content-primary pt-2 border-t border-border">
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>До 15 товаров в каталоге</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Прием заказов в Telegram</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Выбор размеров и вариантов</span>
                   </li>
                   <li className="flex items-center gap-2 text-content-secondary">
@@ -430,7 +430,7 @@ export default function LandingPage() {
             </div>
 
             {/* Plus */}
-            <div className="bg-surface border-2 border-accent rounded-[14px] p-6 flex flex-col justify-between relative shadow-card">
+            <div className="bg-surface border-2 border-accent rounded-[14px] p-4 sm:p-6 flex flex-col justify-between relative shadow-card">
               <div className="absolute -top-3 left-6 bg-accent text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-[6px]">
                 Популярный
               </div>
@@ -444,19 +444,19 @@ export default function LandingPage() {
                 </div>
                 <ul className="space-y-2 text-xs text-content-primary pt-2 border-t border-border">
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>До 100 товаров в каталоге</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Отключение упоминания BioMart</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Кастомные темы витрины и цвета</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Быстрый поиск и фильтры</span>
                   </li>
                 </ul>
@@ -471,7 +471,7 @@ export default function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className="bg-surface border border-border rounded-[14px] p-6 flex flex-col justify-between shadow-xs">
+            <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-6 flex flex-col justify-between shadow-xs">
               <div className="space-y-4">
                 <div>
                   <h3 className="text-base font-semibold text-content-primary">Pro</h3>
@@ -482,19 +482,19 @@ export default function LandingPage() {
                 </div>
                 <ul className="space-y-2 text-xs text-content-primary pt-2 border-t border-border">
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Безлимитное количество товаров</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>ИИ-генератор описаний товаров</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Экспорт базы заказов в Excel</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-accent" />
+                    <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Приоритетная поддержка в Telegram</span>
                   </li>
                 </ul>

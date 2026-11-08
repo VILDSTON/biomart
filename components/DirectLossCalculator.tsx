@@ -13,7 +13,7 @@ export function DirectLossCalculator() {
   const lostOrdersPerMonth = Math.round(dailyInquiries * 30 * 0.12);
 
   return (
-    <div className="bg-surface border border-border rounded-[14px] p-6 sm:p-8 shadow-xs">
+    <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-8 shadow-xs">
       <div className="max-w-2xl mx-auto text-center space-y-2 mb-6">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[10px] bg-accent-soft text-accent text-xs font-semibold">
           <span>Калькулятор рутины в директе</span>
@@ -26,14 +26,14 @@ export function DirectLossCalculator() {
         </p>
       </div>
 
-      <div className="max-w-xl mx-auto space-y-5">
+      <div className="max-w-xl mx-auto space-y-4 sm:space-y-5">
         {/* Slider Box */}
-        <div className="bg-page border border-border rounded-[10px] p-4 sm:p-5 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-page border border-border rounded-[10px] p-3.5 sm:p-5 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-1">
             <span className="text-xs sm:text-sm font-medium text-content-primary">
               Сообщений и вопросов в день:
             </span>
-            <span className="text-lg sm:text-xl font-semibold text-accent tabular-nums">
+            <span className="text-base sm:text-xl font-semibold text-accent tabular-nums">
               {dailyInquiries} <span className="text-xs font-normal text-content-secondary">в день</span>
             </span>
           </div>
@@ -57,7 +57,7 @@ export function DirectLossCalculator() {
 
         {/* Results Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div className="bg-surface border border-border rounded-[10px] p-4 flex items-start gap-3">
+          <div className="bg-surface border border-border rounded-[10px] p-3.5 sm:p-4 flex items-start gap-3">
             <div className="w-9 h-9 rounded-[10px] bg-page text-danger flex items-center justify-center shrink-0 border border-border">
               <Clock className="w-4 h-4" />
             </div>
@@ -74,7 +74,7 @@ export function DirectLossCalculator() {
             </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-[10px] p-4 flex items-start gap-3">
+          <div className="bg-surface border border-border rounded-[10px] p-3.5 sm:p-4 flex items-start gap-3">
             <div className="w-9 h-9 rounded-[10px] bg-page text-danger flex items-center justify-center shrink-0 border border-border">
               <TrendingDown className="w-4 h-4" />
             </div>
@@ -93,7 +93,7 @@ export function DirectLossCalculator() {
         </div>
 
         {/* BioMart Benefit Banner */}
-        <div className="bg-accent-soft border border-accent/20 rounded-[10px] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-accent-soft border border-accent/20 rounded-[10px] p-3.5 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-accent">
               Витрина решает эту проблему

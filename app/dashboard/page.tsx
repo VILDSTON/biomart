@@ -807,8 +807,8 @@ export default function DashboardPage() {
   // Password Protection Gate
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-page text-content-primary flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-surface rounded-[14px] p-6 sm:p-8 shadow-xs border border-border">
+      <main className="min-h-[100dvh] bg-page text-content-primary flex items-center justify-center p-3 sm:p-4">
+        <div className="w-full max-w-sm bg-surface rounded-[14px] p-5 sm:p-8 shadow-xs border border-border">
           <div className="w-10 h-10 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] flex items-center justify-center mx-auto mb-4">
             <Lock className="w-5 h-5" />
           </div>
@@ -816,7 +816,7 @@ export default function DashboardPage() {
           <h1 className="text-xl font-semibold text-center text-content-primary tracking-tight">
             Личный кабинет продавца
           </h1>
-          <p className="text-xs text-center text-content-secondary mt-1 mb-5">
+          <p className="text-xs text-center text-content-secondary mt-1 mb-5 break-all">
             Введите пароль для управления магазином biomart.vercel.app/{activeSlug}
           </p>
 
@@ -871,24 +871,24 @@ export default function DashboardPage() {
   const newOrdersCount = orders.filter((o) => o.status === 'new').length;
 
   return (
-    <div className="min-h-screen bg-page text-content-primary">
+    <div className="min-h-[100dvh] bg-page text-content-primary">
       {/* PC Expanded Container: max-w-3xl */}
-      <main className={`mx-auto min-h-screen bg-page flex flex-col border-x border-border ${activeTab === 'branding' || activeTab === 'design' ? 'max-w-6xl' : 'max-w-3xl'}`}>
+      <main className={`mx-auto min-h-[100dvh] w-full max-w-full bg-page flex flex-col border-x-0 sm:border-x border-border ${activeTab === 'branding' || activeTab === 'design' ? 'sm:max-w-6xl' : 'sm:max-w-3xl'}`}>
 
         {/* Top Header: Clean Light Style */}
-        <header className="bg-surface text-content-primary border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-2.5">
+        <header className="bg-surface text-content-primary border-b border-border px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
             <Link
               href={`/${activeSlug}`}
-              className="w-8 h-8 rounded-[10px] bg-page hover:bg-[#E7E4DC] flex items-center justify-center text-content-primary border border-border transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-[8px] sm:rounded-[10px] bg-page hover:bg-[#E7E4DC] flex items-center justify-center text-content-primary border border-border transition-colors shrink-0"
               title="Открыть витрину"
               aria-label="Открыть витрину"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Link>
 
             {/* Store Avatar in Header */}
-            <div className="relative w-8 h-8 rounded-[10px] overflow-hidden bg-page border border-border shrink-0">
+            <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-[8px] sm:rounded-[10px] overflow-hidden bg-page border border-border shrink-0">
               {settings.avatar_url ? (
                 <Image
                   src={settings.avatar_url}
@@ -907,35 +907,36 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-semibold tracking-tight leading-none text-content-primary truncate max-w-[130px] sm:max-w-[220px]">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                <h1 className="text-xs sm:text-sm font-semibold tracking-tight leading-none text-content-primary truncate min-w-0 flex-1 sm:flex-initial sm:max-w-[260px]">
                   {settings.store_name}
                 </h1>
                 <button
                   type="button"
                   onClick={() => setActiveTab('tariff')}
-                  className="text-[10px] bg-[#E4F1EB] text-[#1F7A5A] border border-[#1F7A5A]/20 px-2 py-0.5 rounded-[6px] font-medium uppercase hover:bg-[#1F7A5A]/10 transition-colors cursor-pointer shrink-0"
+                  className="text-[9px] sm:text-[10px] bg-[#E4F1EB] text-[#1F7A5A] border border-[#1F7A5A]/20 px-1.5 sm:px-2 py-0.5 rounded-[5px] sm:rounded-[6px] font-medium uppercase hover:bg-[#1F7A5A]/10 transition-colors cursor-pointer shrink-0"
                   title="Управление тарифом"
                 >
                   {settings.plan || 'Start'}
                 </button>
               </div>
-              <span className="text-[10px] text-content-secondary font-mono block truncate max-w-[150px] sm:max-w-none">
+              <span className="text-[9px] sm:text-[10px] text-content-secondary font-mono block truncate">
                 biomart.vercel.app/{activeSlug}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={() => {
                 setSupportCategory('bug');
                 setIsSupportOpen(true);
               }}
-              className="text-xs bg-[#E4F1EB] hover:bg-[#d5eade] text-[#1F7A5A] border border-[#1F7A5A]/20 px-2.5 py-1.5 rounded-[10px] flex items-center gap-1 font-medium transition-colors shrink-0"
+              className="text-xs bg-[#E4F1EB] hover:bg-[#d5eade] text-[#1F7A5A] border border-[#1F7A5A]/20 p-1.5 sm:px-2.5 sm:py-1.5 rounded-[8px] sm:rounded-[10px] flex items-center gap-1 font-medium transition-colors shrink-0"
               title="Поддержка и связь с основателем"
+              aria-label="Поддержка"
             >
               <HelpCircle className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Поддержка</span>
@@ -944,17 +945,19 @@ export default function DashboardPage() {
             <Link
               href={`/${activeSlug}`}
               target="_blank"
-              className="text-xs bg-surface hover:bg-page text-content-primary border border-border px-2.5 sm:px-3 py-1.5 rounded-[10px] flex items-center gap-1 font-medium transition-colors shrink-0"
+              className="text-xs bg-surface hover:bg-page text-content-primary border border-border p-1.5 sm:px-3 sm:py-1.5 rounded-[8px] sm:rounded-[10px] flex items-center gap-1 font-medium transition-colors shrink-0"
               title="Открыть витрину"
+              aria-label="Открыть витрину"
             >
-              <span className="hidden sm:inline">Открыть витрину</span>
+              <span className="hidden sm:inline">Витрина</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </Link>
 
             <button
               onClick={handleLogout}
-              className="p-1.5 text-content-secondary hover:text-content-primary rounded-[10px] transition-colors shrink-0"
+              className="p-1.5 text-content-secondary hover:text-content-primary rounded-[8px] sm:rounded-[10px] transition-colors shrink-0"
               title="Выйти"
+              aria-label="Выйти"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -962,7 +965,7 @@ export default function DashboardPage() {
         </header>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-surface border-b border-border p-1.5 sticky top-[53px] z-20">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-surface border-b border-border p-1.5 sticky top-[47px] sm:top-[53px] z-20 touch-pan-x overscroll-x-contain">
           <button
             onClick={() => setActiveTab('orders')}
             className={`relative flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
@@ -1066,13 +1069,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Tab Content Area */}
-        <div className="p-4 sm:p-6 flex-1 space-y-6">
+        <div className="p-3 sm:p-6 flex-1 space-y-4 sm:space-y-6">
           {/* ========================================================================= */}
           {/* TAB 1: PRODUCTS */}
           {/* ========================================================================= */}
           {activeTab === 'products' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2.5">
                 <div>
                   <h2 className="text-base sm:text-lg font-semibold text-content-primary">
                     Каталог товаров
@@ -1084,7 +1087,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setIsAddProductOpen(!isAddProductOpen)}
-                  className="flex items-center gap-1.5 bg-[#1F7A5A] hover:bg-[#17634A] text-white text-xs font-medium py-2 px-3.5 rounded-[10px] shadow-xs transition-colors"
+                  className="flex items-center justify-center gap-1.5 bg-[#1F7A5A] hover:bg-[#17634A] text-white text-xs font-medium py-2 px-3.5 rounded-[10px] shadow-xs transition-colors shrink-0 w-full xs:w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Добавить товар</span>
@@ -1142,12 +1145,12 @@ export default function DashboardPage() {
                       value={newCategoryInput}
                       onChange={(e) => setNewCategoryInput(e.target.value)}
                       placeholder="Название новой категории (например: Очки, Ремни...)"
-                      className="flex-1 px-3 py-1.5 bg-page border border-border rounded-[8px] text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-[#1F7A5A]"
+                      className="flex-1 min-w-0 px-3 py-1.5 bg-page border border-border rounded-[8px] text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-[#1F7A5A]"
                     />
                     <button
                       type="submit"
                       disabled={!newCategoryInput.trim()}
-                      className="px-3.5 py-1.5 bg-[#1F7A5A] hover:bg-[#17634A] text-white text-xs font-semibold rounded-[8px] transition-colors disabled:opacity-40"
+                      className="px-3.5 py-1.5 bg-[#1F7A5A] hover:bg-[#17634A] text-white text-xs font-semibold rounded-[8px] transition-colors disabled:opacity-40 shrink-0"
                     >
                       Создать
                     </button>
@@ -1156,7 +1159,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Product Limit Indicator */}
-              <div className="flex items-center justify-between p-3 bg-surface rounded-[10px] border border-border text-xs shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-surface rounded-[10px] border border-border text-xs shadow-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-content-secondary">
                     Лимит товаров:
@@ -1170,7 +1173,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('tariff')}
-                    className="text-[11px] font-medium text-[#1F7A5A] hover:underline flex items-center gap-1"
+                    className="text-[11px] font-medium text-[#1F7A5A] hover:underline flex items-center gap-1 shrink-0"
                   >
                     <span>Увеличить лимит товаров →</span>
                   </button>
@@ -1313,7 +1316,7 @@ export default function DashboardPage() {
                         value={newImageUrl}
                         onChange={(e) => setNewImageUrl(e.target.value)}
                         placeholder="https://... или загрузите файл выше"
-                        className="flex-1 px-3 py-2 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-[#1F7A5A]"
+                        className="flex-1 min-w-0 px-3 py-2 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-[#1F7A5A]"
                       />
                     </div>
                   </div>
@@ -1365,9 +1368,9 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={prod.id}
-                      className="flex items-center gap-3 p-3 bg-surface rounded-[14px] border border-border shadow-xs"
+                      className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 bg-surface rounded-[12px] sm:rounded-[14px] border border-border shadow-xs"
                     >
-                      <div className="relative w-14 h-14 rounded-[10px] overflow-hidden bg-page shrink-0 border border-border">
+                      <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-[8px] sm:rounded-[10px] overflow-hidden bg-page shrink-0 border border-border">
                         <Image
                           src={img}
                           alt={prod.title}
@@ -1378,11 +1381,11 @@ export default function DashboardPage() {
                         />
                       </div>
 
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 pr-1">
                         <h4 className="text-xs font-semibold text-content-primary truncate">
                           {prod.title}
                         </h4>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5">
                           <span className="text-xs font-semibold text-[#1F7A5A]">
                             {formatPrice(prod.price, settings.currency)}
                           </span>
@@ -1392,7 +1395,7 @@ export default function DashboardPage() {
                             </span>
                           )}
                           <span
-                            className={`text-[9px] font-medium px-1.5 py-0.5 rounded-[4px] ${
+                            className={`text-[9px] font-medium px-1.5 py-0.2 rounded-[4px] ${
                               prod.in_stock
                                 ? 'text-[#1F7A5A] bg-[#E4F1EB]'
                                 : 'text-content-secondary bg-page'
@@ -1403,9 +1406,9 @@ export default function DashboardPage() {
                         </div>
 
                         {prod.sizes && prod.sizes.length > 0 && (
-                          <div className="flex items-center gap-1 mt-1 text-[10px] text-content-secondary truncate">
+                          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-content-secondary truncate">
                             <span>{prod.variant_type || 'Варианты'}:</span>
-                            <span className="font-medium text-content-primary">
+                            <span className="font-medium text-content-primary truncate">
                               {prod.sizes.join(', ')}
                             </span>
                           </div>
@@ -1413,14 +1416,16 @@ export default function DashboardPage() {
                       </div>
 
                       {/* Actions: ONLY "Изменить" visible + "⋯" dropdown */}
-                      <div className="flex items-center gap-1.5 shrink-0 relative">
+                      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 relative">
                         <button
                           type="button"
                           onClick={() => openEditModal(prod)}
-                          className="px-3 py-1.5 rounded-[10px] bg-surface hover:bg-page text-content-primary border border-border text-xs font-medium flex items-center gap-1.5 transition-colors"
+                          className="px-2 sm:px-3 py-1.5 rounded-[8px] sm:rounded-[10px] bg-surface hover:bg-page text-content-primary border border-border text-[11px] sm:text-xs font-medium flex items-center gap-1 sm:gap-1.5 transition-colors"
+                          title="Редактировать товар"
                         >
                           <Edit3 className="w-3.5 h-3.5 text-[#1F7A5A]" />
-                          <span>Изменить</span>
+                          <span className="hidden sm:inline">Изменить</span>
+                          <span className="sm:hidden text-[10px]">Ред.</span>
                         </button>
 
                         <div className="relative">
@@ -1429,7 +1434,7 @@ export default function DashboardPage() {
                             onClick={() =>
                               setOpenActionMenuId(openActionMenuId === prod.id ? null : prod.id)
                             }
-                            className="p-1.5 rounded-[10px] bg-surface hover:bg-page text-content-secondary border border-border transition-colors"
+                            className="p-1.5 rounded-[8px] sm:rounded-[10px] bg-surface hover:bg-page text-content-secondary border border-border transition-colors"
                             title="Дополнительные действия"
                           >
                             <MoreVertical className="w-4 h-4" />
@@ -1667,7 +1672,7 @@ export default function DashboardPage() {
                             value={editImageUrl}
                             onChange={(e) => setEditImageUrl(e.target.value)}
                             placeholder="https://... или загрузите файл выше"
-                            className="flex-1 px-3 py-2 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-[#1F7A5A]"
+                            className="flex-1 min-w-0 px-3 py-2 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-[#1F7A5A]"
                           />
                         </div>
                       </div>
@@ -1731,10 +1736,10 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-content-primary">
                   <span className="text-content-secondary">Заказов:</span>
                   <span className="font-semibold">{orders.length}</span>
-                  <span className="text-[#E7E4DC]">•</span>
+                  <span className="text-content-secondary/40">•</span>
                   <span className="text-content-secondary">Выручка:</span>
                   <span className="font-semibold text-[#1F7A5A]">{formatPrice(totalRevenue, settings.currency)}</span>
-                  <span className="text-[#E7E4DC]">•</span>
+                  <span className="text-content-secondary/40">•</span>
                   <span className="text-content-secondary">Конверсия:</span>
                   <span className="font-semibold">{conversionRate}%</span>
                 </div>
@@ -1745,7 +1750,7 @@ export default function DashboardPage() {
                     setActiveTab('products');
                     setIsAddProductOpen(true);
                   }}
-                  className="bg-[#1F7A5A] hover:bg-[#17634A] text-white px-3 py-1.5 rounded-[10px] font-medium text-xs flex items-center gap-1.5 transition-colors shrink-0"
+                  className="w-full sm:w-auto justify-center bg-[#1F7A5A] hover:bg-[#17634A] text-white px-3 py-1.5 rounded-[10px] font-medium text-xs flex items-center gap-1.5 transition-colors shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Добавить товар</span>
@@ -1855,11 +1860,11 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Dual Export Buttons (Excel .xls and CSV .csv) */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => handleExportOrdersToExcel('xls')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#1F7A5A] hover:bg-[#17634A] text-white text-xs font-medium shadow-xs transition-colors"
+                      className="flex-1 sm:flex-initial justify-center flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#1F7A5A] hover:bg-[#17634A] text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
                       title="Скачать отчет в формате Excel (.xls)"
                     >
                       <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -1869,7 +1874,7 @@ export default function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => handleExportOrdersToExcel('csv')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-surface hover:bg-page text-content-primary text-xs font-medium shadow-xs transition-colors border border-border"
+                      className="flex-1 sm:flex-initial justify-center flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-surface hover:bg-page text-content-primary text-xs font-medium shadow-xs transition-colors border border-border whitespace-nowrap"
                       title="Скачать отчет в формате CSV (.csv)"
                     >
                       <Download className="w-3.5 h-3.5" />
@@ -2031,15 +2036,15 @@ export default function DashboardPage() {
                           </div>
 
                           {order.address && (
-                            <p className="text-[11px] text-content-secondary pt-1 flex items-center gap-1.5">
-                              <MapPin className="w-3 h-3 text-content-secondary shrink-0" />
-                              <span><b>Адрес:</b> {order.address}</span>
+                            <p className="text-[11px] text-content-secondary pt-1 flex items-start gap-1.5 break-words">
+                              <MapPin className="w-3.5 h-3.5 text-content-secondary shrink-0 mt-0.5" />
+                              <span className="break-words"><b>Адрес:</b> {order.address}</span>
                             </p>
                           )}
                           {order.comment && (
-                            <p className="text-[11px] text-content-primary bg-page border border-border p-2 rounded-[8px] mt-1 italic flex items-start gap-1.5">
-                              <MessageSquare className="w-3 h-3 text-content-secondary shrink-0 mt-0.5" />
-                              <span>«{order.comment}»</span>
+                            <p className="text-[11px] text-content-primary bg-page border border-border p-2 rounded-[8px] mt-1 italic flex items-start gap-1.5 break-words">
+                              <MessageSquare className="w-3.5 h-3.5 text-content-secondary shrink-0 mt-0.5" />
+                              <span className="break-words">«{order.comment}»</span>
                             </p>
                           )}
                         </div>
@@ -2109,7 +2114,7 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              <div className="bg-surface border border-border rounded-[14px] p-5 space-y-4">
+              <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-5 space-y-4">
                 <form onSubmit={handleSaveContacts} className="space-y-4">
                   {/* Instagram handle / url */}
                   <div>
@@ -2199,7 +2204,7 @@ export default function DashboardPage() {
 
                   <button
                     type="submit"
-                    className="py-2.5 px-4 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium text-xs rounded-[10px] transition-colors"
+                    className="w-full sm:w-auto justify-center py-2.5 px-4 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium text-xs rounded-[10px] transition-colors text-center"
                   >
                     Сохранить контакты витрины
                   </button>
@@ -2267,10 +2272,10 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       type="submit"
-                      className="py-2.5 px-4 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium text-xs rounded-[10px] transition-colors"
+                      className="w-full sm:w-auto justify-center py-2.5 px-4 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium text-xs rounded-[10px] transition-colors"
                     >
                       Сохранить привязку Telegram
                     </button>
@@ -2279,10 +2284,10 @@ export default function DashboardPage() {
                       href="https://t.me/BioMartAssistant_bot"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-2.5 px-3 bg-surface text-content-primary border border-border font-medium text-xs rounded-[10px] hover:bg-page transition-colors flex items-center gap-1.5"
+                      className="w-full sm:w-auto justify-center py-2.5 px-3 bg-surface text-content-primary border border-border font-medium text-xs rounded-[10px] hover:bg-page transition-colors flex items-center gap-1.5 text-center"
                     >
                       <span>Узнать ID в @BioMartAssistant_bot</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-content-secondary" />
+                      <ExternalLink className="w-3.5 h-3.5 text-content-secondary shrink-0" />
                     </a>
                   </div>
                 </form>
@@ -2361,7 +2366,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Current Active Plan Status */}
-              <div className="p-3 rounded-[10px] bg-[#E4F1EB] border border-[#1F7A5A]/20 flex items-center justify-between text-xs">
+              <div className="p-3 rounded-[10px] bg-[#E4F1EB] border border-[#1F7A5A]/20 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#1F7A5A]" />
                   <span className="font-semibold text-content-primary">
@@ -2523,7 +2528,7 @@ export default function DashboardPage() {
                     setSupportCategory('billing');
                     setIsSupportOpen(true);
                   }}
-                  className="px-3.5 py-2 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium rounded-[10px] transition-colors whitespace-nowrap shrink-0"
+                  className="w-full sm:w-auto justify-center px-3.5 py-2.5 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium text-xs rounded-[10px] transition-colors whitespace-normal shrink-0 text-center"
                 >
                   Сообщить о проблеме с подпиской
                 </button>
@@ -2618,7 +2623,7 @@ export default function DashboardPage() {
                           </div>
                         )}
                         <div
-                          className={`max-w-[85%] p-3 rounded-[10px] text-xs leading-relaxed whitespace-pre-wrap ${
+                          className={`max-w-[85%] p-3 rounded-[10px] text-xs leading-relaxed whitespace-pre-wrap break-words ${
                             msg.role === 'user'
                               ? 'bg-[#1F7A5A] text-white'
                               : 'bg-surface border border-border text-content-primary'
@@ -2649,13 +2654,13 @@ export default function DashboardPage() {
                         }
                       }}
                       placeholder="Задайте вопрос AI-ассистенту..."
-                      className="flex-1 px-3.5 py-2 bg-surface border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-[#1F7A5A]"
+                      className="flex-1 min-w-0 px-3.5 py-2 bg-surface border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-[#1F7A5A]"
                     />
                     <button
                       type="button"
                       disabled={!aiInput.trim() || isAiLoading}
                       onClick={() => handleSendAiMessage()}
-                      className="px-3.5 py-2 bg-[#1F7A5A] hover:bg-[#17634A] disabled:opacity-50 text-white rounded-[10px] text-xs font-medium flex items-center gap-1.5 transition-colors"
+                      className="px-3.5 py-2 bg-[#1F7A5A] hover:bg-[#17634A] disabled:opacity-50 text-white rounded-[10px] text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Отправить</span>

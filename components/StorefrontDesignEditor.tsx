@@ -313,12 +313,12 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
         </div>
 
         {/* Action Buttons: Save & Reset */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           {hasChanges && (
             <button
               type="button"
               onClick={handleReset}
-              className="px-3 py-2 rounded-[10px] text-xs font-medium text-content-secondary hover:text-content-primary hover:bg-page transition-colors"
+              className="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-[10px] text-xs font-medium text-content-secondary hover:text-content-primary hover:bg-page transition-colors text-center"
             >
               {t.resetDefault}
             </button>
@@ -328,13 +328,13 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
             type="button"
             onClick={handleSave}
             disabled={!hasChanges}
-            className={`px-4 py-2 rounded-[10px] text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
+            className={`flex-1 sm:flex-initial justify-center px-4 py-2 rounded-[10px] text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs text-center ${
               hasChanges
                 ? 'bg-brand hover:bg-brand-hover text-white active:scale-95'
                 : 'bg-[#E7E4DC] text-[#9E9E99] cursor-not-allowed'
             }`}
           >
-            <Save className="w-3.5 h-3.5" />
+            <Save className="w-3.5 h-3.5 shrink-0" />
             <span>{t.saveChanges}</span>
           </button>
         </div>
@@ -345,37 +345,37 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
         <button
           type="button"
           onClick={() => setMobileViewTab('settings')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-[9px] flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-1 text-[11px] sm:text-xs font-semibold rounded-[9px] flex items-center justify-center gap-1 sm:gap-1.5 transition-all truncate ${
             mobileViewTab === 'settings'
               ? 'bg-[#1F7A5A] text-white shadow-xs'
               : 'text-content-secondary hover:text-content-primary'
           }`}
         >
-          <Palette className="w-3.5 h-3.5" />
-          <span>Настройки дизайна</span>
+          <Palette className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Настройки дизайна</span>
         </button>
         <button
           type="button"
           onClick={() => setMobileViewTab('preview')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-[9px] flex items-center justify-center gap-1.5 transition-all ${
+          className={`flex-1 py-2 px-1 text-[11px] sm:text-xs font-semibold rounded-[9px] flex items-center justify-center gap-1 sm:gap-1.5 transition-all truncate ${
             mobileViewTab === 'preview'
               ? 'bg-[#1F7A5A] text-white shadow-xs'
               : 'text-content-secondary hover:text-content-primary'
           }`}
         >
-          <Eye className="w-3.5 h-3.5" />
-          <span>Живое превью витрины</span>
+          <Eye className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Превью витрины</span>
         </button>
       </div>
 
       {/* Main Grid: Desktop 2 Columns (Settings Left, Live Phone Right), Mobile Switchable */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         {/* ========================================================================= */}
         {/* SETTINGS COLUMN: 5 MAIN CONTROLS + ACCORDION (7 COLS ON DESKTOP) */}
         {/* ========================================================================= */}
-        <div className={`lg:col-span-7 space-y-6 ${mobileViewTab === 'settings' ? 'block' : 'hidden lg:block'}`}>
+        <div className={`lg:col-span-7 space-y-5 sm:space-y-6 ${mobileViewTab === 'settings' ? 'block' : 'hidden lg:block'}`}>
           {/* AI Assistant Banner (Pro Tier) - BioMart Brand Colors & Fully Functional Generator */}
-          <div className="bg-brand-soft/40 border border-brand-border rounded-[14px] p-4 shadow-xs">
+          <div className="bg-brand-soft/40 border border-brand-border rounded-[14px] p-3.5 sm:p-4 shadow-xs">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -398,7 +398,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                 type="button"
                 disabled={isGeneratingAi}
                 onClick={handleAiGenerateStyle}
-                className="px-3.5 py-2 rounded-[10px] bg-brand hover:bg-brand-hover text-white text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50"
+                className="w-full sm:w-auto justify-center px-3.5 py-2 rounded-[10px] bg-brand hover:bg-brand-hover text-white text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50 text-center"
               >
                 {isGeneratingAi ? (
                   <>
@@ -759,10 +759,10 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <label className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-[10px] text-xs font-semibold bg-page border border-border text-content-primary hover:bg-[#EFECE6] cursor-pointer transition-colors">
-                  <Upload className="w-3.5 h-3.5 text-brand" />
-                  <span>{t.uploadCover}</span>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-[10px] text-xs font-semibold bg-page border border-border text-content-primary hover:bg-[#EFECE6] cursor-pointer transition-colors text-center">
+                  <Upload className="w-3.5 h-3.5 text-brand shrink-0" />
+                  <span className="truncate">{t.uploadCover}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -775,7 +775,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                   <button
                     type="button"
                     onClick={() => setForm((prev) => ({ ...prev, banner_url: '' }))}
-                    className="px-3 py-2 rounded-[10px] text-xs font-medium text-rose-600 bg-white border border-border hover:bg-rose-50 transition-colors"
+                    className="w-full sm:w-auto px-3 py-2 rounded-[10px] text-xs font-medium text-rose-600 bg-white border border-border hover:bg-rose-50 transition-colors text-center shrink-0"
                   >
                     {t.removeCover}
                   </button>
@@ -1159,10 +1159,10 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
           </div>
 
           {/* Smartphone Mockup Frame */}
-          <div className="relative mx-auto w-full max-w-[340px] rounded-[36px] border-[8px] border-[#1A1A1A] shadow-xl overflow-hidden bg-white">
+          <div className="relative mx-auto w-full max-w-[280px] xs:max-w-[310px] sm:max-w-[340px] rounded-[30px] sm:rounded-[36px] border-[6px] sm:border-[8px] border-[#1A1A1A] shadow-xl overflow-hidden bg-white">
             {/* Top Notch / Dynamic Island */}
             <div className="absolute top-2 inset-x-0 z-40 flex justify-center pointer-events-none">
-              <div className="w-24 h-3.5 bg-[#1A1A1A] rounded-full" />
+              <div className="w-20 sm:w-24 h-3 sm:h-3.5 bg-[#1A1A1A] rounded-full" />
             </div>
 
             {/* Live Storefront Viewport */}

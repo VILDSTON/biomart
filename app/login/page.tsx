@@ -102,11 +102,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-page text-content-primary flex flex-col justify-between px-4 py-4">
+    <div className="min-h-[100dvh] bg-page text-content-primary flex flex-col justify-between px-3 sm:px-4 py-3 sm:py-4">
       {/* Top Header */}
-      <div className="w-full max-w-md mx-auto pt-2 pb-6 flex items-center justify-between gap-2">
+      <div className="w-full max-w-md mx-auto pt-2 pb-5 sm:pb-6 flex items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-[1px] font-bold text-lg sm:text-xl text-content-primary">
-          <BioMartLogo className="w-10 h-10 shrink-0" color="#1F7A5A" />
+          <BioMartLogo className="w-9 h-9 sm:w-10 sm:h-10 shrink-0" color="#1F7A5A" />
           <span>BioMart</span>
         </Link>
 
@@ -116,7 +116,7 @@ export default function LoginPage() {
       </div>
 
       {/* Main Login Card */}
-      <div className="w-full max-w-md mx-auto bg-surface border border-border rounded-card p-6 sm:p-8 shadow-card space-y-6">
+      <div className="w-full max-w-md mx-auto bg-surface border border-border rounded-card p-4 sm:p-8 shadow-card space-y-5 sm:space-y-6">
         <div>
           <div className="w-10 h-10 rounded-[10px] bg-accent-soft text-accent flex items-center justify-center mb-3">
             <Lock className="w-5 h-5" />

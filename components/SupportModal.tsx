@@ -71,61 +71,61 @@ export function SupportModal({ isOpen, onClose, shopSlug = '', defaultCategory =
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-lg bg-[#FFFFFF] border border-[#E7E4DC] rounded-[16px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-lg bg-surface border border-border rounded-[16px] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#E7E4DC] flex items-center justify-between bg-[#F7F6F2]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] flex items-center justify-center">
+        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-border flex items-center justify-between bg-page">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="w-8 h-8 rounded-[10px] bg-accent-soft text-accent flex items-center justify-center shrink-0">
               <HelpCircle className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-semibold text-[#1A1A1A] leading-tight">
+              <h2 className="text-xs sm:text-base font-semibold text-content-primary leading-tight">
                 Поддержка и связь с основателем
               </h2>
-              <p className="text-[11px] text-[#6B6B66]">
+              <p className="text-[10px] sm:text-[11px] text-content-secondary">
                 Сообщение придёт напрямую в личный Telegram
               </p>
             </div>
           </div>
           <button
             onClick={handleResetAndClose}
-            className="w-8 h-8 rounded-[8px] hover:bg-[#E7E4DC]/60 flex items-center justify-center text-[#6B6B66] transition-colors"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-[8px] hover:bg-surface-soft flex items-center justify-center text-content-secondary transition-colors shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto">
+        <div className="p-4 sm:p-5 overflow-y-auto">
           {isSuccess ? (
             <div className="py-8 text-center space-y-4">
-              <div className="w-14 h-14 bg-[#E4F1EB] text-[#1F7A5A] rounded-full flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 bg-accent-soft text-accent rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-base font-semibold text-[#1A1A1A]">
+                <h3 className="text-base font-semibold text-content-primary">
                   Обращение успешно отправлено!
                 </h3>
-                <p className="text-xs text-[#6B6B66] max-w-xs mx-auto leading-relaxed">
+                <p className="text-xs text-content-secondary max-w-xs mx-auto leading-relaxed">
                   Основатель BioMart получил уведомление в Telegram и свяжется с вами по указанному контакту.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleResetAndClose}
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-[10px] bg-[#1F7A5A] hover:bg-[#196349] text-white text-xs font-semibold transition-colors"
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-colors"
               >
                 Понятно, закрыть
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
               {errorMessage && (
-                <div className="p-3 rounded-[10px] bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <div className="p-3 rounded-[10px] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-danger text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
@@ -133,60 +133,60 @@ export function SupportModal({ isOpen, onClose, shopSlug = '', defaultCategory =
 
               {/* Category selector */}
               <div>
-                <label className="block text-xs font-semibold text-[#1A1A1A] mb-1.5">
+                <label className="block text-xs font-semibold text-content-primary mb-1.5">
                   С чем связана проблема?
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   <button
                     type="button"
                     onClick={() => setCategory('billing')}
-                    className={`flex items-center gap-2 p-2.5 text-left rounded-[10px] border text-xs transition-colors ${
+                    className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 text-left rounded-[10px] border text-[11px] sm:text-xs transition-colors ${
                       category === 'billing'
-                        ? 'border-[#1F7A5A] bg-[#E4F1EB]/50 text-[#1F7A5A] font-semibold'
-                        : 'border-[#E7E4DC] text-[#1A1A1A] hover:bg-[#F7F6F2]'
+                        ? 'border-accent bg-accent-soft text-accent font-semibold'
+                        : 'border-border text-content-primary hover:bg-page'
                     }`}
                   >
-                    <CreditCard className="w-4 h-4 shrink-0" />
-                    <span>Подписка / Оплата</span>
+                    <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                    <span className="truncate">Подписка / Оплата</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setCategory('bug')}
-                    className={`flex items-center gap-2 p-2.5 text-left rounded-[10px] border text-xs transition-colors ${
+                    className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 text-left rounded-[10px] border text-[11px] sm:text-xs transition-colors ${
                       category === 'bug'
-                        ? 'border-[#1F7A5A] bg-[#E4F1EB]/50 text-[#1F7A5A] font-semibold'
-                        : 'border-[#E7E4DC] text-[#1A1A1A] hover:bg-[#F7F6F2]'
+                        ? 'border-accent bg-accent-soft text-accent font-semibold'
+                        : 'border-border text-content-primary hover:bg-page'
                     }`}
                   >
-                    <Bug className="w-4 h-4 shrink-0" />
-                    <span>Баг / Ошибка на сайте</span>
+                    <Bug className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                    <span className="truncate">Баг / Ошибка на сайте</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setCategory('orders')}
-                    className={`flex items-center gap-2 p-2.5 text-left rounded-[10px] border text-xs transition-colors ${
+                    className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 text-left rounded-[10px] border text-[11px] sm:text-xs transition-colors ${
                       category === 'orders'
-                        ? 'border-[#1F7A5A] bg-[#E4F1EB]/50 text-[#1F7A5A] font-semibold'
-                        : 'border-[#E7E4DC] text-[#1A1A1A] hover:bg-[#F7F6F2]'
+                        ? 'border-accent bg-accent-soft text-accent font-semibold'
+                        : 'border-border text-content-primary hover:bg-page'
                     }`}
                   >
-                    <MessageSquare className="w-4 h-4 shrink-0" />
-                    <span>Заказы / Telegram бот</span>
+                    <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                    <span className="truncate">Заказы / Telegram бот</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setCategory('feature')}
-                    className={`flex items-center gap-2 p-2.5 text-left rounded-[10px] border text-xs transition-colors ${
+                    className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 text-left rounded-[10px] border text-[11px] sm:text-xs transition-colors ${
                       category === 'feature'
-                        ? 'border-[#1F7A5A] bg-[#E4F1EB]/50 text-[#1F7A5A] font-semibold'
-                        : 'border-[#E7E4DC] text-[#1A1A1A] hover:bg-[#F7F6F2]'
+                        ? 'border-accent bg-accent-soft text-accent font-semibold'
+                        : 'border-border text-content-primary hover:bg-page'
                     }`}
                   >
-                    <Sparkles className="w-4 h-4 shrink-0" />
-                    <span>Предложение / Идея</span>
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                    <span className="truncate">Предложение / Идея</span>
                   </button>
                 </div>
               </div>
@@ -194,7 +194,7 @@ export function SupportModal({ isOpen, onClose, shopSlug = '', defaultCategory =
               {/* Name & Contact */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#1A1A1A] mb-1">
+                  <label className="block text-xs font-semibold text-content-primary mb-1">
                     Ваше имя или магазин
                   </label>
                   <input
@@ -202,12 +202,12 @@ export function SupportModal({ isOpen, onClose, shopSlug = '', defaultCategory =
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Например: TASHKENT DRIP"
-                    className="w-full px-3 py-2 text-xs rounded-[10px] border border-[#E7E4DC] focus:outline-none focus:border-[#1F7A5A] focus:ring-1 focus:ring-[#1F7A5A]"
+                    className="w-full px-3 py-2 text-xs rounded-[10px] border border-border bg-surface text-content-primary focus:outline-none focus:border-accent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#1A1A1A] mb-1">
+                  <label className="block text-xs font-semibold text-content-primary mb-1">
                     Telegram или телефон *
                   </label>
                   <input
@@ -216,14 +216,14 @@ export function SupportModal({ isOpen, onClose, shopSlug = '', defaultCategory =
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     placeholder="@username или +998 90..."
-                    className="w-full px-3 py-2 text-xs rounded-[10px] border border-[#E7E4DC] focus:outline-none focus:border-[#1F7A5A] focus:ring-1 focus:ring-[#1F7A5A]"
+                    className="w-full px-3 py-2 text-xs rounded-[10px] border border-border bg-surface text-content-primary focus:outline-none focus:border-accent"
                   />
                 </div>
               </div>
 
               {/* Message */}
               <div>
-                <label className="block text-xs font-semibold text-[#1A1A1A] mb-1">
+                <label className="block text-xs font-semibold text-content-primary mb-1">
                   Подробно опишите проблему *
                 </label>
                 <textarea
@@ -232,19 +232,19 @@ export function SupportModal({ isOpen, onClose, shopSlug = '', defaultCategory =
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Опишите, что пошло не так (например: 'Оформил тариф Plus, списали оплату, но в кабинете остался Start' или 'При загрузке товара на телефоне вылетает ошибка'...)"
-                  className="w-full px-3 py-2 text-xs rounded-[10px] border border-[#E7E4DC] focus:outline-none focus:border-[#1F7A5A] focus:ring-1 focus:ring-[#1F7A5A] resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-[10px] border border-border bg-surface text-content-primary focus:outline-none focus:border-accent resize-none leading-relaxed"
                 />
               </div>
 
               {/* Submit Button */}
-              <div className="pt-2 flex items-center justify-between gap-3">
-                <span className="text-[11px] text-[#6B6B66]">
+              <div className="pt-2 flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2.5">
+                <span className="text-[11px] text-content-secondary">
                   Бот: @BioMartAssistant_bot
                 </span>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-[10px] bg-[#1F7A5A] hover:bg-[#196349] disabled:opacity-50 text-white text-xs font-semibold transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-[10px] bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-xs font-semibold transition-colors shadow-xs"
                 >
                   {isSubmitting ? (
                     <>

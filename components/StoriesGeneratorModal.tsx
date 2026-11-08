@@ -387,17 +387,17 @@ export const StoriesGeneratorModal: React.FC<StoriesGeneratorModalProps> = ({
 
       <div className="relative w-full max-w-xl bg-[#FFFFFF] border border-[#E7E4DC] rounded-[14px] shadow-lg overflow-hidden flex flex-col max-h-[92vh] z-10 text-[#1A1A1A]">
         {/* Header */}
-        <div className="p-4 px-5 border-b border-[#E7E4DC] flex items-center justify-between bg-[#FFFFFF]">
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-[10px] bg-brand-soft text-brand flex items-center justify-center">
+        <div className="p-3 px-4 sm:p-4 sm:px-5 border-b border-[#E7E4DC] flex items-center justify-between bg-[#FFFFFF] gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-8 h-8 shrink-0 rounded-[10px] bg-brand-soft text-brand flex items-center justify-center">
               <Instagram className="w-4 h-4" />
             </span>
-            <div>
-              <h3 className="text-sm font-semibold text-[#1A1A1A] tracking-tight flex items-center gap-1.5">
+            <div className="min-w-0">
+              <h3 className="text-xs sm:text-sm font-semibold text-[#1A1A1A] tracking-tight flex items-center gap-1.5 flex-wrap">
                 <span>Стикер товара для Stories</span>
                 <span className="text-[10px] bg-brand-soft text-brand font-mono font-medium px-1.5 py-0.5 rounded-[6px]">9:16</span>
               </h3>
-              <p className="text-[11px] text-[#6B6B66]">
+              <p className="text-[10px] sm:text-[11px] text-[#6B6B66] truncate">
                 Готовый вертикальный макет 9:16 для Instagram и Telegram
               </p>
             </div>
@@ -405,7 +405,7 @@ export const StoriesGeneratorModal: React.FC<StoriesGeneratorModalProps> = ({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-[10px] bg-[#F7F6F2] hover:bg-[#E7E4DC] text-[#6B6B66] flex items-center justify-center transition-colors"
+            className="w-8 h-8 shrink-0 rounded-[10px] bg-[#F7F6F2] hover:bg-[#E7E4DC] text-[#6B6B66] flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -487,12 +487,12 @@ export const StoriesGeneratorModal: React.FC<StoriesGeneratorModalProps> = ({
                   type="text"
                   readOnly
                   value={productDirectUrl}
-                  className="flex-1 px-3 py-1.5 bg-[#FFFFFF] border border-[#E7E4DC] rounded-[10px] text-xs font-mono text-[#1A1A1A] truncate focus:outline-none"
+                  className="flex-1 min-w-0 px-3 py-1.5 bg-[#FFFFFF] border border-[#E7E4DC] rounded-[10px] text-xs font-mono text-[#1A1A1A] truncate focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="shrink-0 px-3 py-1.5 bg-[#FFFFFF] hover:bg-[#F7F6F2] text-[#1A1A1A] border border-[#E7E4DC] rounded-[10px] text-xs font-medium flex items-center gap-1.5 transition-colors"
+                  className="shrink-0 px-2.5 sm:px-3 py-1.5 bg-[#FFFFFF] hover:bg-[#F7F6F2] text-[#1A1A1A] border border-[#E7E4DC] rounded-[10px] text-xs font-medium flex items-center gap-1.5 transition-colors"
                   title="Скопировать ссылку"
                 >
                   {isCopied ? <Check className="w-3.5 h-3.5 text-brand" /> : <Copy className="w-3.5 h-3.5" />}

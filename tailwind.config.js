@@ -8,6 +8,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: '360px',
+      },
       colors: {
         // Dynamic Page & Surface tokens from CSS Variables
         page: 'var(--bg-page)',
