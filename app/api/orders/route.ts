@@ -214,7 +214,7 @@ export async function POST(request: Request) {
       .join('\n\n');
 
     const cleanPhone = customer_phone.replace(/[^\d+]/g, '');
-    const shopBadge = shop_slug ? `\n<b>Магазин:</b> biomart.uz/${escapeTelegramHtml(shop_slug)}` : '';
+    const shopBadge = shop_slug ? `\n<b>Магазин:</b> biomart.vercel.app/${escapeTelegramHtml(shop_slug)}` : '';
 
     const tgMessage = `<b>НОВЫЙ ЗАКАЗ #${orderId}</b>${shopBadge}
 

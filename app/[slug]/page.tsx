@@ -54,6 +54,8 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
 
   // 2. Check for database persistence (Supabase) if configured
   let dbStore: any = null;
+  let dbCategories: any[] | null = null;
+  let dbProducts: any[] | null = null;
   try {
     const supabase = createSupabaseServerClient();
     if (supabase) {
@@ -63,8 +65,33 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
         .eq('slug', cleanSlug)
         .maybeSingle();
       dbStore = data;
+
+      if (dbStore?.id) {
+        const [catsRes, prodsRes] = await Promise.all([
+          supabase
+            .from('categories')
+            .select('*')
+            .eq('store_id', dbStore.id)
+            .order('sort_order', { ascending: true }),
+          supabase
+            .from('products')
+            .select('*')
+            .eq('store_id', dbStore.id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false }),
+        ]);
+
+        if (catsRes.data && catsRes.data.length > 0) {
+          dbCategories = catsRes.data;
+        }
+        if (prodsRes.data && prodsRes.data.length > 0) {
+          dbProducts = prodsRes.data;
+        }
+      }
     }
-  } catch {}
+  } catch (err) {
+    console.warn('Supabase fetch exception for slug:', cleanSlug, err);
+  }
 
   // 3. Fallback to mock settings for demo store or new stores
   const storeSettings = {
@@ -189,7 +216,12 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
       />
 
       <React.Suspense fallback={<StorefrontSkeleton />}>
-        <StorefrontClient initialSlug={cleanSlug} initialSettings={effectiveStoreSettings} />
+        <StorefrontClient
+          initialSlug={cleanSlug}
+          initialSettings={effectiveStoreSettings}
+          initialCategories={dbCategories || undefined}
+          initialProducts={dbProducts || undefined}
+        />
       </React.Suspense>
     </>
   );

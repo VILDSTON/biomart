@@ -12,7 +12,7 @@ import { FloatingCartBar } from '@/components/FloatingCartBar';
 import { CartCheckoutDrawer } from '@/components/CartCheckoutDrawer';
 import { OrderSuccessModal } from '@/components/OrderSuccessModal';
 import { ViralBioMartBadge } from '@/components/ViralBioMartBadge';
-import { Order, Product, StoreSettings } from '@/types';
+import { Category, Order, Product, StoreSettings } from '@/types';
 import { PackageSearch } from 'lucide-react';
 import { translations } from '@/lib/i18n';
 import { computeStoreTokens, getEffectiveThemeSettings } from '@/lib/theme';
@@ -53,9 +53,16 @@ export function StorefrontSkeleton() {
 interface StorefrontClientProps {
   initialSlug: string;
   initialSettings?: StoreSettings;
+  initialCategories?: Category[];
+  initialProducts?: Product[];
 }
 
-export function StorefrontClient({ initialSlug, initialSettings }: StorefrontClientProps) {
+export function StorefrontClient({
+  initialSlug,
+  initialSettings,
+  initialCategories,
+  initialProducts,
+}: StorefrontClientProps) {
   const params = useParams();
   const searchParams = useSearchParams();
   const rawSlug = (params?.slug as string) || initialSlug || 'tashkent_drip';
@@ -123,8 +130,23 @@ export function StorefrontClient({ initialSlug, initialSettings }: StorefrontCli
 
   // Merge shopData with initialSettings fallback
   const currentSettings = shopData?.settings || initialSettings;
-  const currentCategories = shopData?.categories || [];
-  const currentProducts = shopData?.products || [];
+  const currentCategories = useMemo(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      const hasAll = initialCategories.some((c) => c.slug === 'all');
+      if (!hasAll) {
+        return [{ id: 'cat-all', name: 'Все', slug: 'all', sort_order: 0 }, ...initialCategories];
+      }
+      return initialCategories;
+    }
+    return shopData?.categories || [];
+  }, [initialCategories, shopData]);
+
+  const currentProducts = useMemo(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      return initialProducts;
+    }
+    return shopData?.products || [];
+  }, [initialProducts, shopData]);
 
   // Effective unified theme settings (Priority: URL query > Local save override > SSR initialSettings > Zustand)
   const queryAccent = searchParams?.get('accent');
