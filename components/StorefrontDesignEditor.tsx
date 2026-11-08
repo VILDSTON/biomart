@@ -121,6 +121,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
   const [isSavedToast, setIsSavedToast] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState<string | null>(null);
+  const [mobileViewTab, setMobileViewTab] = useState<'settings' | 'preview'>('settings');
 
   // Check for unsaved changes
   const hasChanges = useMemo(() => {
@@ -331,12 +332,40 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
         </div>
       </div>
 
-      {/* Main Grid: Desktop 2 Columns (Settings Left, Live Phone Right), Mobile (Preview Top, Settings Below) */}
+      {/* Mobile-Only Tab Switcher: Prevents phone mockup from covering controls on mobile */}
+      <div className="lg:hidden flex items-center p-1 bg-surface border border-border rounded-[12px] shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setMobileViewTab('settings')}
+          className={`flex-1 py-2 text-xs font-semibold rounded-[9px] flex items-center justify-center gap-1.5 transition-all ${
+            mobileViewTab === 'settings'
+              ? 'bg-[#1F7A5A] text-white shadow-xs'
+              : 'text-content-secondary hover:text-content-primary'
+          }`}
+        >
+          <Palette className="w-3.5 h-3.5" />
+          <span>Настройки дизайна</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileViewTab('preview')}
+          className={`flex-1 py-2 text-xs font-semibold rounded-[9px] flex items-center justify-center gap-1.5 transition-all ${
+            mobileViewTab === 'preview'
+              ? 'bg-[#1F7A5A] text-white shadow-xs'
+              : 'text-content-secondary hover:text-content-primary'
+          }`}
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>Живое превью витрины</span>
+        </button>
+      </div>
+
+      {/* Main Grid: Desktop 2 Columns (Settings Left, Live Phone Right), Mobile Switchable */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* ========================================================================= */}
-        {/* SETTINGS COLUMN: 5 MAIN CONTROLS + ACCORDION (7 COLS ON DESKTOP, BELOW ON MOBILE) */}
+        {/* SETTINGS COLUMN: 5 MAIN CONTROLS + ACCORDION (7 COLS ON DESKTOP) */}
         {/* ========================================================================= */}
-        <div className="order-2 lg:order-1 lg:col-span-7 space-y-6">
+        <div className={`lg:col-span-7 space-y-6 ${mobileViewTab === 'settings' ? 'block' : 'hidden lg:block'}`}>
           {/* AI Assistant Banner (Pro Tier) - BioMart Brand Colors & Fully Functional Generator */}
           <div className="bg-brand-soft/40 border border-brand-border rounded-[14px] p-4 shadow-xs">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -981,9 +1010,9 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* LIVE PHONE PREVIEW (5 COLS ON DESKTOP, TOP ON MOBILE) */}
+        {/* LIVE PHONE PREVIEW (5 COLS ON DESKTOP, TOGGLE ON MOBILE) */}
         {/* ========================================================================= */}
-        <div className="order-1 lg:order-2 lg:col-span-5 sticky top-4 z-10">
+        <div className={`lg:col-span-5 static lg:sticky lg:top-4 z-10 ${mobileViewTab === 'preview' ? 'block' : 'hidden lg:block'}`}>
           <div className="flex items-center justify-between pb-2">
             <span className="text-xs font-bold text-content-primary flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-brand" />

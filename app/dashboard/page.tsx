@@ -66,6 +66,20 @@ const AVATAR_PRESETS = [
   { name: 'Аксессуары & Украшения', url: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=400&q=80', label: 'Украшения' },
 ];
 
+function cleanDisplayAiText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^[-=_]{2,}\s*$/gm, '')
+    .replace(/\|/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .trim();
+}
+
 type DashboardTab = 'orders' | 'products' | 'share' | 'telegram' | 'branding' | 'design' | 'tariff' | 'ai';
 
 export default function DashboardPage() {
@@ -2323,9 +2337,6 @@ export default function DashboardPage() {
                     Генерация описаний товаров, идей для Stories и текстов акций
                   </p>
                 </div>
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-[6px] bg-[#E4F1EB] text-[#1F7A5A] border border-[#1F7A5A]/20">
-                  Llama 3.3 70B
-                </span>
               </div>
 
               {currentPlan !== 'pro' ? (
@@ -2404,7 +2415,7 @@ export default function DashboardPage() {
                               : 'bg-surface border border-border text-content-primary'
                           }`}
                         >
-                          {msg.content}
+                          {cleanDisplayAiText(msg.content)}
                         </div>
                       </div>
                     ))}
