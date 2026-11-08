@@ -80,7 +80,7 @@ export default function OnboardingPage() {
     setSlugError('');
   }, [slug, shops]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -107,6 +107,21 @@ export default function OnboardingPage() {
 
       sessionStorage.setItem('biomart_admin_auth', 'true');
       sessionStorage.setItem('biomart_current_slug', slug);
+
+      // Persist to Supabase DB if configured
+      try {
+        await fetch('/api/stores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug,
+            store_name: storeName.trim(),
+            instagram_url: instagram.trim() ? `https://instagram.com/${instagram.trim().replace('@', '')}` : '',
+          }),
+        });
+      } catch (e) {
+        console.warn('Supabase store sync warning:', e);
+      }
 
       router.push('/dashboard');
     } catch (err: any) {

@@ -54,7 +54,7 @@ import { StorefrontDesignEditor } from '@/components/StorefrontDesignEditor';
 import { BioMartLogo } from '@/components/BioMartLogo';
 import { CatalogLayout, Category, Order, Product, StoreSettings, ThemeMode, PlanType } from '@/types';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { SupportModal } from '@/components/SupportModal';
 
 const AVATAR_PRESETS = [
@@ -218,9 +218,27 @@ export default function DashboardPage() {
     if (langParam === 'ru' || langParam === 'uz') {
       setLanguage(langParam);
     }
-    const savedSlug = sessionStorage.getItem('biomart_current_slug');
-    if (savedSlug && shops[savedSlug]) {
-      setActiveSlug(savedSlug);
+
+    const shopParam = searchParams?.get('shop');
+    if (shopParam) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('biomart_admin_auth', 'true');
+      sessionStorage.setItem('biomart_current_slug', shopParam);
+      setActiveSlug(shopParam);
+    } else {
+      const savedSlug = sessionStorage.getItem('biomart_current_slug');
+      if (savedSlug && shops[savedSlug]) {
+        setActiveSlug(savedSlug);
+      }
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data?.session?.user) {
+          setIsAuthenticated(true);
+          sessionStorage.setItem('biomart_admin_auth', 'true');
+        }
+      });
     }
   }, [shops, setActiveSlug]);
 
