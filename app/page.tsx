@@ -73,8 +73,8 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-page text-content-primary overflow-x-hidden">
-      {/* Top Navigation (BUG 3: Sticky working with overflow-x: clip) */}
+    <div className="min-h-[100dvh] bg-page text-content-primary">
+      {/* Top Navigation: sticky top-0 */}
       <nav className="border-b border-border bg-surface/90 backdrop-blur-md sticky top-0 z-50 transition-colors">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-[1px] font-bold text-lg sm:text-xl text-content-primary">
