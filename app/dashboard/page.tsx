@@ -490,6 +490,7 @@ export default function DashboardPage() {
           messages: newMessages,
           plan: currentPlan,
           storeName: settings.store_name,
+          category: categories.find((c) => c.slug !== 'all')?.name || categories[0]?.name || '',
         }),
       });
 

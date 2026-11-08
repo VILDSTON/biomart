@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Lock, Store, AlertCircle } from 'lucide-react';
+import { ArrowRight, Lock, Store, AlertCircle, Info } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { BioMartLogo } from '@/components/BioMartLogo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -77,7 +77,19 @@ export default function LoginPage() {
         router.push('/register');
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Не удалось войти через Google');
+      const rawMsg = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err || ''));
+      const isProviderNotEnabled =
+        rawMsg.includes('Unsupported provider') ||
+        rawMsg.includes('provider is not enabled') ||
+        rawMsg.includes('validation_failed') ||
+        err?.code === 'validation_failed' ||
+        err?.error_code === 'validation_failed';
+
+      if (isProviderNotEnabled) {
+        setErrorMsg('Google-вход ожидает включения в Supabase Dashboard (Authentication → Providers → Google). Вы можете войти по ссылке магазина или нажать «Демо-магазин» ниже.');
+      } else {
+        setErrorMsg(err?.message || 'Не удалось войти через Google');
+      }
       setIsGoogleLoading(false);
     }
   };
