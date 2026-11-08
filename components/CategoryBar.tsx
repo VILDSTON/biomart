@@ -62,11 +62,12 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
         </div>
 
         {/* Layout Switcher */}
-        <div className="flex items-center p-0.5 rounded-btn border border-border bg-page shrink-0">
+        <div className="flex items-center p-1 rounded-btn border border-border bg-page shrink-0 gap-0.5">
           <button
             type="button"
             onClick={() => onToggleLayout('grid')}
-            className={`p-2 rounded-[8px] transition-colors ${
+            style={{ borderRadius: 'calc(var(--radius-btn, 10px) - 3px)' }}
+            className={`p-1.5 transition-all flex items-center justify-center ${
               layout === 'grid'
                 ? 'bg-surface text-accent shadow-xs'
                 : 'text-content-secondary hover:text-content-primary'
@@ -79,7 +80,8 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
           <button
             type="button"
             onClick={() => onToggleLayout('list')}
-            className={`p-2 rounded-[8px] transition-colors ${
+            style={{ borderRadius: 'calc(var(--radius-btn, 10px) - 3px)' }}
+            className={`p-1.5 transition-all flex items-center justify-center ${
               layout === 'list'
                 ? 'bg-surface text-accent shadow-xs'
                 : 'text-content-secondary hover:text-content-primary'

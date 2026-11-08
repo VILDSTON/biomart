@@ -191,10 +191,10 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-[8px] text-content-secondary hover:text-content-primary hover:bg-surface-soft transition-colors"
+            className="w-8 h-8 rounded-full border border-border bg-page hover:bg-surface-soft text-content-primary flex items-center justify-center transition-colors"
             aria-label="Закрыть корзину"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 stroke-[2.5]" />
           </button>
         </div>
 

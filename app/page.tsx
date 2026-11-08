@@ -32,6 +32,13 @@ export default function LandingPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsDark(document.documentElement.classList.contains('dark'));
+
+      // If redirected from OAuth to root with ?code=, forward to auth callback handler
+      const searchParams = new URLSearchParams(window.location.search);
+      const code = searchParams.get('code');
+      if (code) {
+        window.location.replace(`/auth/callback?code=${encodeURIComponent(code)}`);
+      }
     }
   }, []);
 

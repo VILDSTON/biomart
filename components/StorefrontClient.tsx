@@ -350,6 +350,7 @@ export function StorefrontClient({
         <StoreHeader
           settings={effectiveSettings}
           isDemo={shopSlug === 'tashkent_drip'}
+          totalProducts={currentProducts.length}
         />
 
         {/* 2. Sticky Category Bar & Search */}
@@ -366,7 +367,18 @@ export function StorefrontClient({
         />
 
         {/* 3. Products Grid / List */}
-        <section className="p-3 flex-1">
+        <section id="catalog-section" className="p-3 flex-1 scroll-mt-14">
+          {filteredProducts.length > 0 && (
+            <div className="flex items-center justify-between text-[11px] font-semibold text-content-secondary mb-2 px-0.5">
+              <span>
+                {language === 'uz' ? 'Katalog' : 'Каталог'} ({filteredProducts.length})
+              </span>
+              <span className="text-[10px] text-content-tertiary flex items-center gap-1">
+                <span>{language === 'uz' ? 'Pastga suring' : 'Листайте вниз'}</span>
+                <span>↓</span>
+              </span>
+            </div>
+          )}
           {filteredProducts.length === 0 ? (
             <div className="py-16 px-4 text-center flex flex-col items-center justify-center">
               <div className="w-12 h-12 rounded-[10px] flex items-center justify-center mb-2.5 border border-border bg-page text-content-secondary">

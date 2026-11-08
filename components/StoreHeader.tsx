@@ -11,11 +11,11 @@ import { translations } from '@/lib/i18n';
 interface StoreHeaderProps {
   settings: StoreSettings;
   isDemo?: boolean;
+  totalProducts?: number;
 }
 
-export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = false }) => {
+export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = false, totalProducts }) => {
   const [avatarError, setAvatarError] = useState(false);
-  const [isDeliveryExpanded, setIsDeliveryExpanded] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const { language, setLanguage } = useBioMartStore();
   const t = translations[language];
@@ -214,26 +214,27 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
           </div>
         )}
 
-        {/* Delivery Notice */}
-        {settings.delivery_info && (
-          <button
-            type="button"
-            onClick={() => setIsDeliveryExpanded(!isDeliveryExpanded)}
-            className="w-full mt-2.5 py-2 px-3 rounded-btn border border-border bg-page flex items-center justify-between text-left gap-2 text-xs text-content-primary hover:bg-surface-soft transition-colors"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Zap className="w-3.5 h-3.5 text-accent shrink-0" />
-              <span className={isDeliveryExpanded ? 'leading-relaxed' : 'truncate text-content-secondary'}>
-                {settings.delivery_info}
+        {/* Catalog Scroll Cue (User request: покупатель должен знать, что дальше есть каталог) */}
+        <a
+          href="#catalog-section"
+          className="w-full mt-3 py-2 px-3.5 rounded-btn border border-border bg-page hover:bg-surface-soft flex items-center justify-between text-left gap-2 text-xs text-content-primary transition-all group active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-accent shrink-0 animate-pulse" />
+            <span className="font-semibold truncate">
+              {language === 'uz' ? 'Mahsulotlar katalogi' : 'Каталог товаров'}
+            </span>
+            {typeof totalProducts === 'number' && (
+              <span className="text-[11px] text-content-secondary font-medium shrink-0">
+                ({totalProducts})
               </span>
-            </div>
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-content-secondary shrink-0 transition-transform ${
-                isDeliveryExpanded ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-        )}
+            )}
+          </div>
+          <div className="flex items-center gap-1 text-[11px] text-accent font-semibold shrink-0 group-hover:translate-y-0.5 transition-transform">
+            <span>{language === 'uz' ? 'Ko‘rish' : 'Смотреть'}</span>
+            <ChevronDown className="w-3.5 h-3.5" />
+          </div>
+        </a>
       </div>
     </header>
   );

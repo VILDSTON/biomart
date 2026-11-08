@@ -157,13 +157,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         {/* Top Handle for mobile swipe down gesture */}
         <div className="sm:hidden w-12 h-1.5 bg-border rounded-full mx-auto my-2.5 shrink-0 cursor-grab" />
 
-        {/* Close Button */}
+        {/* Close Button - High contrast, visible on dark & light photos */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-[10px] bg-surface/80 backdrop-blur-sm border border-border text-content-secondary hover:text-content-primary flex items-center justify-center transition-colors"
+          className="absolute top-3.5 right-3.5 z-30 w-9 h-9 rounded-full bg-surface/95 dark:bg-black/75 backdrop-blur-md border border-border text-content-primary hover:scale-105 active:scale-95 shadow-md flex items-center justify-center transition-all"
           aria-label="Закрыть окно"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5 stroke-[2.5]" />
         </button>
 
         {/* Scrollable Content */}
@@ -198,7 +198,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </div>
             )}
 
-            {/* Gallery Navigation Arrows */}
+            {/* Gallery Navigation Arrows - High contrast, visible on dark & light photos */}
             {images.length > 1 && (
               <>
                 <button
@@ -206,20 +206,20 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   onClick={() =>
                     setActiveImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
                   }
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface/80 backdrop-blur-sm border border-border text-content-primary flex items-center justify-center shadow-xs"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-surface/95 dark:bg-black/75 backdrop-blur-md border border-border text-content-primary hover:scale-110 active:scale-95 shadow-md flex items-center justify-center transition-all"
                   aria-label="Предыдущее фото"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
                 </button>
                 <button
                   type="button"
                   onClick={() =>
                     setActiveImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
                   }
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface/80 backdrop-blur-sm border border-border text-content-primary flex items-center justify-center shadow-xs"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-surface/95 dark:bg-black/75 backdrop-blur-md border border-border text-content-primary hover:scale-110 active:scale-95 shadow-md flex items-center justify-center transition-all"
                   aria-label="Следующее фото"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-5 h-5 stroke-[2.5]" />
                 </button>
 
                 {/* Dot Pagination Indicators */}

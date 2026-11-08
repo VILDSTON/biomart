@@ -129,7 +129,7 @@ export const MOCK_STORE_SETTINGS: StoreSettings = {
   telegram_chat_id: '',
   phone: '+998 90 123 45 67',
   currency: 'сум',
-  delivery_info: 'Доставка курьером Yandex по Ташкенту — 25 000 сум (2-4 часа). Экспресс BTS по регионам — 35 000 сум.',
+  delivery_info: '',
   accent_color: '#111827',
   theme: 'light',
   catalog_layout: 'grid',
