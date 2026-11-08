@@ -17,6 +17,7 @@ import { PackageSearch } from 'lucide-react';
 import { translations } from '@/lib/i18n';
 import { computeStoreTokens, getEffectiveThemeSettings } from '@/lib/theme';
 import { StoreTrustBadges } from '@/components/StoreTrustBadges';
+import { StoreReviews } from '@/components/StoreReviews';
 
 export function StorefrontSkeleton() {
   return (
@@ -378,9 +379,9 @@ export function StorefrontClient({
           storeSettings={effectiveSettings}
         />
 
-        {/* Store Trust & Guarantees (Non-carousel, sleek 2x2 grid) */}
+        {/* Store Trust & Guarantees (Non-carousel, sleek 2x2 grid, customized by niche or seller) */}
         <div className="px-3 pt-1">
-          <StoreTrustBadges />
+          <StoreTrustBadges settings={effectiveSettings} />
         </div>
 
         {/* 3. Products Grid / List */}
@@ -437,7 +438,10 @@ export function StorefrontClient({
           )}
         </section>
 
-        {/* 4. Discreet BioMart Watermark (Uses platform brand color, not store accent) */}
+        {/* 4. Customer Reviews Section */}
+        <StoreReviews settings={effectiveSettings} />
+
+        {/* 5. Discreet BioMart Watermark (Uses platform brand color, not store accent) */}
         <ViralBioMartBadge
           hideBranding={Boolean(effectiveSettings.hide_branding)}
           accentColor={effectiveSettings.accent_color}

@@ -2,6 +2,24 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export type CatalogLayout = 'grid' | 'list';
 export type PlanType = 'start' | 'plus' | 'pro';
 export type StoreThemePreset = 'minimal' | 'warm' | 'streetwear' | 'boutique' | 'cyber' | 'vintage' | 'organic' | 'editorial';
+export type StoreNiche = 'clothing' | 'electronics' | 'beauty' | 'food' | 'flowers' | 'universal';
+
+export interface TrustBadgeItem {
+  id: string;
+  icon: 'zap' | 'package' | 'message' | 'shield' | 'clock' | 'check' | 'sparkles' | 'heart';
+  title: string;
+  subtitle: string;
+}
+
+export interface StoreReview {
+  id: string;
+  author_name: string;
+  rating: number; // 1 to 5
+  text: string;
+  date: string;
+  is_verified?: boolean;
+}
+
 export type StoreFontPreset = 'neutral' | 'strict' | 'boutique';
 export type StoreRadiiPreset = 'sharp' | 'medium' | 'round';
 export type StoreCardStyle = 'grid2' | 'single' | 'compact';
@@ -26,6 +44,10 @@ export interface ThemeSettings {
   announcement_active: boolean;
   announcement_text: string;
   hide_branding?: boolean;
+  niche?: StoreNiche;
+  show_trust_badges?: boolean;
+  custom_badges?: TrustBadgeItem[];
+  show_reviews?: boolean;
 }
 
 export interface StoreSettings {
@@ -64,6 +86,11 @@ export interface StoreSettings {
   announcement_text?: string;
   default_language?: 'ru' | 'uz';
   is_verified?: boolean;
+  niche?: StoreNiche;
+  show_trust_badges?: boolean;
+  custom_badges?: TrustBadgeItem[];
+  show_reviews?: boolean;
+  reviews?: StoreReview[];
 }
 
 export interface Category {

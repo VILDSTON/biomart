@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { MOCK_STORE_SETTINGS } from '@/lib/mock-data';
 import { computeStoreTokens, getEffectiveThemeSettings, ThemeSettings } from '@/lib/theme';
+import { StoreSettings } from '@/types';
 import { StorefrontClient, StorefrontSkeleton } from '@/components/StorefrontClient';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -44,11 +45,16 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
 
   // 1. Check for cookie persistence across dashboard save & SSR
   let cookieTheme: Partial<ThemeSettings> | null = null;
+  let cookieContacts: Partial<StoreSettings> | null = null;
   try {
     const cookieStore = cookies();
     const rawCookie = cookieStore.get(`biomart_theme_${cleanSlug}`)?.value;
     if (rawCookie) {
       cookieTheme = JSON.parse(decodeURIComponent(rawCookie));
+    }
+    const rawContacts = cookieStore.get(`biomart_contacts_${cleanSlug}`)?.value;
+    if (rawContacts) {
+      cookieContacts = JSON.parse(decodeURIComponent(rawContacts));
     }
   } catch {}
 
@@ -99,7 +105,11 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     slug: cleanSlug,
     store_name:
       dbStore?.store_name ||
+      cookieContacts?.store_name ||
       (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.store_name : cleanSlug.replace(/_/g, ' ').toUpperCase()),
+    instagram_url: cookieContacts?.instagram_url ?? dbStore?.instagram_url ?? (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.instagram_url : ''),
+    telegram_username: cookieContacts?.telegram_username ?? dbStore?.telegram_username ?? (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.telegram_username : ''),
+    phone: cookieContacts?.phone ?? dbStore?.phone ?? (cleanSlug === 'tashkent_drip' ? MOCK_STORE_SETTINGS.phone : ''),
   };
 
   // Merge theme settings: Database -> Cookie -> Query Overrides
@@ -142,6 +152,11 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     announcement_active: themeSettings.announcement_active,
     announcement_text: themeSettings.announcement_text,
     hide_branding: themeSettings.hide_branding,
+    niche: themeSettings.niche || storeSettings.niche || 'clothing',
+    show_trust_badges: themeSettings.show_trust_badges !== undefined ? themeSettings.show_trust_badges : (storeSettings.show_trust_badges ?? true),
+    custom_badges: themeSettings.custom_badges || storeSettings.custom_badges,
+    show_reviews: themeSettings.show_reviews !== undefined ? themeSettings.show_reviews : (storeSettings.show_reviews ?? true),
+    reviews: storeSettings.reviews,
     theme_settings: themeSettings,
   };
 

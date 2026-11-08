@@ -1,4 +1,4 @@
-import { Category, Order, Product, StoreSettings } from '@/types';
+import { Category, Order, Product, StoreSettings, StoreNiche, TrustBadgeItem, StoreReview } from '@/types';
 
 export const ACCENT_COLOR_PRESETS = [
   {
@@ -350,3 +350,150 @@ export function getStarterProductsForShop(): Product[] {
     },
   ];
 }
+
+export interface NichePresetInfo {
+  id: StoreNiche;
+  titleRu: string;
+  titleUz: string;
+  iconName: string;
+  badgesRu: TrustBadgeItem[];
+  badgesUz: TrustBadgeItem[];
+}
+
+export const STORE_NICHE_PRESETS: NichePresetInfo[] = [
+  {
+    id: 'clothing',
+    titleRu: 'Одежда и обувь',
+    titleUz: 'Kiyim va poyabzal',
+    iconName: 'Shirt',
+    badgesRu: [
+      { id: 'b1', icon: 'zap', title: 'Быстрая отправка', subtitle: 'По Ташкенту 1-2 часа' },
+      { id: 'b2', icon: 'package', title: 'Примерка перед оплатой', subtitle: 'Курьер подождет 15 минут' },
+      { id: 'b3', icon: 'message', title: 'Прямая связь', subtitle: 'Ответ в Telegram за 5 минут' },
+      { id: 'b4', icon: 'shield', title: 'Обмен размера', subtitle: 'Бесплатный обмен, если не подошло' },
+    ],
+    badgesUz: [
+      { id: 'b1', icon: 'zap', title: 'Tezkor yetkazish', subtitle: 'Toshkent bo‘yicha 1-2 soat' },
+      { id: 'b2', icon: 'package', title: 'Kiyib ko‘rish imkoni', subtitle: 'To‘lovdan oldin kiyib ko‘ring' },
+      { id: 'b3', icon: 'message', title: 'To‘g‘ridan-to‘g‘ri aloqa', subtitle: 'Telegramda 5 daqiqada javob' },
+      { id: 'b4', icon: 'shield', title: 'O‘lchamni almashtirish', subtitle: 'Mos kelmasa, bepul almashtiramiz' },
+    ],
+  },
+  {
+    id: 'electronics',
+    titleRu: 'Электроника и гаджеты',
+    titleUz: 'Elektronika va gadjetlar',
+    iconName: 'Smartphone',
+    badgesRu: [
+      { id: 'b1', icon: 'zap', title: 'Экспресс-доставка', subtitle: 'В день заказа по Ташкенту' },
+      { id: 'b2', icon: 'shield', title: '100% Оригинал', subtitle: 'Новая запечатанная техника' },
+      { id: 'b3', icon: 'package', title: 'Проверка при курьере', subtitle: 'Вскрытие и проверка до оплаты' },
+      { id: 'b4', icon: 'check', title: 'Гарантия качества', subtitle: 'Гарантия и чек на товар' },
+    ],
+    badgesUz: [
+      { id: 'b1', icon: 'zap', title: 'Ekspress yetkazish', subtitle: 'Toshkent bo‘ylab bir kunda' },
+      { id: 'b2', icon: 'shield', title: '100% Asl mahsulot', subtitle: 'Yangi ochilmagan texnika' },
+      { id: 'b3', icon: 'package', title: 'Kuryer oldida tekshirish', subtitle: 'To‘lovdan avval tekshirib oling' },
+      { id: 'b4', icon: 'check', title: 'Sifat kafolati', subtitle: 'Rasmiy kafolat va chek' },
+    ],
+  },
+  {
+    id: 'beauty',
+    titleRu: 'Парфюм и косметика',
+    titleUz: 'Parfyum va kosmetika',
+    iconName: 'Sparkles',
+    badgesRu: [
+      { id: 'b1', icon: 'shield', title: 'Селективный оригинал', subtitle: 'Только подлинная продукция' },
+      { id: 'b2', icon: 'package', title: 'Подарок к заказу', subtitle: 'Пробник аромата в посылке' },
+      { id: 'b3', icon: 'message', title: 'Консультация в TG', subtitle: 'Поможем подобрать стойкий аромат' },
+      { id: 'b4', icon: 'zap', title: 'Бережная упаковка', subtitle: 'Надёжная защита флаконов' },
+    ],
+    badgesUz: [
+      { id: 'b1', icon: 'shield', title: '100% Asl parfyum', subtitle: 'Faqat original mahsulotlar' },
+      { id: 'b2', icon: 'package', title: 'Xaridga sovg‘a', subtitle: 'Har bir buyurtmaga probnik' },
+      { id: 'b3', icon: 'message', title: 'Telegramda maslahat', subtitle: 'Did va hid tanlashda yordam' },
+      { id: 'b4', icon: 'zap', title: 'Ehtiyotkor qadoqlash', subtitle: 'Xavfsiz va chiroyli yetkazamiz' },
+    ],
+  },
+  {
+    id: 'food',
+    titleRu: 'Еда и выпечка',
+    titleUz: 'Taomlar va shirinliklar',
+    iconName: 'Utensils',
+    badgesRu: [
+      { id: 'b1', icon: 'clock', title: 'Доставка от 40 минут', subtitle: 'С пылу с жару прямо к столу' },
+      { id: 'b2', icon: 'heart', title: 'Свежие ингредиенты', subtitle: 'Готовим только под заказ' },
+      { id: 'b3', icon: 'zap', title: 'Заказ в 1 клик', subtitle: 'Без лишней регистрации' },
+      { id: 'b4', icon: 'shield', title: 'Контроль свежести', subtitle: 'Термосумки для горячих блюд' },
+    ],
+    badgesUz: [
+      { id: 'b1', icon: 'clock', title: '40 daqiqadan yetkazish', subtitle: 'Issiq va mazali taomlar' },
+      { id: 'b2', icon: 'heart', title: 'Toza masalliqlar', subtitle: 'Faqat buyurtma bo‘yicha pishiriladi' },
+      { id: 'b3', icon: 'zap', title: '1 bosqichda xarid', subtitle: 'Ortiqcha ro‘yxatdan o‘tishsiz' },
+      { id: 'b4', icon: 'shield', title: 'Termo-yetkazish', subtitle: 'Harorat saqlangan holda keladi' },
+    ],
+  },
+  {
+    id: 'flowers',
+    titleRu: 'Цветы и подарки',
+    titleUz: 'Gullar va sovg‘alar',
+    iconName: 'Gift',
+    badgesRu: [
+      { id: 'b1', icon: 'clock', title: 'Точно ко времени', subtitle: 'Доставим минута в минуту' },
+      { id: 'b2', icon: 'package', title: 'Фото до отправки', subtitle: 'Пришлем фото букета в Telegram' },
+      { id: 'b3', icon: 'heart', title: 'Открытка в подарок', subtitle: 'Напишем любые ваши пожелания' },
+      { id: 'b4', icon: 'shield', title: 'Свежие бутоны', subtitle: 'Гарантия свежести цветка' },
+    ],
+    badgesUz: [
+      { id: 'b1', icon: 'clock', title: 'Aniq vaqtida', subtitle: 'Belgilangan vaqtda yetkazamiz' },
+      { id: 'b2', icon: 'package', title: 'Yuborishdan avval rasm', subtitle: 'Telegramda guldastani ko‘rsatamiz' },
+      { id: 'b3', icon: 'heart', title: 'Maktub sovg‘a', subtitle: 'Tilaklaringizni yozib qo‘yamiz' },
+      { id: 'b4', icon: 'shield', title: 'Tazelik kafolati', subtitle: 'Faqat yangi uzilgan gullar' },
+    ],
+  },
+  {
+    id: 'universal',
+    titleRu: 'Универсальный магазин',
+    titleUz: 'Universal do‘kon',
+    iconName: 'Store',
+    badgesRu: [
+      { id: 'b1', icon: 'zap', title: 'Быстрая отправка', subtitle: 'По Ташкенту и регионам' },
+      { id: 'b2', icon: 'package', title: 'Осмотр при получении', subtitle: 'Проверьте товар перед оплатой' },
+      { id: 'b3', icon: 'message', title: 'Прямая связь', subtitle: 'Ответ в Telegram за 5 минут' },
+      { id: 'b4', icon: 'shield', title: '100% гарантия', subtitle: 'Реальные фото без обмана' },
+    ],
+    badgesUz: [
+      { id: 'b1', icon: 'zap', title: 'Tezkor jo‘natish', subtitle: 'Toshkent va viloyatlarga' },
+      { id: 'b2', icon: 'package', title: 'Qabulda tekshirish', subtitle: 'To‘lovdan oldin ko‘rib oling' },
+      { id: 'b3', icon: 'message', title: 'To‘g‘ridan-to‘g‘ri aloqa', subtitle: 'Telegramda 5 daqiqada javob' },
+      { id: 'b4', icon: 'shield', title: '100% ishonchli', subtitle: 'Haqiqiy suratlar va kafolat' },
+    ],
+  },
+];
+
+export const DEFAULT_STORE_REVIEWS: StoreReview[] = [
+  {
+    id: 'rev-1',
+    author_name: 'Сардор Алимов',
+    rating: 5,
+    date: 'Вчера',
+    text: 'Заказывал с доставкой по Ташкенту через Yandex, привезли буквально за 1.5 часа! Качество отличное, размер подошел идеально. Спасибо продавцу за быстрый ответ в телеге!',
+    is_verified: true,
+  },
+  {
+    id: 'rev-2',
+    author_name: 'Мадина К.',
+    rating: 5,
+    date: '3 дня назад',
+    text: 'Очень удобная витрина, оформила заказ в 1 клик без всяких паролей. Курьер подождал, пока я открыла и посмотрела вещь. Рекомендую этот магазин!',
+    is_verified: true,
+  },
+  {
+    id: 'rev-3',
+    author_name: 'Jasur Bek',
+    rating: 5,
+    date: '5 дней назад',
+    text: 'Ajoyib xizmat! Samarqandga BTS orqali ertasi kuni yetib keldi. Mahsulot rasmdegidek, qadoqlanishi juda chiroyli. Rahmat!',
+    is_verified: true,
+  },
+];

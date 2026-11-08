@@ -64,18 +64,21 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existing) {
-      // Update
+      // Build dynamic update payload without overwriting unset fields
+      const updatePayload: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (store_name !== undefined) updatePayload.store_name = store_name.trim();
+      if (description !== undefined) updatePayload.description = description.trim();
+      if (instagram_url !== undefined) updatePayload.instagram_url = instagram_url?.trim() || null;
+      if (telegram_username !== undefined) updatePayload.telegram_username = telegram_username?.trim() || null;
+      if (telegram_chat_id !== undefined) updatePayload.telegram_chat_id = telegram_chat_id?.trim() || null;
+      if (phone !== undefined) updatePayload.phone = phone?.trim() || null;
+      if (body.theme_settings !== undefined) updatePayload.theme_settings = body.theme_settings;
+
       const { data: updated, error } = await supabaseAdmin
         .from('stores')
-        .update({
-          store_name: store_name?.trim() || 'Мой магазин',
-          description: description?.trim() || null,
-          instagram_url: instagram_url?.trim() || null,
-          telegram_username: telegram_username?.trim() || null,
-          telegram_chat_id: telegram_chat_id?.trim() || null,
-          phone: phone?.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('id', existing.id)
         .select()
         .single();

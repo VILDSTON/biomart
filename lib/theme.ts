@@ -1,4 +1,4 @@
-import { StoreFontPreset, StoreRadiiPreset, StoreThemePreset, ThemeMode, CatalogLayout, StoreButtonText } from '@/types';
+import { StoreFontPreset, StoreRadiiPreset, StoreThemePreset, ThemeMode, CatalogLayout, StoreButtonText, StoreNiche, TrustBadgeItem } from '@/types';
 
 export interface ThemeSettings {
   preset: StoreThemePreset;
@@ -13,6 +13,10 @@ export interface ThemeSettings {
   announcement_active: boolean;
   announcement_text: string;
   hide_branding?: boolean;
+  niche?: StoreNiche;
+  show_trust_badges?: boolean;
+  custom_badges?: TrustBadgeItem[];
+  show_reviews?: boolean;
 }
 
 export interface StoreAccentTokens {
@@ -359,5 +363,9 @@ export function getEffectiveThemeSettings(raw?: Partial<ThemeSettings> | null, l
     announcement_active: raw?.announcement_active !== undefined ? raw.announcement_active : (legacySettings?.announcement_active ?? defaults.announcement_active),
     announcement_text: raw?.announcement_text ?? legacySettings?.announcement_text ?? defaults.announcement_text,
     hide_branding: raw?.hide_branding !== undefined ? raw.hide_branding : (legacySettings?.hide_branding ?? defaults.hide_branding),
+    niche: raw?.niche || legacySettings?.niche || 'clothing',
+    show_trust_badges: raw?.show_trust_badges !== undefined ? raw.show_trust_badges : (legacySettings?.show_trust_badges ?? true),
+    custom_badges: raw?.custom_badges || legacySettings?.custom_badges || undefined,
+    show_reviews: raw?.show_reviews !== undefined ? raw.show_reviews : (legacySettings?.show_reviews ?? true),
   };
 }

@@ -27,6 +27,13 @@ import {
   Zap,
   Info,
   Image as ImageIcon,
+  Shirt,
+  Utensils,
+  Gift,
+  Store,
+  Star,
+  MessageSquare,
+  PackageCheck,
 } from 'lucide-react';
 import {
   ThemeSettings,
@@ -36,9 +43,10 @@ import {
   computeStoreTokens,
   getEffectiveThemeSettings,
 } from '@/lib/theme';
-import { StoreSettings, StoreThemePreset, CatalogLayout, ThemeMode, StoreRadiiPreset, StoreButtonText } from '@/types';
+import { StoreSettings, StoreThemePreset, CatalogLayout, ThemeMode, StoreRadiiPreset, StoreButtonText, StoreNiche, TrustBadgeItem } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { designTranslations } from '@/lib/i18n';
+import { STORE_NICHE_PRESETS } from '@/lib/mock-data';
 
 interface StorefrontDesignEditorProps {
   settings: StoreSettings;
@@ -808,6 +816,135 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                 <List className="w-4 h-4" />
                 <span>{t.layoutList}</span>
               </button>
+            </div>
+          </div>
+
+          {/* ===================================================================== */}
+          {/* БЛОК: НИША МАГАЗИНА И БЕЙДЖИ ПРЕИМУЩЕСТВ */}
+          {/* ===================================================================== */}
+          <div className="bg-surface rounded-[14px] p-5 border border-border shadow-xs space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-content-primary mb-1">
+                {isUz ? 'Do‘kon yo‘nalishi (Nisha)' : 'Ниша магазина'}
+              </label>
+              <p className="text-[11px] text-content-secondary mb-3">
+                {isUz
+                  ? 'Yo‘nalishni tanlang — afzalliklar kartalari avtomatik moslashtiriladi'
+                  : 'Выберите сферу торговли для автозаполнения карточек преимуществ'}
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {STORE_NICHE_PRESETS.map((np) => {
+                  const isCurrent = (form.niche || 'clothing') === np.id;
+                  return (
+                    <button
+                      key={np.id}
+                      type="button"
+                      onClick={() => {
+                        const defaultBadges = isUz ? np.badgesUz : np.badgesRu;
+                        setForm((prev) => ({
+                          ...prev,
+                          niche: np.id,
+                          custom_badges: defaultBadges,
+                        }));
+                      }}
+                      className={`p-2.5 rounded-[10px] border text-left flex items-center gap-2 transition-all active:scale-95 ${
+                        isCurrent
+                          ? 'border-brand bg-brand-soft text-brand font-semibold shadow-xs'
+                          : 'border-border bg-page hover:bg-surface-soft text-content-primary'
+                      }`}
+                    >
+                      <span className="text-xs truncate">{isUz ? np.titleUz : np.titleRu}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Toggle Trust Badges */}
+            <div className="pt-3 border-t border-border flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-content-primary block">
+                  {isUz ? 'Afzalliklar bloki (4 ta karta)' : 'Блок преимуществ (4 карточки)'}
+                </span>
+                <span className="text-[11px] text-content-secondary">
+                  {isUz ? 'Yetkazish, to‘lov va kafolatlar kartalari' : 'Карточки быстрой доставки, осмотра и гарантий'}
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={form.show_trust_badges !== false}
+                onChange={(e) => setForm((prev) => ({ ...prev, show_trust_badges: e.target.checked }))}
+                className="w-4 h-4 rounded text-brand focus:ring-0 cursor-pointer accent-[#1F7A5A]"
+              />
+            </div>
+
+            {/* Editable 4 Badges */}
+            {form.show_trust_badges !== false && (
+              <div className="space-y-2.5 pt-1">
+                <span className="text-[11px] font-semibold text-content-secondary block">
+                  {isUz ? 'Kartalar matnini tahrirlash:' : 'Тексты 4 карточек преимуществ:'}
+                </span>
+                {(() => {
+                  const currentNichePreset =
+                    STORE_NICHE_PRESETS.find((p) => p.id === (form.niche || 'clothing')) ||
+                    STORE_NICHE_PRESETS[0];
+                  const badgesToEdit: TrustBadgeItem[] =
+                    form.custom_badges && form.custom_badges.length === 4
+                      ? form.custom_badges
+                      : (isUz ? currentNichePreset.badgesUz : currentNichePreset.badgesRu);
+
+                  return badgesToEdit.map((b, idx) => (
+                    <div key={b.id || idx} className="p-2.5 rounded-[8px] bg-page border border-border space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-content-secondary">
+                        <span>{isUz ? `Karta #${idx + 1}` : `Карточка #${idx + 1}`}</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={b.title}
+                          onChange={(e) => {
+                            const updated = [...badgesToEdit];
+                            updated[idx] = { ...updated[idx], title: e.target.value };
+                            setForm((prev) => ({ ...prev, custom_badges: updated }));
+                          }}
+                          placeholder={isUz ? 'Sarlavha' : 'Заголовок'}
+                          className="px-2.5 py-1.5 rounded-[6px] text-xs border border-border bg-surface text-content-primary focus:outline-none focus:border-brand"
+                        />
+                        <input
+                          type="text"
+                          value={b.subtitle}
+                          onChange={(e) => {
+                            const updated = [...badgesToEdit];
+                            updated[idx] = { ...updated[idx], subtitle: e.target.value };
+                            setForm((prev) => ({ ...prev, custom_badges: updated }));
+                          }}
+                          placeholder={isUz ? 'Tavsif' : 'Подзаголовок'}
+                          className="px-2.5 py-1.5 rounded-[6px] text-xs border border-border bg-surface text-content-primary focus:outline-none focus:border-brand"
+                        />
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+
+            {/* Toggle Customer Reviews */}
+            <div className="pt-3 border-t border-border flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-content-primary block">
+                  {isUz ? 'Xaridorlar fikrlari (Sharhlar)' : 'Отзывы покупателей на витрине'}
+                </span>
+                <span className="text-[11px] text-content-secondary">
+                  {isUz ? 'Vitrina pastida mijozlar sharhlarini ko‘rsatish' : 'Блок отзывов и форма для покупателей внизу витрины'}
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={form.show_reviews !== false}
+                onChange={(e) => setForm((prev) => ({ ...prev, show_reviews: e.target.checked }))}
+                className="w-4 h-4 rounded text-brand focus:ring-0 cursor-pointer accent-[#1F7A5A]"
+              />
             </div>
           </div>
 

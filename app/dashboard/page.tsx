@@ -571,6 +571,16 @@ export default function DashboardPage() {
     });
 
     try {
+      const contactsPayload = {
+        store_name: settings.store_name,
+        instagram_url: cleanIg,
+        telegram_username: cleanTgUser,
+        phone: cleanPhone,
+      };
+      document.cookie = `biomart_contacts_${activeSlug}=${encodeURIComponent(JSON.stringify(contactsPayload))}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
+
+    try {
       await fetch('/api/stores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2301,7 +2311,19 @@ export default function DashboardPage() {
                   announcement_active: updatedThemeSettings.announcement_active,
                   announcement_text: updatedThemeSettings.announcement_text,
                   hide_branding: updatedThemeSettings.hide_branding,
+                  niche: updatedThemeSettings.niche,
+                  show_trust_badges: updatedThemeSettings.show_trust_badges,
+                  custom_badges: updatedThemeSettings.custom_badges,
+                  show_reviews: updatedThemeSettings.show_reviews,
                 });
+                fetch('/api/stores', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    slug: activeSlug,
+                    theme_settings: updatedThemeSettings,
+                  }),
+                }).catch(() => null);
                 if (supabase) {
                   try {
                     supabase
