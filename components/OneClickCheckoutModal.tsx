@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Zap, Loader2, User, Phone, MapPin, Truck, Store, AlertCircle, Tag, ShoppingBag } from 'lucide-react';
 import { Order, Product, StoreSettings } from '@/types';
-import { formatPrice, getContrastTextColor } from '@/lib/utils';
+import { formatPrice, getContrastTextColor, UZBEKISTAN_REGIONS } from '@/lib/utils';
 import { useBioMartStore } from '@/store/useStore';
 import { translations } from '@/lib/i18n';
 
@@ -28,6 +28,7 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('+998 ');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
   const [address, setAddress] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [variantError, setVariantError] = useState(false);
@@ -136,12 +137,16 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
 
     setIsSubmitting(true);
 
+    const fullAddress = selectedDistrict
+      ? `${selectedDistrict}, ${address.trim()}`
+      : address.trim();
+
     const newOrder: Order = {
       id: Math.floor(1000 + Math.random() * 9000),
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
       delivery_type: deliveryType,
-      address: deliveryType === 'delivery' ? address.trim() : undefined,
+      address: deliveryType === 'delivery' ? fullAddress : undefined,
       items: [
         {
           product_id: product.id,
@@ -342,23 +347,43 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
               </div>
             </div>
 
-            {/* Address */}
+            {/* District & Address */}
             {deliveryType === 'delivery' && (
-              <div>
-                <label className="block text-xs font-medium text-content-secondary mb-1">
-                  {t.deliveryAddress} *
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 absolute left-3 top-3 text-content-secondary" />
-                  <textarea
-                    required
-                    rows={2}
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    onFocus={handleInputFocus}
-                    placeholder={t.addressPlaceholder}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-btn text-xs border border-border bg-page text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent resize-none"
-                  />
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-content-secondary mb-1">
+                    {t.districtLabel}
+                  </label>
+                  <select
+                    value={selectedDistrict}
+                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-btn text-xs border border-border bg-page text-content-primary focus:outline-none focus:border-accent"
+                  >
+                    <option value="">{t.selectDistrict}</option>
+                    {UZBEKISTAN_REGIONS.map((reg) => (
+                      <option key={reg.id} value={language === 'uz' ? reg.uz : reg.ru}>
+                        {language === 'uz' ? reg.uz : reg.ru}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-content-secondary mb-1">
+                    {t.deliveryAddress} *
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 absolute left-3 top-3 text-content-secondary" />
+                    <textarea
+                      required
+                      rows={2}
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      onFocus={handleInputFocus}
+                      placeholder={t.addressPlaceholder}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-btn text-xs border border-border bg-page text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent resize-none"
+                    />
+                  </div>
                 </div>
               </div>
             )}

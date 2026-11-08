@@ -79,3 +79,31 @@ export function getContrastTextColor(hexColor?: string): string {
   return yiq >= 160 ? '#1A1A1A' : '#FFFFFF';
 }
 
+export const UZBEKISTAN_REGIONS = [
+  { id: 'tashkent_yunusobod', ru: 'Ташкент: Юнусабадский район', uz: 'Toshkent: Yunusobod tumani' },
+  { id: 'tashkent_chilonzor', ru: 'Ташкент: Чиланзарский район', uz: 'Toshkent: Chilonzor tumani' },
+  { id: 'tashkent_mirzo_ulugbek', ru: 'Ташкент: Мирзо-Улугбекский район', uz: 'Toshkent: Mirzo Ulug‘bek tumani' },
+  { id: 'tashkent_yakkasaroy', ru: 'Ташкент: Яккасарайский район', uz: 'Toshkent: Yakkasaroy tumani' },
+  { id: 'tashkent_mirobod', ru: 'Ташкент: Мирабадский район', uz: 'Toshkent: Mirobod tumani' },
+  { id: 'tashkent_shayxontohur', ru: 'Ташкент: Шайхантахурский район', uz: 'Toshkent: Shayxontohur tumani' },
+  { id: 'tashkent_olmazor', ru: 'Ташкент: Алмазарский район', uz: 'Toshkent: Olmazor tumani' },
+  { id: 'tashkent_yashnobod', ru: 'Ташкент: Яшнабадский район', uz: 'Toshkent: Yashnobod tumani' },
+  { id: 'tashkent_uchtepa', ru: 'Ташкент: Учтепинский район', uz: 'Toshkent: Uchtepa tumani' },
+  { id: 'tashkent_sergeli', ru: 'Ташкент: Сергелийский район', uz: 'Toshkent: Sergeli tumani' },
+  { id: 'tashkent_yangihayot', ru: 'Ташкент: Янгихаётский район', uz: 'Toshkent: Yangihayot tumani' },
+  { id: 'tashkent_bektemir', ru: 'Ташкент: Бектемирский район', uz: 'Toshkent: Bektemir tumani' },
+  { id: 'tashkent_region', ru: 'Ташкентская область', uz: 'Toshkent viloyati' },
+  { id: 'samarkand', ru: 'Самаркандская область', uz: 'Samarqand viloyati' },
+  { id: 'bukhara', ru: 'Бухарская область', uz: 'Buxoro viloyati' },
+  { id: 'fergana', ru: 'Ферганская область', uz: 'Farg‘ona viloyati' },
+  { id: 'andijan', ru: 'Андижанская область', uz: 'Andijon viloyati' },
+  { id: 'namangan', ru: 'Наманганская область', uz: 'Namangan viloyati' },
+  { id: 'kashkadarya', ru: 'Кашкадарьинская область', uz: 'Qashqadaryo viloyati' },
+  { id: 'surkhandarya', ru: 'Сурхандарьинская область', uz: 'Surxondaryo viloyati' },
+  { id: 'navoiy', ru: 'Навоийская область', uz: 'Navoiy viloyati' },
+  { id: 'jizzakh', ru: 'Джизакская область', uz: 'Jizzax viloyati' },
+  { id: 'syrdarya', ru: 'Сырдарьинская область', uz: 'Sirdaryo viloyati' },
+  { id: 'khorezm', ru: 'Хорезмская область', uz: 'Xorazm viloyati' },
+  { id: 'karakalpakstan', ru: 'Республика Каракалпакстан', uz: 'Qoraqalpog‘iston Resp.' },
+];
+

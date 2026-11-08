@@ -63,6 +63,7 @@ export interface StoreSettings {
   announcement_active?: boolean;
   announcement_text?: string;
   default_language?: 'ru' | 'uz';
+  is_verified?: boolean;
 }
 
 export interface Category {

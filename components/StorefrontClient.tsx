@@ -16,6 +16,7 @@ import { Category, Order, Product, StoreSettings } from '@/types';
 import { PackageSearch } from 'lucide-react';
 import { translations } from '@/lib/i18n';
 import { computeStoreTokens, getEffectiveThemeSettings } from '@/lib/theme';
+import { StoreTrustBadges } from '@/components/StoreTrustBadges';
 
 export function StorefrontSkeleton() {
   return (
@@ -230,12 +231,23 @@ export function StorefrontClient({
     root.style.setProperty('--accent-text', tokens.onAccent);
   }, [isClient, tokens]);
 
-  // Auto-open product modal if directed from Stories (?item=ID)
+  // Auto-open product modal & scroll to product if directed (?product=ID or ?item=ID)
   useEffect(() => {
     if (isClient && itemIdParam && currentProducts.length > 0) {
-      const target = currentProducts.find((p) => p.id === itemIdParam);
+      const cleanTarget = itemIdParam.trim().toLowerCase();
+      const target = currentProducts.find(
+        (p) =>
+          p.id.toLowerCase() === cleanTarget ||
+          p.title.toLowerCase().replace(/\s+/g, '-') === cleanTarget
+      );
       if (target) {
         setActiveProductModal(target);
+        setTimeout(() => {
+          const el = document.getElementById(`product-${target.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
       }
     }
   }, [isClient, itemIdParam, currentProducts, setActiveProductModal]);
@@ -365,6 +377,11 @@ export function StorefrontClient({
           onToggleLayout={handleLayoutChange}
           storeSettings={effectiveSettings}
         />
+
+        {/* Store Trust & Guarantees (Non-carousel, sleek 2x2 grid) */}
+        <div className="px-3 pt-1">
+          <StoreTrustBadges />
+        </div>
 
         {/* 3. Products Grid / List */}
         <section id="catalog-section" className="p-3 flex-1 scroll-mt-14">

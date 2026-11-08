@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { X, Check, AlertCircle, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
+import { X, Check, AlertCircle, ChevronLeft, ChevronRight, ShoppingBag, Share2 } from 'lucide-react';
 import { Product, StoreSettings } from '@/types';
 import { calculateDiscount, formatPrice, getContrastTextColor } from '@/lib/utils';
 import { useBioMartStore } from '@/store/useStore';
@@ -30,6 +30,19 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [variantError, setVariantError] = useState(false);
   const [isAddedFeedback, setIsAddedFeedback] = useState(false);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+
+  const handleShareProduct = () => {
+    if (!product) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://biomart.vercel.app';
+    const slug = storeSettings.slug || 'shop';
+    const url = `${origin}/${slug}?product=${product.id}`;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(url);
+    }
+    setIsLinkCopied(true);
+    setTimeout(() => setIsLinkCopied(false), 2000);
+  };
 
   // Swipe / Drag down to dismiss state
   const [dragOffset, setDragOffset] = useState(0);
@@ -340,7 +353,27 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
 
         {/* Action Bottom Bar (Touch target >= 44px) */}
-        <div className="p-3 border-t border-border bg-surface flex gap-2 safe-pb">
+        <div className="p-3 border-t border-border bg-surface flex gap-2 safe-pb items-center">
+          <button
+            type="button"
+            onClick={handleShareProduct}
+            className="min-h-[44px] px-3 rounded-[10px] border border-border bg-page hover:bg-surface-soft text-content-primary flex items-center justify-center gap-1.5 text-xs font-semibold transition-colors active:scale-95 shrink-0"
+            title="Скопировать ссылку на товар"
+            aria-label="Скопировать ссылку на товар"
+          >
+            {isLinkCopied ? (
+              <>
+                <Check className="w-4 h-4 text-accent stroke-[3]" />
+                <span className="text-accent text-[11px]">{language === 'uz' ? 'Nusxalandi!' : 'Ссылка скопирована!'}</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="w-4 h-4 text-content-secondary" />
+                <span className="text-[11px] text-content-primary">{language === 'uz' ? 'Ulashish' : 'Поделиться'}</span>
+              </>
+            )}
+          </button>
+
           {product.in_stock ? (
             <button
               type="button"

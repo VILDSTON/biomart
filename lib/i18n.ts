@@ -27,6 +27,8 @@ export interface Translations {
   deliveryMethod: string;
   deliveryCourier: string;
   pickup: string;
+  districtLabel: string;
+  selectDistrict: string;
   deliveryAddress: string;
   addressPlaceholder: string;
   comment: string;
@@ -78,6 +80,8 @@ export const translations: Record<StoreLanguage, Translations> = {
     deliveryMethod: 'Способ получения',
     deliveryCourier: 'Доставка курьером',
     pickup: 'Самовывоз',
+    districtLabel: 'Район / Регион',
+    selectDistrict: 'Выберите район Ташкента или область',
     deliveryAddress: 'Адрес доставки',
     addressPlaceholder: 'Город, район, улица, дом...',
     comment: 'Комментарий к заказу (необязательно)',
@@ -132,6 +136,8 @@ export const translations: Record<StoreLanguage, Translations> = {
     deliveryMethod: 'Qabul qilish usuli',
     deliveryCourier: 'Kuryer orqali yetkazish',
     pickup: 'Olib ketish',
+    districtLabel: 'Tuman / Viloyat',
+    selectDistrict: 'Toshkent tumani yoki viloyatni tanlang',
     deliveryAddress: 'Yetkazib berish manzili',
     addressPlaceholder: 'Shahar, tuman, ko‘cha, uy...',
     comment: 'Buyurtmaga izoh (ixtiyoriy)',

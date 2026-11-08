@@ -106,15 +106,17 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                 <h1 className="text-base font-semibold text-content-primary truncate tracking-tight">
                   {settings.store_name}
                 </h1>
-                <span
-                  title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon' : 'Проверенный продавец платформы BioMart'}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-brand-soft text-brand text-[10px] font-semibold border border-brand-border shrink-0 select-none shadow-2xs"
-                >
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  <span className="hidden xs:inline text-[9px] sm:text-[10px]">
-                    {language === 'uz' ? 'BioMart tasdiqlagan' : 'подтверждено BioMart'}
+                {(isDemo || Boolean(settings.is_verified)) && (
+                  <span
+                    title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon' : 'Проверенный продавец платформы BioMart'}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-brand-soft text-brand text-[10px] font-semibold border border-brand-border shrink-0 select-none shadow-2xs"
+                  >
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    <span className="hidden xs:inline text-[9px] sm:text-[10px]">
+                      {language === 'uz' ? 'BioMart tasdiqlagan' : 'подтверждено BioMart'}
+                    </span>
                   </span>
-                </span>
+                )}
               </div>
 
               {/* Header Right: Language Switcher (RU | UZ) */}
@@ -213,28 +215,6 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
             <span className="overflow-wrap-anywhere">{settings.announcement_text}</span>
           </div>
         )}
-
-        {/* Catalog Scroll Cue (User request: покупатель должен знать, что дальше есть каталог) */}
-        <a
-          href="#catalog-section"
-          className="w-full mt-3 py-2 px-3.5 rounded-btn border border-border bg-page hover:bg-surface-soft flex items-center justify-between text-left gap-2 text-xs text-content-primary transition-all group active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-accent shrink-0 animate-pulse" />
-            <span className="font-semibold truncate">
-              {language === 'uz' ? 'Mahsulotlar katalogi' : 'Каталог товаров'}
-            </span>
-            {typeof totalProducts === 'number' && (
-              <span className="text-[11px] text-content-secondary font-medium shrink-0">
-                ({totalProducts})
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1 text-[11px] text-accent font-semibold shrink-0 group-hover:translate-y-0.5 transition-transform">
-            <span>{language === 'uz' ? 'Ko‘rish' : 'Смотреть'}</span>
-            <ChevronDown className="w-3.5 h-3.5" />
-          </div>
-        </a>
       </div>
     </header>
   );

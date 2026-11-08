@@ -134,6 +134,7 @@ export const MOCK_STORE_SETTINGS: StoreSettings = {
   theme: 'light',
   catalog_layout: 'grid',
   hide_branding: false,
+  is_verified: true,
   plan: 'pro',
   theme_settings: {
     preset: 'minimal',

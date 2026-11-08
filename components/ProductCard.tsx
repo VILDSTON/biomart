@@ -78,8 +78,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   if (layout === 'list' || storeSettings.card_style === 'compact') {
     return (
       <div
+        id={`product-${product.id}`}
         onClick={handleCardClick}
-        className="group relative flex gap-3 p-3 rounded-card border border-border bg-surface hover:border-accent/40 transition-all cursor-pointer shadow-xs active:scale-[0.99]"
+        className="group relative flex gap-3 p-3 rounded-card border border-border bg-surface hover:border-accent/40 transition-all cursor-pointer shadow-xs active:scale-[0.99] scroll-mt-24"
       >
         {/* Left: 4:5 image with blur-up */}
         <div className="relative w-20 aspect-[4/5] rounded-[10px] overflow-hidden bg-page border border-border shrink-0">
@@ -175,8 +176,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   if (storeSettings.card_style === 'single') {
     return (
       <div
+        id={`product-${product.id}`}
         onClick={handleCardClick}
-        className="group relative flex flex-col rounded-card overflow-hidden border border-border bg-surface hover:border-accent/40 transition-all cursor-pointer shadow-xs active:scale-[0.99] mb-3"
+        className="group relative flex flex-col rounded-card overflow-hidden border border-border bg-surface hover:border-accent/40 transition-all cursor-pointer shadow-xs active:scale-[0.99] mb-3 scroll-mt-24"
       >
         <div className="relative aspect-[16/10] w-full bg-page overflow-hidden border-b border-border">
           {hasImage ? (
@@ -266,8 +268,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // =========================================================================
   return (
     <div
+      id={`product-${product.id}`}
       onClick={handleCardClick}
-      className="group relative flex flex-col rounded-card overflow-hidden border border-border bg-surface hover:border-accent/40 transition-all cursor-pointer shadow-xs active:scale-[0.99]"
+      className="group relative flex flex-col rounded-card overflow-hidden border border-border bg-surface hover:border-accent/40 transition-all cursor-pointer shadow-xs active:scale-[0.99] scroll-mt-24"
     >
       {/* 4:5 Aspect Ratio Photo with Blur-up */}
       <div className="relative aspect-[4/5] w-full bg-page overflow-hidden border-b border-border">

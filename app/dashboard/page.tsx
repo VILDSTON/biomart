@@ -199,6 +199,7 @@ export default function DashboardPage() {
   const [settingsForm, setSettingsForm] = useState<StoreSettings>(settings);
   const [settingsSavedToast, setSettingsSavedToast] = useState(false);
   const [tgSavedToast, setTgSavedToast] = useState(false);
+  const [contactsSavedToast, setContactsSavedToast] = useState(false);
 
   // Orders Filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'new' | 'completed' | 'cancelled'>('all');
@@ -554,6 +555,39 @@ export default function DashboardPage() {
     });
     setTgSavedToast(true);
     setTimeout(() => setTgSavedToast(false), 2500);
+  };
+
+  const handleSaveContacts = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const rawIg = settingsForm.instagram_url?.trim() || '';
+    const cleanIg = rawIg ? (rawIg.startsWith('http') ? rawIg : `https://instagram.com/${rawIg.replace('@', '')}`) : '';
+    const cleanTgUser = settingsForm.telegram_username?.replace('@', '').trim() || '';
+    const cleanPhone = settingsForm.phone?.trim() || '';
+
+    updateShopSettings(activeSlug, {
+      instagram_url: cleanIg,
+      telegram_username: cleanTgUser,
+      phone: cleanPhone,
+    });
+
+    try {
+      await fetch('/api/stores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: activeSlug,
+          store_name: settings.store_name,
+          instagram_url: cleanIg,
+          telegram_username: cleanTgUser,
+          phone: cleanPhone,
+        }),
+      });
+    } catch (e) {
+      console.warn('Sync contacts warning:', e);
+    }
+
+    setContactsSavedToast(true);
+    setTimeout(() => setContactsSavedToast(false), 2500);
   };
 
   const handleAddPromo = (e: React.FormEvent) => {
@@ -968,8 +1002,8 @@ export default function DashboardPage() {
                 : 'text-content-secondary hover:bg-page hover:text-content-primary'
             }`}
           >
-            <Send className="w-3.5 h-3.5" />
-            <span>Telegram</span>
+            <Phone className="w-3.5 h-3.5" />
+            <span>Контакты и TG</span>
           </button>
 
           <button
@@ -1392,7 +1426,24 @@ export default function DashboardPage() {
                           </button>
 
                           {openActionMenuId === prod.id && (
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-surface border border-border rounded-[10px] shadow-md py-1 z-30 text-xs">
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-[10px] shadow-md py-1 z-30 text-xs">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenActionMenuId(null);
+                                  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://biomart.vercel.app';
+                                  const url = `${origin}/${activeSlug}?product=${prod.id}`;
+                                  if (navigator?.clipboard?.writeText) {
+                                    navigator.clipboard.writeText(url);
+                                  }
+                                  showToast('Прямая ссылка на товар скопирована!');
+                                }}
+                                className="w-full text-left px-3 py-1.5 text-content-primary hover:bg-page flex items-center gap-2 font-medium"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 text-[#1F7A5A]" />
+                                <span>Ссылка на товар</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1889,9 +1940,11 @@ export default function DashboardPage() {
 
                           <select
                             value={order.status}
-                            onChange={(e) =>
-                              updateShopOrderStatus(activeSlug, order.id, e.target.value as any)
-                            }
+                            onChange={(e) => {
+                              const newStatus = e.target.value as any;
+                              updateShopOrderStatus(activeSlug, order.id, newStatus);
+                              showToast(`Статус заказа #${order.id} изменен на «${newStatus === 'completed' ? 'Выполнен' : newStatus === 'cancelled' ? 'Отменён' : 'Новый'}»`);
+                            }}
                             className={`text-xs font-medium px-2 py-1 rounded-[8px] border focus:outline-none ${
                               order.status === 'new'
                                 ? 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]'
@@ -1937,13 +1990,20 @@ export default function DashboardPage() {
                             </a>
 
                             <a
-                              href={`https://t.me/${cleanPhone.replace('+', '')}`}
+                              href={`https://t.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(
+                                order.status === 'completed'
+                                  ? `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» успешно выполнен. Спасибо за покупку!`
+                                  : order.status === 'cancelled'
+                                  ? `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» был отменен.`
+                                  : `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» принят в обработку и передан курьеру. Ожидайте доставку!`
+                              )}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 text-[11px] font-medium bg-page text-content-primary px-2 py-1 rounded-[6px] border border-border hover:bg-[#E7E4DC]"
+                              title="Отправить статус заказа клиенту в Telegram"
                             >
                               <Send className="w-3 h-3 text-[#1F7A5A]" />
-                              <span>Написать в TG</span>
+                              <span>Уведомить в TG</span>
                             </a>
 
                             {order.address && (
@@ -2025,16 +2085,124 @@ export default function DashboardPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 3: TELEGRAM INTEGRATION (MULTI-TENANT RULE 1) */}
+          {/* TAB 3: CONTACTS & TELEGRAM INTEGRATION */}
           {/* ========================================================================= */}
           {activeTab === 'telegram' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* CARD 1: STORE CONTACTS (INSTAGRAM, TELEGRAM, PHONE) */}
               <div>
                 <h2 className="text-base sm:text-lg font-semibold text-content-primary">
-                  Привязка Telegram (Куда присылать заказы)
+                  Контакты витрины и связь
                 </h2>
                 <p className="text-xs text-content-secondary">
-                  У каждого продавца свой Telegram Chat ID — заказы будут приходить лично вам
+                  Эти данные отображаются в шапке вашей витрины для связи с покупателями
+                </p>
+              </div>
+
+              <div className="bg-surface border border-border rounded-[14px] p-5 space-y-4">
+                <form onSubmit={handleSaveContacts} className="space-y-4">
+                  {/* Instagram handle / url */}
+                  <div>
+                    <label className="block text-xs font-semibold text-content-primary mb-1 flex items-center gap-1.5">
+                      <Instagram className="w-3.5 h-3.5 text-pink-500" />
+                      <span>Instagram аккаунт или ссылка:</span>
+                    </label>
+                    <div className="flex items-center rounded-[10px] bg-page border border-border overflow-hidden focus-within:border-[#1F7A5A]">
+                      <span className="pl-3.5 pr-1 py-2.5 text-xs font-semibold text-content-secondary font-mono select-none">
+                        @
+                      </span>
+                      <input
+                        type="text"
+                        value={settingsForm.instagram_url ? settingsForm.instagram_url.replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace('@', '') : ''}
+                        onChange={(e) =>
+                          setSettingsForm({
+                            ...settingsForm,
+                            instagram_url: e.target.value.trim() ? `https://instagram.com/${e.target.value.replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace('@', '').trim()}` : '',
+                          })
+                        }
+                        placeholder="tashkent_drip"
+                        className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-xs text-content-primary focus:outline-none placeholder:text-content-secondary"
+                      />
+                    </div>
+                    <p className="text-[10px] text-content-secondary mt-1">
+                      Отображается кнопка Instagram в шапке витрины для перехода в ваш профиль
+                    </p>
+                  </div>
+
+                  {/* Telegram username */}
+                  <div>
+                    <label className="block text-xs font-semibold text-content-primary mb-1 flex items-center gap-1.5">
+                      <Send className="w-3.5 h-3.5 text-[#2AABEE]" />
+                      <span>Telegram магазина (для сообщений покупателей):</span>
+                    </label>
+                    <div className="flex items-center rounded-[10px] bg-page border border-border overflow-hidden focus-within:border-[#1F7A5A]">
+                      <span className="pl-3.5 pr-1 py-2.5 text-xs font-semibold text-content-secondary font-mono select-none">
+                        @
+                      </span>
+                      <input
+                        type="text"
+                        value={settingsForm.telegram_username ? settingsForm.telegram_username.replace('@', '') : ''}
+                        onChange={(e) =>
+                          setSettingsForm({
+                            ...settingsForm,
+                            telegram_username: e.target.value.replace('@', '').trim(),
+                          })
+                        }
+                        placeholder="vash_username_ili_kanal"
+                        className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-xs text-content-primary focus:outline-none placeholder:text-content-secondary"
+                      />
+                    </div>
+                    <p className="text-[10px] text-content-secondary mt-1">
+                      Покупатель нажимает кнопку «Telegram» в шапке и сразу пишет вам в чат
+                    </p>
+                  </div>
+
+                  {/* Phone number */}
+                  <div>
+                    <label className="block text-xs font-semibold text-content-primary mb-1 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-[#1F7A5A]" />
+                      <span>Телефон магазина (для кнопки «Позвонить»):</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.phone || ''}
+                      onChange={(e) =>
+                        setSettingsForm({
+                          ...settingsForm,
+                          phone: e.target.value,
+                        })
+                      }
+                      placeholder="+998 90 123 45 67"
+                      className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-[#1F7A5A]"
+                    />
+                    <p className="text-[10px] text-content-secondary mt-1">
+                      Если поле пустое, кнопка звонка на витрине скрыта
+                    </p>
+                  </div>
+
+                  {contactsSavedToast && (
+                    <div className="p-2.5 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] text-xs font-medium flex items-center gap-1.5 animate-fade-in border border-[#1F7A5A]/20">
+                      <Check className="w-4 h-4 text-[#1F7A5A] stroke-[2.5]" />
+                      <span>Контакты витрины успешно сохранены и обновлены!</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="py-2.5 px-4 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium text-xs rounded-[10px] transition-colors"
+                  >
+                    Сохранить контакты витрины
+                  </button>
+                </form>
+              </div>
+
+              {/* CARD 2: TELEGRAM BOT INTEGRATION FOR ORDERS */}
+              <div className="pt-2">
+                <h3 className="text-sm font-semibold text-content-primary">
+                  Привязка бота для приёма заказов
+                </h3>
+                <p className="text-xs text-content-secondary">
+                  Сюда бот @BioMartAssistant_bot присылает уведомления о новых заказах клиентов
                 </p>
               </div>
 
