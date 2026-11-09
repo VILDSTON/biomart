@@ -24,7 +24,68 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const rawSlug = params?.slug || 'tashkent_drip';
   const cleanSlug = rawSlug.toLowerCase();
+
+  if (cleanSlug === '404') {
+    return {
+      title: '404 — Страница не найдена | BioMart',
+      description: 'Запрашиваемая страница не существует или магазин изменил адрес.',
+      robots: { index: false, follow: true },
+    };
+  }
+
   const demoPreset = DEMO_PRESET_SHOPS[cleanSlug];
+  const isDemoSlug = cleanSlug === 'tashkent_drip' || Boolean(demoPreset);
+
+  // If not a demo store, check if store exists in DB or cookies
+  if (!isDemoSlug) {
+    let dbStoreName: string | null = null;
+    let dbDesc: string | null = null;
+    try {
+      const supabase = createSupabaseServerClient();
+      if (supabase) {
+        const { data } = await supabase
+          .from('stores')
+          .select('id, store_name, description')
+          .eq('slug', cleanSlug)
+          .maybeSingle();
+        if (data) {
+          dbStoreName = data.store_name;
+          dbDesc = data.description;
+        }
+      }
+    } catch {}
+
+    let cookieStoreName: string | null = null;
+    try {
+      const cookieStore = cookies();
+      const rawContacts = cookieStore.get(`biomart_contacts_${cleanSlug}`)?.value;
+      if (rawContacts) {
+        const parsed = JSON.parse(decodeURIComponent(rawContacts));
+        cookieStoreName = parsed.store_name || null;
+      }
+    } catch {}
+
+    const resolvedName = dbStoreName || cookieStoreName;
+    if (!resolvedName) {
+      return {
+        title: '404 — Магазин не найден | BioMart',
+        description: 'Запрашиваемый магазин не существует или изменил свой адрес.',
+        robots: { index: false, follow: true },
+      };
+    }
+
+    return {
+      title: `${resolvedName} — Витрина товаров в Instagram и Telegram`,
+      description: dbDesc || `Онлайн-витрина ${resolvedName} на платформе BioMart`,
+      openGraph: {
+        title: `${resolvedName} | BioMart`,
+        description: dbDesc || `Онлайн-витрина ${resolvedName} на платформе BioMart`,
+        url: `https://biomart.vercel.app/${cleanSlug}`,
+        siteName: 'BioMart',
+        type: 'website',
+      },
+    };
+  }
 
   const storeName = demoPreset
     ? demoPreset.settings.store_name
@@ -107,6 +168,14 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
   }
 
   const demoPreset = DEMO_PRESET_SHOPS[cleanSlug];
+  const isDemoSlug = cleanSlug === 'tashkent_drip' || Boolean(demoPreset);
+  const hasStore = Boolean(dbStore?.id || isDemoSlug || cookieContacts?.store_name || cookieTheme);
+
+  // If this slug is not a known demo store, not in database, and not in merchant cookies: return 404
+  if (cleanSlug === '404' || !hasStore) {
+    notFound();
+  }
+
   const fallbackSettings = demoPreset?.settings || MOCK_STORE_SETTINGS;
 
   // 3. Fallback to mock settings for demo store or new stores

@@ -20,6 +20,10 @@ export const RESERVED_SLUGS = [
   'static',
   '_next',
   'favicon.ico',
+  '404',
+  'rules',
+  'sitemap.xml',
+  'robots.txt',
 ] as const;
 
 /**
