@@ -49,6 +49,12 @@ import {
   Globe,
   Link2,
   ArrowUpRight,
+  Users,
+  UserPlus,
+  Shield,
+  CheckCircle2,
+  User,
+  Save,
 } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { ACCENT_COLOR_PRESETS } from '@/lib/mock-data';
@@ -56,11 +62,13 @@ import { QRCodeCard } from '@/components/QRCodeCard';
 import { StoriesGeneratorModal } from '@/components/StoriesGeneratorModal';
 import { StorefrontDesignEditor } from '@/components/StorefrontDesignEditor';
 import { BioMartLogo } from '@/components/BioMartLogo';
-import { CatalogLayout, Category, Order, Product, StoreSettings, ThemeMode, PlanType, StoreCustomLink, StoreLinkIcon } from '@/types';
+import { CatalogLayout, Category, Order, Product, StoreSettings, ThemeMode, PlanType, StoreCustomLink, StoreLinkIcon, StoreMember, StoreMemberRole } from '@/types';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { SupportModal } from '@/components/SupportModal';
 import { IS_SUBSCRIPTION_ENABLED } from '@/lib/constants';
+import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
+import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 
 const AVATAR_PRESETS = [
   { name: 'Streetwear & Стиль', url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=400&q=80', label: 'Одежда' },
@@ -85,7 +93,7 @@ function cleanDisplayAiText(text: string): string {
     .trim();
 }
 
-type DashboardTab = 'orders' | 'products' | 'links' | 'share' | 'telegram' | 'branding' | 'design' | 'tariff' | 'ai';
+type DashboardTab = 'orders' | 'products' | 'links' | 'share' | 'telegram' | 'branding' | 'design' | 'team' | 'tariff' | 'ai';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -102,7 +110,7 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
       const tab = sp.get('tab') as DashboardTab;
-      const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
+      const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', 'team', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
       if (allowedTabs.includes(tab)) return tab;
     }
     return 'orders';
@@ -181,6 +189,9 @@ export default function DashboardPage() {
     updateShopOrderStatus,
     addShopCategory,
     deleteShopCategory,
+    renameShopSlug,
+    addStoreMember,
+    removeStoreMember,
     resetDemoData,
     shops,
   } = useBioMartStore();
@@ -218,7 +229,7 @@ export default function DashboardPage() {
       setIsAuthenticated(true);
     }
     const tabParam = searchParams?.get('tab') as DashboardTab | null;
-    const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
+    const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', 'team', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
     if (tabParam && allowedTabs.includes(tabParam)) {
       setActiveTab(tabParam);
     }
@@ -298,6 +309,27 @@ export default function DashboardPage() {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkError, setLinkError] = useState('');
 
+  // Store Identity State (Name, Slug, Description)
+  const [storeNameInput, setStoreNameInput] = useState(settings.store_name);
+  const [storeSlugInput, setStoreSlugInput] = useState(activeSlug);
+  const [storeDescInput, setStoreDescInput] = useState(settings.description || '');
+  const [identitySlugError, setIdentitySlugError] = useState('');
+  const [isIdentitySavedToast, setIsIdentitySavedToast] = useState(false);
+
+  useEffect(() => {
+    setStoreNameInput(settings.store_name);
+    setStoreSlugInput(activeSlug);
+    setStoreDescInput(settings.description || '');
+    setIdentitySlugError('');
+  }, [activeSlug, settings.store_name, settings.description]);
+
+  // Team Invite Modal State
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteRole, setInviteRole] = useState<StoreMemberRole>('manager');
+  const [inviteName, setInviteName] = useState('');
+  const [invitePhone, setInvitePhone] = useState('');
+  const [inviteError, setInviteError] = useState('');
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -345,7 +377,7 @@ export default function DashboardPage() {
 
     if (isLimitReached) {
       setFormError(
-        `Вы достигли лимита ${maxProducts} товаров для тарифа ${currentPlan.toUpperCase()}. Перейдите на Plus или Pro для увеличения лимита.`
+        `Вы достигли бесплатного лимита ${maxProducts} товаров в каталоге.`
       );
       return;
     }
@@ -541,7 +573,7 @@ export default function DashboardPage() {
   const handleDuplicateProduct = (prod: Product) => {
     if (isLimitReached) {
       showToast(
-        `Достигнут лимит товаров (${maxProducts}) для тарифа ${currentPlan.toUpperCase()}. Перейдите на тариф Plus или Pro.`
+        `Достигнут бесплатный лимит (${maxProducts}) товаров в каталоге.`
       );
       return;
     }
@@ -566,6 +598,137 @@ export default function DashboardPage() {
     });
     setTgSavedToast(true);
     setTimeout(() => setTgSavedToast(false), 2500);
+  };
+
+  const handleSaveStoreIdentity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIdentitySlugError('');
+
+    const trimmedName = storeNameInput.trim();
+    const cleanNewSlug = storeSlugInput.toLowerCase().replace(/[^a-z0-9_]/g, '').trim();
+
+    if (!trimmedName) {
+      setIdentitySlugError('Укажите название витрины');
+      return;
+    }
+
+    if (!cleanNewSlug || cleanNewSlug.length < 3) {
+      setIdentitySlugError('Адрес витрины должен содержать от 3 символов (только латиница и цифры)');
+      return;
+    }
+
+    if (RESERVED_SLUGS.includes(cleanNewSlug as any)) {
+      setIdentitySlugError('Этот адрес зарезервирован системой BioMart');
+      return;
+    }
+
+    if (isSlugBanned(cleanNewSlug)) {
+      setIdentitySlugError('Этот адрес недоступен для использования');
+      return;
+    }
+
+    const modCheck = validateStoreContent({ store_name: trimmedName, slug: cleanNewSlug });
+    if (!modCheck.isValid) {
+      setIdentitySlugError(modCheck.error || 'Название содержит недопустимые слова');
+      return;
+    }
+
+    let targetSlug = activeSlug;
+
+    // If slug was changed
+    if (cleanNewSlug !== activeSlug) {
+      if (shops[cleanNewSlug]) {
+        setIdentitySlugError('Этот адрес уже занят другим магазином');
+        return;
+      }
+
+      const renamed = renameShopSlug(activeSlug, cleanNewSlug);
+      if (!renamed) {
+        setIdentitySlugError('Не удалось изменить адрес магазина');
+        return;
+      }
+      targetSlug = cleanNewSlug;
+      sessionStorage.setItem('biomart_current_slug', cleanNewSlug);
+    }
+
+    // Update store settings
+    updateShopSettings(targetSlug, {
+      store_name: trimmedName,
+      description: storeDescInput.trim(),
+    });
+
+    // Update cookies
+    try {
+      const contactsPayload = {
+        store_name: trimmedName,
+        description: storeDescInput.trim(),
+        instagram_url: settingsForm.instagram_url,
+        telegram_username: settingsForm.telegram_username,
+        phone: settingsForm.phone,
+        custom_links: settings.custom_links || [],
+      };
+      document.cookie = `biomart_contacts_${targetSlug}=${encodeURIComponent(JSON.stringify(contactsPayload))}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
+
+    // Persist to Supabase if configured
+    try {
+      await fetch('/api/stores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: targetSlug,
+          store_name: trimmedName,
+          description: storeDescInput.trim(),
+          instagram_url: settingsForm.instagram_url,
+          telegram_username: settingsForm.telegram_username,
+          phone: settingsForm.phone,
+        }),
+      });
+    } catch (e) {
+      console.warn('Sync store identity warning:', e);
+    }
+
+    setIsIdentitySavedToast(true);
+    setTimeout(() => setIsIdentitySavedToast(false), 2500);
+    showToast('Основные данные и адрес витрины успешно сохранены');
+
+    if (targetSlug !== activeSlug) {
+      router.replace(`/dashboard?shop=${encodeURIComponent(targetSlug)}`);
+    }
+  };
+
+  const handleAddMemberSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviteError('');
+
+    if (!inviteName.trim()) {
+      setInviteError('Укажите имя сотрудника');
+      return;
+    }
+
+    addStoreMember(activeSlug, {
+      name: inviteName.trim(),
+      phone: invitePhone.trim(),
+      role: inviteRole,
+    });
+
+    setInviteName('');
+    setInvitePhone('');
+    setIsInviteModalOpen(false);
+    showToast(`Сотрудник ${inviteName.trim()} добавлен в команду`);
+  };
+
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    removeStoreMember(activeSlug, memberId);
+    showToast(`Сотрудник ${memberName} удален из команды`);
+  };
+
+  const handleCopyInviteLink = () => {
+    if (typeof window !== 'undefined') {
+      const inviteUrl = `${window.location.origin}/register?invite=team_${activeSlug}_${Date.now()}&shop=${activeSlug}&role=${inviteRole}`;
+      navigator.clipboard.writeText(inviteUrl);
+      showToast('Ссылка-приглашение скопирована в буфер обмена');
+    }
   };
 
   const handleSaveContacts = async (e: React.FormEvent) => {
@@ -734,6 +897,17 @@ export default function DashboardPage() {
     }
 
     updateShopSettings(activeSlug, { custom_links: updatedLinks });
+    try {
+      const rawCookie = document.cookie.split('; ').find((r) => r.startsWith(`biomart_contacts_${activeSlug}=`));
+      let existingContacts: any = {};
+      if (rawCookie) {
+        try {
+          existingContacts = JSON.parse(decodeURIComponent(rawCookie.split('=')[1]));
+        } catch {}
+      }
+      existingContacts.custom_links = updatedLinks;
+      document.cookie = `biomart_contacts_${activeSlug}=${encodeURIComponent(JSON.stringify(existingContacts))}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
     setIsLinkModalOpen(false);
   };
 
@@ -743,6 +917,17 @@ export default function DashboardPage() {
       l.id === linkId ? { ...l, is_active: !l.is_active } : l
     );
     updateShopSettings(activeSlug, { custom_links: updated });
+    try {
+      const rawCookie = document.cookie.split('; ').find((r) => r.startsWith(`biomart_contacts_${activeSlug}=`));
+      let existingContacts: any = {};
+      if (rawCookie) {
+        try {
+          existingContacts = JSON.parse(decodeURIComponent(rawCookie.split('=')[1]));
+        } catch {}
+      }
+      existingContacts.custom_links = updated;
+      document.cookie = `biomart_contacts_${activeSlug}=${encodeURIComponent(JSON.stringify(existingContacts))}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
     showToast('Статус кнопки изменён');
   };
 
@@ -750,6 +935,17 @@ export default function DashboardPage() {
     const currentLinks = settings.custom_links || [];
     const updated = currentLinks.filter((l) => l.id !== linkId);
     updateShopSettings(activeSlug, { custom_links: updated });
+    try {
+      const rawCookie = document.cookie.split('; ').find((r) => r.startsWith(`biomart_contacts_${activeSlug}=`));
+      let existingContacts: any = {};
+      if (rawCookie) {
+        try {
+          existingContacts = JSON.parse(decodeURIComponent(rawCookie.split('=')[1]));
+        } catch {}
+      }
+      existingContacts.custom_links = updated;
+      document.cookie = `biomart_contacts_${activeSlug}=${encodeURIComponent(JSON.stringify(existingContacts))}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
     showToast('Кнопка удалена');
   };
 
@@ -776,13 +972,6 @@ export default function DashboardPage() {
 
   // Excel / CSV Export (Supports CSV and Excel-native XLS format)
   const handleExportOrdersToExcel = (formatType: 'csv' | 'xls' = 'csv') => {
-    if (!isProPlan) {
-      showToast(
-        'Экспорт заказов в Excel (.xlsx/.csv) доступен на тарифе Pro. Перейдите во вкладку «Дизайн», чтобы выбрать Pro.'
-      );
-      return;
-    }
-
     if (filteredOrders.length === 0) {
       alert('За выбранный период заказов нет.');
       return;
@@ -1180,6 +1369,23 @@ export default function DashboardPage() {
           >
             <Palette className="w-3.5 h-3.5" />
             <span>Дизайн</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('team')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'team'
+                ? 'bg-[#1F7A5A] text-white shadow-xs'
+                : 'text-content-secondary hover:bg-page hover:text-content-primary'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Команда</span>
+            {(settings.team_members?.length || 0) > 0 && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-page text-content-primary font-mono font-semibold">
+                {settings.team_members?.length}
+              </span>
+            )}
           </button>
 
           {IS_SUBSCRIPTION_ENABLED && (
@@ -1941,8 +2147,8 @@ export default function DashboardPage() {
                       Топ товаров по продажам
                     </h3>
                   </div>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-[6px] bg-[#E4F1EB] text-[#1F7A5A]">
-                    {isProPlan ? 'PRO ДАШБОРД' : 'ТАРИФ PRO'}
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[6px] bg-accent-soft text-accent">
+                    ТОП ПРОДАЖ
                   </span>
                 </div>
 
@@ -2459,6 +2665,106 @@ export default function DashboardPage() {
           {/* ========================================================================= */}
           {activeTab === 'telegram' && (
             <div className="space-y-6">
+              {/* CARD 0: STORE IDENTITY (STORE NAME & SLUG / URL) */}
+              <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center gap-2">
+                    <Store className="w-4 h-4 text-accent" />
+                    <div>
+                      <h3 className="text-xs font-bold text-content-primary">
+                        Основные данные и адрес витрины
+                      </h3>
+                      <p className="text-[11px] text-content-secondary">
+                        Название магазина и прямая ссылка, по которой покупатели находят вашу витрину
+                      </p>
+                    </div>
+                  </div>
+                  {isIdentitySavedToast && (
+                    <span className="text-[11px] font-semibold text-accent bg-accent-soft px-2 py-0.5 rounded-[6px] animate-fade-in flex items-center gap-1">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                      <span>Сохранено</span>
+                    </span>
+                  )}
+                </div>
+
+                <form onSubmit={handleSaveStoreIdentity} className="space-y-4">
+                  {/* Store Name Input */}
+                  <div>
+                    <label className="block text-xs font-semibold text-content-primary mb-1">
+                      Название витрины:
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={storeNameInput}
+                      onChange={(e) => setStoreNameInput(e.target.value)}
+                      placeholder="Например: Tashkent Drip"
+                      className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs text-content-primary font-medium focus:outline-none focus:border-accent"
+                    />
+                    <p className="text-[10px] text-content-secondary mt-1">
+                      Отображается в шапке магазина, чеках в Telegram и вкладке браузера
+                    </p>
+                  </div>
+
+                  {/* Store Slug / URL Input */}
+                  <div>
+                    <label className="block text-xs font-semibold text-content-primary mb-1">
+                      Адрес ссылки на витрину (Slug):
+                    </label>
+                    <div className="flex items-center rounded-[10px] bg-page border border-border overflow-hidden focus-within:border-accent">
+                      <span className="pl-3.5 pr-1 py-2.5 text-xs font-semibold text-content-secondary font-mono select-none">
+                        biomart.uz/
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        value={storeSlugInput}
+                        onChange={(e) => {
+                          const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 30);
+                          setStoreSlugInput(val);
+                          setIdentitySlugError('');
+                        }}
+                        placeholder="vash_magazin"
+                        className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-xs text-content-primary font-mono font-semibold focus:outline-none placeholder:text-content-secondary"
+                      />
+                    </div>
+                    {identitySlugError ? (
+                      <p className="text-[11px] text-danger font-medium mt-1">
+                        {identitySlugError}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-content-secondary mt-1">
+                        Только строчные латинские буквы, цифры и знак подчеркивания _ (от 3 до 30 символов)
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Store Description Input */}
+                  <div>
+                    <label className="block text-xs font-semibold text-content-primary mb-1">
+                      Краткое описание витрины (био):
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={storeDescInput}
+                      onChange={(e) => setStoreDescInput(e.target.value)}
+                      placeholder="Опишите ваши товары, условия примерки или доставки..."
+                      className="w-full px-3.5 py-2 bg-page border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-accent resize-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end pt-1">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Сохранить адрес и название</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
               {/* CARD 1: STORE CONTACTS (INSTAGRAM, TELEGRAM, PHONE) */}
               <div>
                 <h2 className="text-base sm:text-lg font-semibold text-content-primary">
@@ -2706,7 +3012,191 @@ export default function DashboardPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 5: TARIFF */}
+                    {/* ========================================================================= */}
+          {/* TAB: TEAM (КОМАНДА И СОТРУДНИКИ) */}
+          {/* ========================================================================= */}
+          {activeTab === 'team' && (
+            <div className="space-y-4">
+              {/* Header Card */}
+              <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-content-primary flex items-center gap-2">
+                    <Users className="w-5 h-5 text-accent" />
+                    <span>Команда магазина</span>
+                  </h2>
+                  <p className="text-xs text-content-secondary mt-0.5">
+                    Управляйте доступом сотрудников к заказам, каталогу и работе с клиентами
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInviteModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-colors shadow-xs shrink-0 self-start sm:self-auto"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Добавить сотрудника</span>
+                </button>
+              </div>
+
+              {/* Quick Invite Link Banner */}
+              <div className="bg-accent-soft/30 border border-accent/20 rounded-[14px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center shrink-0 mt-0.5">
+                    <Link2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-content-primary">
+                      Быстрое приглашение по ссылке
+                    </h3>
+                    <p className="text-[11px] text-content-secondary mt-0.5 leading-relaxed">
+                      Отправьте специальную ссылку коллеге (менеджеру или курьеру). При переходе он подключится к вашей витрине.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyInviteLink}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[8px] bg-surface hover:bg-page border border-border text-xs font-medium text-content-primary transition-colors shrink-0"
+                >
+                  <Copy className="w-3.5 h-3.5 text-accent" />
+                  <span>Скопировать ссылку</span>
+                </button>
+              </div>
+
+              {/* Team Members List */}
+              <div className="bg-surface border border-border rounded-[14px] overflow-hidden">
+                <div className="p-4 border-b border-border flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-content-primary flex items-center gap-2">
+                    <span>Участники команды</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-page text-content-secondary font-mono">
+                      {(settings.team_members?.length || 0) + 1}
+                    </span>
+                  </h3>
+                  <span className="text-[11px] text-content-secondary">
+                    Роли и уровни доступа
+                  </span>
+                </div>
+
+                <div className="divide-y divide-border">
+                  {/* Store Owner (You) */}
+                  <div className="p-4 flex items-center justify-between gap-3 hover:bg-page/40 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-[#1F7A5A] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                        В
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-content-primary truncate">
+                            Владелец витрины (Вы)
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent border border-accent/20">
+                            Владелец
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-content-secondary truncate mt-0.5">
+                          Полный доступ ко всем функциям магазина
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Активен</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Registered Team Members */}
+                  {(settings.team_members || []).map((member) => (
+                    <div
+                      key={member.id}
+                      className="p-4 flex items-center justify-between gap-3 hover:bg-page/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-surface border border-border text-content-primary flex items-center justify-center font-bold text-xs shrink-0">
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-content-primary truncate">
+                              {member.name}
+                            </span>
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                                member.role === 'admin'
+                                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
+                                  : member.role === 'manager'
+                                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                              }`}
+                            >
+                              {member.role === 'admin'
+                                ? 'Администратор'
+                                : member.role === 'manager'
+                                ? 'Менеджер'
+                                : 'Курьер'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-content-secondary mt-0.5">
+                            {member.phone && <span>{member.phone}</span>}
+                            <span>•</span>
+                            <span>Добавлен: {new Date(member.addedAt).toLocaleDateString('ru-RU')}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(member.id, member.name)}
+                          className="p-1.5 rounded-[8px] text-content-secondary hover:text-danger hover:bg-danger/10 transition-colors"
+                          title="Удалить из команды"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Roles Guide */}
+              <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-5 space-y-3">
+                <h3 className="text-xs font-bold text-content-primary flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-accent" />
+                  <span>Уровни доступа и роли</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="p-3 rounded-[10px] bg-page border border-border space-y-1">
+                    <span className="text-[11px] font-bold text-content-primary">
+                      Администратор
+                    </span>
+                    <p className="text-[10px] text-content-secondary leading-relaxed">
+                      Управление товарами, редактирование цен, настройка ссылок, обработка всех заказов.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[10px] bg-page border border-border space-y-1">
+                    <span className="text-[11px] font-bold text-content-primary">
+                      Менеджер
+                    </span>
+                    <p className="text-[10px] text-content-secondary leading-relaxed">
+                      Прием входящих заказов, изменение статусов («Принят», «Доставляется», «Выполнен»).
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-[10px] bg-page border border-border space-y-1">
+                    <span className="text-[11px] font-bold text-content-primary">
+                      Курьер
+                    </span>
+                    <p className="text-[10px] text-content-secondary leading-relaxed">
+                      Просмотр адресов доставки, контактов покупателей и состава заказов в рейсе.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+{/* TAB 5: TARIFF */}
           {/* ========================================================================= */}
           {activeTab === 'tariff' && (
             <div className="space-y-4">
@@ -3196,7 +3686,133 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Floating Toast Notification */}
+            {/* Team Member Invite Modal */}
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-surface border border-border rounded-[16px] max-w-md w-full p-5 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-accent" />
+                <h3 className="text-sm font-bold text-content-primary">
+                  Добавить сотрудника
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsInviteModalOpen(false)}
+                className="p-1 rounded-[6px] text-content-secondary hover:text-content-primary hover:bg-page transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Share Link Section */}
+            <div className="p-3.5 rounded-[10px] bg-accent-soft/30 border border-accent/20 space-y-2">
+              <span className="text-[11px] font-bold text-content-primary flex items-center gap-1.5">
+                <Link2 className="w-3.5 h-3.5 text-accent" />
+                <span>Ссылка для мгновенного входа сотрудника</span>
+              </span>
+              <p className="text-[10px] text-content-secondary">
+                Отправьте ссылку сотруднику. Он сможет зарегистрироваться и сразу войти в вашу витрину.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleCopyInviteLink}
+                  className="flex-1 py-2 px-3 rounded-[8px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Скопировать ссылку</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const inviteUrl = `${window.location.origin}/register?invite=team_${activeSlug}_${Date.now()}&shop=${activeSlug}&role=${inviteRole}`;
+                    window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(`Присоединяйся к управлению витриной ${settings.store_name} на BioMart`)}`, '_blank');
+                  }}
+                  className="p-2 rounded-[8px] bg-[#229ED9] hover:bg-[#1e8ec3] text-white text-xs transition-colors shrink-0"
+                  title="Отправить в Telegram"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Direct Add Form */}
+            <form onSubmit={handleAddMemberSubmit} className="space-y-3 pt-1">
+              <div className="text-[11px] font-semibold text-content-secondary uppercase tracking-wider">
+                Или добавьте вручную:
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-content-primary mb-1">
+                  Имя сотрудника:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  placeholder="Например: Азизбек"
+                  className="w-full px-3 py-2 text-xs rounded-[8px] bg-page border border-border text-content-primary focus:outline-none focus:border-accent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-content-primary mb-1">
+                  Телефон или Telegram (опционально):
+                </label>
+                <input
+                  type="text"
+                  value={invitePhone}
+                  onChange={(e) => setInvitePhone(e.target.value)}
+                  placeholder="+998 90 123 45 67 или @username"
+                  className="w-full px-3 py-2 text-xs font-mono rounded-[8px] bg-page border border-border text-content-primary focus:outline-none focus:border-accent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-content-primary mb-1">
+                  Роль:
+                </label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as StoreMemberRole)}
+                  className="w-full px-3 py-2 text-xs rounded-[8px] bg-page border border-border text-content-primary focus:outline-none focus:border-accent"
+                >
+                  <option value="manager">Менеджер (обработка заказов)</option>
+                  <option value="courier">Курьер (доставка и адреса)</option>
+                  <option value="admin">Администратор (товары и настройки)</option>
+                </select>
+              </div>
+
+              {inviteError && (
+                <div className="p-2 rounded-[8px] bg-danger/10 border border-danger/20 text-danger text-[11px]">
+                  {inviteError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsInviteModalOpen(false)}
+                  className="px-3 py-2 rounded-[8px] text-xs font-medium text-content-secondary hover:text-content-primary hover:bg-page transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-[8px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-colors shadow-xs"
+                >
+                  Добавить в команду
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+{/* Floating Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#1A1A1A] text-white px-4 py-2.5 rounded-[10px] shadow-lg border border-[#333333] text-xs font-medium flex items-center gap-2 animate-slide-up">
           <Check className="w-4 h-4 text-[#1F7A5A] stroke-[2.5]" />

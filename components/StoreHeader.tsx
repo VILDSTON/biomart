@@ -29,14 +29,14 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
     setAvatarError(false);
   }, [settings.avatar_url]);
 
-  const cleanTg = settings.telegram_username ? settings.telegram_username.replace('@', '') : '';
+  const cleanTg = settings.telegram_username ? settings.telegram_username.replace('@', '').trim() : '';
   const tgInquiryText = language === 'uz'
     ? 'Assalomu alaykum! Mahsulotlar va yetkazib berish haqida ma‘lumot olmoqchiman'
     : 'Здравствуйте! Хочу уточнить детали по товарам и доставке';
 
   const tgInquiryUrl = cleanTg
     ? `https://t.me/${cleanTg}?text=${encodeURIComponent(tgInquiryText)}`
-    : 'https://t.me/biomart_support';
+    : '';
 
   const desc = settings.description || '';
   const isLongDescription = desc.length > 80;
@@ -179,16 +179,18 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
             </a>
           )}
 
-          <a
-            href={tgInquiryUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Telegram"
-            className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
-          >
-            <Send className="w-3.5 h-3.5 text-accent shrink-0" />
-            <span className="truncate">Telegram</span>
-          </a>
+          {cleanTg && (
+            <a
+              href={tgInquiryUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram"
+              className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
+            >
+              <Send className="w-3.5 h-3.5 text-accent shrink-0" />
+              <span className="truncate">Telegram</span>
+            </a>
+          )}
 
           {settings.phone && (
             <a

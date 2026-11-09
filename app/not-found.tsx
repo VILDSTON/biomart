@@ -1,12 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { Home, Store, ArrowRight, Compass, ShieldAlert, Sparkles } from 'lucide-react';
+import { Home, Store, ArrowRight, Search, Sparkles, AlertCircle } from 'lucide-react';
 import { BioMartLogo } from '@/components/BioMartLogo';
 
 export const metadata: Metadata = {
   title: '404 — Страница не найдена | BioMart',
-  description: 'Запрашиваемая страница не существует или магазин изменил свой адрес.',
+  description: 'Запрашиваемая страница не существует или магазин изменил адрес.',
   robots: {
     index: false,
     follow: true,
@@ -17,7 +17,7 @@ export default function NotFound() {
   return (
     <div className="min-h-[100dvh] bg-page text-content-primary flex flex-col justify-between selection:bg-accent/20">
       {/* Top Navbar */}
-      <header className="w-full border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-40">
+      <header className="w-full border-b border-border bg-surface/90 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95">
             <BioMartLogo size={28} withText textClassName="text-base sm:text-lg font-bold tracking-tight text-content-primary" />
@@ -42,38 +42,29 @@ export default function NotFound() {
         </div>
       </header>
 
-      {/* Main 404 Hero Section */}
-      <main className="flex-1 flex items-center justify-center px-4 py-10 sm:py-16">
+      {/* Main 404 Content */}
+      <main className="flex-1 flex items-center justify-center px-4 py-12 sm:py-20">
         <div className="w-full max-w-lg mx-auto text-center space-y-6">
-          {/* Badge */}
+          {/* Status Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-soft border border-accent/20 text-accent text-xs font-bold tracking-wide">
-            <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>ОШИБКА 404 • СТРАНИЦА НЕ НАЙДЕНА</span>
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>ОШИБКА 404</span>
           </div>
 
-          {/* Large 404 Visual Number */}
-          <div className="relative">
-            <div className="text-7xl sm:text-8xl md:text-9xl font-black tracking-tighter text-content-primary/10 select-none font-mono">
+          {/* Clean 404 Headline */}
+          <div className="space-y-3">
+            <div className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tight text-content-primary font-mono select-none">
               404
             </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-surface border border-border shadow-md flex items-center justify-center text-accent">
-                <Compass className="w-8 h-8 sm:w-10 sm:h-10 animate-pulse" />
-              </div>
-            </div>
-          </div>
-
-          {/* Heading & Subtitle */}
-          <div className="space-y-2.5">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-content-primary">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-content-primary">
               Страница не найдена или магазин переехал
             </h1>
             <p className="text-xs sm:text-sm text-content-secondary max-w-md mx-auto leading-relaxed">
-              Возможно, адрес введен с ошибкой, ссылка в Instagram устарела или продавец изменил свой никнейм.
+              Возможно, адрес введен с опечаткой, ссылка в Instagram устарела или продавец изменил свой никнейм.
             </p>
           </div>
 
-          {/* Primary Action Buttons */}
+          {/* Direct Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2 max-w-md mx-auto">
             <Link
               href="/"
@@ -91,8 +82,8 @@ export default function NotFound() {
             </Link>
           </div>
 
-          {/* Quick Helpful Links Box */}
-          <div className="pt-4 max-w-md mx-auto">
+          {/* Helpful Navigation Card */}
+          <div className="pt-2 max-w-md mx-auto">
             <div className="p-4 sm:p-5 rounded-card bg-surface border border-border shadow-2xs text-left space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold text-content-primary">
                 <Sparkles className="w-3.5 h-3.5 text-accent" />

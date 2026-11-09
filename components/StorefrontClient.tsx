@@ -133,8 +133,18 @@ export function StorefrontClient({
     return getShopData(shopSlug);
   }, [shopSlug, getShopData]);
 
-  // Merge shopData with initialSettings fallback
-  const currentSettings = isDemo && initialSettings ? initialSettings : (shopData?.settings || initialSettings);
+  // Merge shopData with initialSettings fallback and ensure custom_links are preserved
+  const rawBaseSettings = isDemo && initialSettings ? initialSettings : (shopData?.settings || initialSettings);
+  const currentSettings = useMemo(() => {
+    if (!rawBaseSettings) return initialSettings;
+    return {
+      ...rawBaseSettings,
+      custom_links:
+        (shopData?.settings?.custom_links && shopData.settings.custom_links.length > 0)
+          ? shopData.settings.custom_links
+          : (initialSettings?.custom_links || rawBaseSettings.custom_links || []),
+    };
+  }, [rawBaseSettings, shopData?.settings?.custom_links, initialSettings]);
   const currentCategories = useMemo(() => {
     const source = isDemo && initialCategories && initialCategories.length > 0
       ? initialCategories
@@ -354,13 +364,28 @@ export function StorefrontClient({
   const radiiPreset = themeSettings.radii_preset || 'medium';
 
   // Construct combined settings ensuring theme_settings overrides legacy
+  const base = currentSettings || initialSettings;
   const effectiveSettings: StoreSettings = {
-    ...currentSettings,
+    id: base?.id || shopSlug || 'store',
+    slug: base?.slug || shopSlug || 'store',
+    store_name: base?.store_name || shopSlug || 'Магазин',
+    description: base?.description || '',
+    avatar_url: themeSettings.avatar_url || base?.avatar_url || '',
+    banner_url: themeSettings.banner_url || base?.banner_url,
+    instagram_url: base?.instagram_url || '',
+    telegram_username: base?.telegram_username || '',
+    telegram_chat_id: base?.telegram_chat_id,
+    phone: base?.phone || '',
+    currency: base?.currency || 'UZS',
+    delivery_info: base?.delivery_info || 'Доставка по всему Узбекистану',
+    custom_links: base?.custom_links || [],
+    team_members: base?.team_members || [],
+    promo_codes: base?.promo_codes || [],
+    status: base?.status,
+    moderation_comment: base?.moderation_comment,
     accent_color: themeSettings.accent_color,
     theme: themeSettings.theme,
     catalog_layout: themeSettings.catalog_layout,
-    avatar_url: themeSettings.avatar_url || currentSettings.avatar_url,
-    banner_url: themeSettings.banner_url || currentSettings.banner_url,
     radii_preset: themeSettings.radii_preset,
     button_text: themeSettings.button_text,
     show_old_price: themeSettings.show_old_price,

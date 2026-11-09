@@ -162,6 +162,11 @@ export const MOCK_STORE_SETTINGS: StoreSettings = {
     { id: 'link-td-yt', title: 'YouTube лукбуки и обзоры', icon: 'youtube', url: 'https://youtube.com/@tashkent_drip', is_active: true },
     { id: 'link-td-ph', title: 'Позвонить менеджеру', icon: 'phone', url: 'tel:+998901234567', is_active: true },
   ],
+  team_members: [
+    { id: 'mem-1', name: 'Сардор Алимов', phone: '+998 90 123 45 67', role: 'owner', addedAt: '2026-01-15', status: 'active' },
+    { id: 'mem-2', name: 'Азиза Каримова', phone: '+998 90 987 65 43', role: 'manager', addedAt: '2026-02-10', status: 'active' },
+    { id: 'mem-3', name: 'Шерзод Рустамов', phone: '+998 93 555 44 33', role: 'courier', addedAt: '2026-03-01', status: 'active' },
+  ],
 };
 
 export const MOCK_CATEGORIES: Category[] = [

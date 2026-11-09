@@ -51,7 +51,7 @@ export interface ThemeSettings {
 }
 
 export type StoreStatus = 'pending' | 'published' | 'rejected' | 'needs_changes';
-export type StoreMemberRole = 'owner' | 'admin' | 'manager';
+export type StoreMemberRole = 'owner' | 'admin' | 'manager' | 'courier';
 
 export type StoreLinkIcon = 'instagram' | 'telegram' | 'youtube' | 'phone' | 'website';
 
@@ -66,9 +66,12 @@ export interface StoreCustomLink {
 export interface StoreMember {
   id: string;
   name: string;
-  phone: string;
+  phone?: string;
+  email?: string;
   role: StoreMemberRole;
   addedAt: string;
+  status?: 'active' | 'invited';
+  inviteToken?: string;
 }
 
 export interface StoreSettings {
@@ -82,6 +85,7 @@ export interface StoreSettings {
   telegram_username: string;
   telegram_chat_id?: string; // Telegram Chat ID продавца для получения заказов!
   phone: string;
+  email?: string;
   currency: string;
   delivery_info: string;
   accent_color: string;

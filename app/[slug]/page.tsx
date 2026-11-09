@@ -189,6 +189,7 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     instagram_url: cookieContacts?.instagram_url ?? dbStore?.instagram_url ?? (demoPreset ? demoPreset.settings.instagram_url : ''),
     telegram_username: cookieContacts?.telegram_username ?? dbStore?.telegram_username ?? (demoPreset ? demoPreset.settings.telegram_username : ''),
     phone: cookieContacts?.phone ?? dbStore?.phone ?? (demoPreset ? demoPreset.settings.phone : ''),
+    custom_links: cookieContacts?.custom_links !== undefined ? cookieContacts.custom_links : (dbStore?.custom_links ?? fallbackSettings.custom_links ?? []),
   };
 
   // 4. Check moderation status: if banned or rejected, show polite unavailable screen
@@ -263,6 +264,7 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     custom_badges: themeSettings.custom_badges || storeSettings.custom_badges,
     show_reviews: themeSettings.show_reviews !== undefined ? themeSettings.show_reviews : (storeSettings.show_reviews ?? true),
     reviews: storeSettings.reviews,
+    custom_links: storeSettings.custom_links || [],
     theme_settings: themeSettings,
   };
 

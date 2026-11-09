@@ -20,7 +20,7 @@ interface BioMartMultiStoreState {
 
   // Multi-shop registry
   shops: Record<string, ShopData>;
-  registerShop: (slug: string, storeName: string, instagramUsername?: string) => ShopData;
+  registerShop: (slug: string, storeName: string, instagramUsername?: string, email?: string) => ShopData;
   getShopData: (slug: string) => ShopData;
   updateShopSettings: (slug: string, settings: Partial<StoreSettings>) => void;
   addShopProduct: (slug: string, product: Omit<Product, 'id'>) => void;
@@ -94,7 +94,7 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         aura_perfume: DEMO_PRESET_SHOPS.aura_perfume,
       },
 
-      registerShop: (rawSlug, storeName, instagramUsername = '') => {
+      registerShop: (rawSlug, storeName, instagramUsername = '', email = '') => {
         const cleanSlug = rawSlug.toLowerCase().replace(/[^a-z0-9_-]/g, '') || `shop_${Date.now()}`;
         const existing = get().shops[cleanSlug];
         if (existing) {
@@ -129,6 +129,7 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
             telegram_username: '',
             telegram_chat_id: '',
             phone: '+998 90 123 45 67',
+            email: email.trim(),
             currency: 'сум',
             delivery_info: 'Доставка по Ташкенту и всему Узбекистану.',
             accent_color: defaultThemeSettings.accent_color,

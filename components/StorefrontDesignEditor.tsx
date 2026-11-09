@@ -131,6 +131,8 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState<string | null>(null);
   const [mobileViewTab, setMobileViewTab] = useState<'settings' | 'preview'>('settings');
+  type DesignSubTab = 'palette' | 'header' | 'cards' | 'trust';
+  const [designSubTab, setDesignSubTab] = useState<DesignSubTab>('palette');
 
   // Check for unsaved changes
   const hasChanges = useMemo(() => {
@@ -374,7 +376,60 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
         {/* ========================================================================= */}
         {/* SETTINGS COLUMN: 5 MAIN CONTROLS + ACCORDION (7 COLS ON DESKTOP) */}
         {/* ========================================================================= */}
-        <div className={`lg:col-span-7 space-y-5 sm:space-y-6 ${mobileViewTab === 'settings' ? 'block' : 'hidden lg:block'}`}>
+        <div className={`lg:col-span-7 space-y-4 ${mobileViewTab === 'settings' ? 'block' : 'hidden lg:block'}`}>
+          {/* Sub-tab Navigation (БАГ 10 & ПОНЯТНЫЙ РЕДАКТОР ДИЗАЙНА) */}
+          <div className="bg-surface border border-border rounded-[14px] p-1.5 shadow-2xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+              <button
+                type="button"
+                onClick={() => setDesignSubTab('palette')}
+                className={`py-2 px-2.5 rounded-[10px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center ${
+                  designSubTab === 'palette'
+                    ? 'bg-[#1F7A5A] text-white shadow-xs'
+                    : 'text-content-secondary hover:text-content-primary hover:bg-page'
+                }`}
+              >
+                <Palette className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Палитра и стиль</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDesignSubTab('header')}
+                className={`py-2 px-2.5 rounded-[10px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center ${
+                  designSubTab === 'header'
+                    ? 'bg-[#1F7A5A] text-white shadow-xs'
+                    : 'text-content-secondary hover:text-content-primary hover:bg-page'
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Шапка и баннер</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDesignSubTab('cards')}
+                className={`py-2 px-2.5 rounded-[10px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center ${
+                  designSubTab === 'cards'
+                    ? 'bg-[#1F7A5A] text-white shadow-xs'
+                    : 'text-content-secondary hover:text-content-primary hover:bg-page'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Карточки товаров</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDesignSubTab('trust')}
+                className={`py-2 px-2.5 rounded-[10px] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center ${
+                  designSubTab === 'trust'
+                    ? 'bg-[#1F7A5A] text-white shadow-xs'
+                    : 'text-content-secondary hover:text-content-primary hover:bg-page'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Доверие и бренд</span>
+              </button>
+            </div>
+          </div>
           {/* AI Assistant Banner (Hidden per request) */}
           {false && (
             <div className="bg-brand-soft/40 border border-brand-border rounded-[14px] p-3.5 sm:p-4 shadow-xs">
@@ -425,7 +480,20 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
           )}
 
           {/* ===================================================================== */}
-          {/* 1. СТИЛЬ (4 ГОТОВЫХ ШАБЛОНА) */}
+          {/* ========================================================================= */}
+          {/* SUB-TAB 1: PALETTE & THEME (ПАЛИТРА, ШАБЛОНЫ И ТЕМА) */}
+          {/* ========================================================================= */}
+          {designSubTab === 'palette' && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-[12px] bg-accent-soft/30 border border-accent/20 flex items-start gap-2.5">
+                <Palette className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                <p className="text-xs text-content-secondary leading-relaxed">
+                  {isUz 
+                    ? 'Vitrina uchun tayyor vizual uslub, tugmalar rangi va mavzu rejimini (yorug‘ yoki qorong‘i) tanlang.' 
+                    : 'Выберите готовый визуальный стиль витрины, акцентный цвет кнопок и режим темы (светлая или тёмная). Изменения сразу видны в телефоне справа.'}
+                </p>
+              </div>
+{/* 1. СТИЛЬ (4 ГОТОВЫХ ШАБЛОНА) */}
           {/* ===================================================================== */}
           <div className="bg-surface rounded-[14px] border border-border p-4 sm:p-5 shadow-xs">
             <div className="mb-3">
@@ -632,7 +700,23 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
           </div>
 
           {/* ===================================================================== */}
-          {/* 4. ЛОГОТИП И ОБЛОЖКА */}
+                      </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SUB-TAB 2: HEADER & BRAND (ШАПКА, ЛОГОТИП И БАННЕР) */}
+          {/* ========================================================================= */}
+          {designSubTab === 'header' && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-[12px] bg-accent-soft/30 border border-accent/20 flex items-start gap-2.5">
+                <ImageIcon className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                <p className="text-xs text-content-secondary leading-relaxed">
+                  {isUz
+                    ? 'Do‘koningiz logotipi (avatari), fon banneri va yuqori aksiyalar e’lonini sozlang.'
+                    : 'Настройте логотип или аватарку магазина, фоновую обложку-баннер и верхнюю строку с акцией или бесплатной доставкой.'}
+                </p>
+              </div>
+{/* 4. ЛОГОТИП И ОБЛОЖКА */}
           {/* ===================================================================== */}
           <div className="bg-surface rounded-[14px] border border-border p-4 sm:p-5 shadow-xs space-y-4">
             <h2 className="text-sm font-bold text-content-primary">{t.brandingTitle}</h2>
@@ -788,7 +872,23 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
           </div>
 
           {/* ===================================================================== */}
-          {/* 5. ВИД КАТАЛОГА (СЕТКА 2 КОЛОНКИ ИЛИ СПИСОК) */}
+                      </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SUB-TAB 3: PRODUCT CARDS & BUTTONS (КАРТОЧКИ ТОВАРОВ И КНОПКИ) */}
+          {/* ========================================================================= */}
+          {designSubTab === 'cards' && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-[12px] bg-accent-soft/30 border border-accent/20 flex items-start gap-2.5">
+                <LayoutGrid className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                <p className="text-xs text-content-secondary leading-relaxed">
+                  {isUz
+                    ? 'Katalog to‘rini (2 ustun yoki ro‘yxat), tugmalar shaklini va chegirmalarni ko‘rsatishni sozlang.'
+                    : 'Настройте формат каталога (сетка в 2 колонки или список), скругление углов, текст на кнопке покупки и показ скидок.'}
+                </p>
+              </div>
+{/* 5. ВИД КАТАЛОГА (СЕТКА 2 КОЛОНКИ ИЛИ СПИСОК) */}
           {/* ===================================================================== */}
           <div className="bg-surface rounded-[14px] border border-border p-4 sm:p-5 shadow-xs">
             <h2 className="text-sm font-bold text-content-primary mb-2.5">{t.catalogLayoutTitle}</h2>
@@ -825,7 +925,23 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
           {/* ===================================================================== */}
           {/* БЛОК: НИША МАГАЗИНА И БЕЙДЖИ ПРЕИМУЩЕСТВ */}
           {/* ===================================================================== */}
-          <div className="bg-surface rounded-[14px] p-5 border border-border shadow-xs space-y-4">
+                      </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SUB-TAB 4: TRUST & REVIEWS (ДОВЕРИЕ, БЕЙДЖИ И ОТЗЫВЫ) */}
+          {/* ========================================================================= */}
+          {designSubTab === 'trust' && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-[12px] bg-accent-soft/30 border border-accent/20 flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                <p className="text-xs text-content-secondary leading-relaxed">
+                  {isUz
+                    ? 'Kafolat nishonlari va xaridorlar fikrlari blokini yoqish orqali buyurtmalar sonini oshiring.'
+                    : 'Бейджи преимуществ («Оригинал 100%», «Примерка перед оплатой») и блок отзывов клиентов повышают доверие и увеличивают продажи на 20-30%.'}
+                </p>
+              </div>
+<div className="bg-surface rounded-[14px] p-5 border border-border shadow-xs space-y-4">
             <div>
               <label className="block text-xs font-bold text-content-primary mb-1">
                 {isUz ? 'Do‘kon yo‘nalishi (Nisha)' : 'Ниша магазина'}
@@ -954,6 +1070,10 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
           {/* ===================================================================== */}
           {/* ДОПОЛНИТЕЛЬНО: СВЁРНУТЫЙ БЛОК «ЕЩЁ НАСТРОЙКИ» */}
           {/* ===================================================================== */}
+                      </div>
+          )}
+
+{designSubTab === 'cards' && (
           <div className="bg-surface rounded-[14px] border border-border overflow-hidden shadow-xs">
             <button
               type="button"
@@ -1118,7 +1238,8 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
               </div>
             )}
           </div>
-        </div>
+        )}
+      </div>
 
         {/* ========================================================================= */}
         {/* LIVE PHONE PREVIEW (5 COLS ON DESKTOP, TOGGLE ON MOBILE) */}
