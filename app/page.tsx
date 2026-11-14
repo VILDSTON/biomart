@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Store,
   ArrowRight,
@@ -317,20 +318,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section: Proof (Showcase Demo stores or Merchant Testimonials if available) */}
-      {testimonials && testimonials.length > 0 ? (
-        <section className="py-14 sm:py-20 px-4 border-b border-border bg-surface">
-          <div className="max-w-5xl mx-auto space-y-10">
-            <div className="text-center space-y-2">
+      {/* Section: Showcase of Demo Stores */}
+      <ShowcaseSection />
+
+      {/* Section: Authentic Merchant Reviews / Social Proof */}
+      {testimonials && testimonials.length > 0 && (
+        <section className="py-16 sm:py-24 px-4 border-b border-border bg-page transition-colors">
+          <div className="max-w-5xl mx-auto space-y-12">
+            <div className="text-center space-y-2.5">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-soft text-accent text-xs font-semibold">
                 <Star className="w-3.5 h-3.5 fill-accent" />
-                <span>Отзывы продавцов</span>
+                <span>Реальные отзывы продавцов</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-content-primary tracking-tight">
-                Нам доверяют бренды в Ташкенте и регионах
+                Нам доверяют бренды в Ташкенте и по всему Узбекистану
               </h2>
               <p className="text-xs sm:text-sm text-content-secondary max-w-xl mx-auto">
-                Реальные истории владельцев магазинов одежды, обуви и парфюмерии
+                Истории владельцев магазинов, которые автоматизировали прием заказов и увеличили продажи
               </p>
             </div>
 
@@ -338,35 +342,57 @@ export default function LandingPage() {
               {testimonials.map((item, idx) => (
                 <div
                   key={idx}
-                  className="bg-page border border-border rounded-[16px] p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-xs"
+                  className="bg-surface border border-border hover:border-accent/40 rounded-[16px] p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-all hover:-translate-y-0.5"
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-1 text-accent">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star key={s} className="w-3.5 h-3.5 fill-accent text-accent" />
-                      ))}
+                  <div className="space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-amber-400">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        ))}
+                      </div>
+                      {item.metric && (
+                        <span className="text-[10px] font-semibold text-accent bg-accent-soft px-2 py-0.5 rounded-full">
+                          {item.metric}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-content-primary leading-relaxed italic">
+                    <p className="text-xs sm:text-[13px] text-content-primary leading-relaxed">
                       «{item.text}»
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-border flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-content-primary">{item.name}</div>
-                      <div className="text-[11px] text-content-secondary">{item.shop}</div>
+                  <div className="pt-4 border-t border-border flex items-center gap-3">
+                    {item.avatar && (
+                      <div className="w-10 h-10 rounded-full overflow-hidden relative shrink-0 border border-border">
+                        <Image
+                          src={item.avatar}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-content-primary truncate flex items-center gap-1.5">
+                        <span>{item.name}</span>
+                        {item.city && (
+                          <span className="text-[10px] font-normal text-content-secondary">
+                            ({item.city})
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-content-secondary truncate">
+                        {item.shop} • {item.role}
+                      </div>
                     </div>
-                    <span className="text-[10px] font-medium text-accent bg-accent-soft px-2 py-0.5 rounded-full">
-                      {item.role}
-                    </span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         </section>
-      ) : (
-        <ShowcaseSection />
       )}
 
       {/* Section: Tariffs with Monthly / Annual Switcher (Hidden while platform is 100% free) */}

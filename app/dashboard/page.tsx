@@ -249,6 +249,14 @@ export default function DashboardPage() {
       const savedSlug = sessionStorage.getItem('biomart_current_slug');
       if (savedSlug && shops[savedSlug]) {
         setActiveSlug(savedSlug);
+      } else {
+        const customShopKey = Object.keys(shops).find(
+          (k) => k !== 'tashkent_drip' && k !== 'volt_gadgets' && k !== 'aura_perfume'
+        );
+        if (customShopKey) {
+          setActiveSlug(customShopKey);
+          sessionStorage.setItem('biomart_current_slug', customShopKey);
+        }
       }
     }
 
@@ -1300,9 +1308,24 @@ export default function DashboardPage() {
                   </span>
                 )}
               </div>
-              <span className="text-[9px] sm:text-[10px] text-content-secondary font-mono block truncate">
-                biomart.uz/{activeSlug}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] sm:text-[10px] text-content-secondary font-mono truncate">
+                  biomart.uz/{activeSlug}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      navigator.clipboard.writeText(`${window.location.origin}/${activeSlug}`);
+                      showToast('Ссылка на витрину скопирована!');
+                    }
+                  }}
+                  title="Скопировать ссылку на витрину"
+                  className="p-0.5 text-content-secondary hover:text-accent transition-colors"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
 

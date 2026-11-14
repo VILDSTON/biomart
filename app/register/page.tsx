@@ -19,6 +19,8 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Zap,
+  Send,
 } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
@@ -383,6 +385,32 @@ export default function RegisterPage() {
 
       {/* Main Registration Card */}
       <div className="w-full max-w-md mx-auto bg-surface border border-border rounded-card p-4 sm:p-8 shadow-card space-y-5 sm:space-y-6">
+        {/* Step Indicator */}
+        <div className="flex items-center justify-between pb-3 border-b border-border text-xs">
+          <div className="flex items-center gap-2">
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+              !isOtpStep ? 'bg-accent text-white' : 'bg-accent-soft text-accent'
+            }`}>
+              1
+            </span>
+            <span className={`font-semibold ${!isOtpStep ? 'text-content-primary' : 'text-content-secondary'}`}>
+              Параметры витрины
+            </span>
+          </div>
+
+          <span className="text-content-secondary text-[11px]">→</span>
+
+          <div className="flex items-center gap-2">
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+              isOtpStep ? 'bg-accent text-white' : 'bg-page text-content-secondary border border-border'
+            }`}>
+              2
+            </span>
+            <span className={`font-semibold ${isOtpStep ? 'text-content-primary' : 'text-content-secondary'}`}>
+              Подтверждение
+            </span>
+          </div>
+        </div>
         {/* ========================================================================= */}
         {/* STEP 2: OTP CONFIRMATION SCREEN */}
         {/* ========================================================================= */}
@@ -688,6 +716,41 @@ export default function RegisterPage() {
                     По этому паролю вы будете входить в панель управления витриной
                   </p>
                 )}
+
+                {/* Real-time Password Strength Meter */}
+                {adminPassword.length > 0 && (
+                  <div className="space-y-1 mt-1.5 animate-fade-in">
+                    <div className="flex gap-1 h-1 w-full bg-border/40 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          adminPassword.length < 6
+                            ? 'w-1/3 bg-danger'
+                            : adminPassword.length < 9
+                            ? 'w-2/3 bg-amber-500'
+                            : 'w-full bg-emerald-500'
+                        }`}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] text-content-secondary">
+                      <span>Надёжность пароля:</span>
+                      <span
+                        className={`font-semibold ${
+                          adminPassword.length < 6
+                            ? 'text-danger'
+                            : adminPassword.length < 9
+                            ? 'text-amber-500'
+                            : 'text-emerald-500'
+                        }`}
+                      >
+                        {adminPassword.length < 6
+                          ? 'Минимум 6 символов'
+                          : adminPassword.length < 9
+                          ? 'Хороший'
+                          : 'Надёжный ✨'}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Instagram handle (Optional) */}
@@ -758,6 +821,28 @@ export default function RegisterPage() {
                 )}
               </button>
             </form>
+
+            {/* Trust and Feature Micro-Badges */}
+            <div className="pt-4 border-t border-border grid grid-cols-3 gap-2 text-center">
+              <div className="space-y-1">
+                <div className="w-7 h-7 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
+                  <Zap className="w-3.5 h-3.5" />
+                </div>
+                <p className="text-[10px] text-content-secondary font-medium leading-tight">Запуск за 2 минуты</p>
+              </div>
+              <div className="space-y-1">
+                <div className="w-7 h-7 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <p className="text-[10px] text-content-secondary font-medium leading-tight">Защита паролем</p>
+              </div>
+              <div className="space-y-1">
+                <div className="w-7 h-7 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
+                  <Send className="w-3.5 h-3.5" />
+                </div>
+                <p className="text-[10px] text-content-secondary font-medium leading-tight">Заказы в Telegram</p>
+              </div>
+            </div>
 
             <div className="pt-2 border-t border-border text-center">
               <Link
