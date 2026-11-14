@@ -52,12 +52,12 @@
 
 html.dark,
 [data-theme="dark"] {
-  /* BioMart Platform Brand Tokens in Dark Mode (Lighter & more readable green) */
-  --brand-primary: #2ECC71;
-  --brand-hover: #34D399;
-  --brand-soft: rgba(46, 204, 113, 0.15);
-  --brand-text: #0B1E14;
-  --brand-border: rgba(46, 204, 113, 0.30);
+  /* BioMart Platform Brand Tokens in Dark Mode (Requested #1F7A5A) */
+  --brand-primary: #1F7A5A;
+  --brand-hover: #26966f;
+  --brand-soft: rgba(31, 122, 90, 0.22);
+  --brand-text: #FFFFFF;
+  --brand-border: rgba(31, 122, 90, 0.45);
 
   /* Full Dark Theme Tokens (WCAG Contrast compliant >= 4.5:1) */
   --bg-page: #121212;
@@ -70,16 +70,16 @@ html.dark,
   --text-secondary: #A3A3A3;
   --text-tertiary: #737373;
 
-  /* Dark mode Platform Emerald Accent (Lighter, vibrant mint-emerald) */
-  --accent: #2ECC71;
-  --accent-hover: #34D399;
-  --accent-soft: rgba(46, 204, 113, 0.15);
-  --accent-text: #0B1E14;
+  /* Dark mode Platform Emerald Accent */
+  --accent: #1F7A5A;
+  --accent-hover: #26966f;
+  --accent-soft: rgba(31, 122, 90, 0.22);
+  --accent-text: #FFFFFF;
 
-  --store-accent: #2ECC71;
-  --store-accent-hover: #34D399;
-  --store-accent-soft: rgba(46, 204, 113, 0.15);
-  --store-on-accent: #0B1E14;
+  --store-accent: #1F7A5A;
+  --store-accent-hover: #26966f;
+  --store-accent-soft: rgba(31, 122, 90, 0.22);
+  --store-on-accent: #FFFFFF;
 
   --error: #F87171;
 

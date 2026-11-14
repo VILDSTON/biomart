@@ -68,12 +68,15 @@ function DemoContent() {
               <span className="font-bold text-sm tracking-tight hidden xs:inline">BioMart</span>
             </Link>
             <span className="text-border hidden xs:inline">•</span>
-            <div className="flex items-center gap-1 text-xs truncate">
+            <div className="flex items-center gap-1.5 text-xs truncate">
               <span className="text-[10px] uppercase font-semibold text-accent bg-accent-soft px-1.5 py-0.5 rounded">
                 Демо
               </span>
               <span className="font-semibold text-content-primary truncate">
                 {currentPreset.title}
+              </span>
+              <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full bg-accent text-white tracking-wider">
+                Новинка: AI Марти
               </span>
             </div>
           </div>

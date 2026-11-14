@@ -280,16 +280,8 @@ export function computeStoreTokens(accentHex?: string, isDark: boolean = false):
   const rgb = hexToRgb(accentHex || '#111827');
   const L = getRelativeLuminance(rgb);
 
-  // In dark mode, if the accent is dark (like #1F7A5A), lighten it for contrast and readability
-  let effectiveRgb = rgb;
-  if (isDark && L < 0.28) {
-    effectiveRgb = {
-      r: Math.min(255, Math.round(rgb.r * 1.25 + 25)),
-      g: Math.min(255, Math.round(rgb.g * 1.45 + 45)),
-      b: Math.min(255, Math.round(rgb.b * 1.25 + 25)),
-    };
-  }
-  const effectiveL = getRelativeLuminance(effectiveRgb);
+  const effectiveRgb = rgb;
+  const effectiveL = L;
 
   // 1. Text color on accent: WCAG contrast check against White and Black
   const contrastWithWhite = 1.05 / (effectiveL + 0.05);

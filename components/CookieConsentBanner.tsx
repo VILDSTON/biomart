@@ -9,15 +9,26 @@ export const CookieConsentBanner: React.FC = () => {
 
   useEffect(() => {
     try {
+      // Check if force query param is present e.g. ?cookies
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceShow = urlParams.has('cookies') || urlParams.has('cookie');
+
       const consent = localStorage.getItem('biomart_cookie_consent');
-      if (!consent) {
-        // Show after 1.5 seconds delay for a smooth experience
-        const timer = setTimeout(() => setIsVisible(true), 1500);
+      if (!consent || forceShow) {
+        // Show promptly after hydration without long annoying delay
+        const timer = setTimeout(() => setIsVisible(true), 150);
         return () => clearTimeout(timer);
       }
     } catch {
-      // ignore
+      setIsVisible(true);
     }
+  }, []);
+
+  // Listen for custom trigger from footer "Настройки Cookie"
+  useEffect(() => {
+    const handleTrigger = () => setIsVisible(true);
+    window.addEventListener('biomart_show_cookie_banner', handleTrigger);
+    return () => window.removeEventListener('biomart_show_cookie_banner', handleTrigger);
   }, []);
 
   const handleAccept = (type: 'all' | 'necessary') => {
@@ -35,31 +46,33 @@ export const CookieConsentBanner: React.FC = () => {
   return (
     <aside
       aria-label="Согласие на использование файлов cookie"
-      className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:bottom-6 z-50 sm:max-w-md bg-surface/95 dark:bg-surface/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-4 sm:p-5 animate-smooth-in"
-      style={{
-        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.2)',
-      }}
+      className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:bottom-6 z-[9999] sm:max-w-md bg-surface dark:bg-[#1E1E1E] border border-border shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl p-4 sm:p-5 animate-smooth-in"
     >
       <div className="flex items-start justify-between gap-3 mb-2.5">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-accent-soft text-accent flex items-center justify-center shrink-0">
-            <Cookie className="w-4 h-4" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-accent-soft text-accent flex items-center justify-center shrink-0">
+            <Cookie className="w-4 h-4 text-accent" />
           </div>
-          <span className="text-xs font-bold text-content-primary">
-            Мы заботимся о вашей конфиденциальности
-          </span>
+          <div>
+            <span className="text-xs font-bold text-content-primary block">
+              Мы используем файлы cookie
+            </span>
+            <span className="text-[10px] text-content-tertiary">
+              Для корзины, быстрой авторизации и аналитики
+            </span>
+          </div>
         </div>
         <button
           onClick={() => handleAccept('necessary')}
           title="Закрыть"
           className="p-1 text-content-secondary hover:text-content-primary rounded-md transition-colors"
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
 
       <p className="text-xs text-content-secondary leading-relaxed mb-4">
-        BioMart использует файлы cookie для корректной работы корзины, безопасной авторизации и улучшения работы витрин в соответствии с законодательством Республики Узбекистан.{' '}
+        BioMart использует cookies для стабильной работы онлайн-витрины, сохранения корзины и безопасного оформления заказов через Telegram в соответствии с законодательством Республики Узбекистан.{' '}
         <Link href="/privacy" className="text-accent hover:underline font-semibold">
           Политика конфиденциальности
         </Link>
@@ -77,7 +90,7 @@ export const CookieConsentBanner: React.FC = () => {
           onClick={() => handleAccept('necessary')}
           className="py-2 px-3 rounded-lg text-xs font-semibold bg-page hover:bg-surface border border-border text-content-secondary hover:text-content-primary transition-colors text-center"
         >
-          Только нужные
+          Только обязательные
         </button>
       </div>
     </aside>

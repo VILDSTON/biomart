@@ -673,53 +673,140 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-surface border-t border-border py-8 px-4 text-xs text-content-secondary">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-[2px] font-bold text-lg sm:text-xl text-content-primary">
-            <BioMartLogo className="w-8 h-8 sm:w-9 sm:h-9 shrink-0" color="#1F7A5A" />
-            <span className="tracking-tight">BioMart</span>
+      <footer className="bg-surface border-t border-border pt-12 pb-8 px-4 text-xs text-content-secondary transition-colors">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
+            {/* Brand Column */}
+            <div className="lg:col-span-2 space-y-3.5">
+              <Link href="/" className="inline-flex items-center gap-2 font-bold text-xl text-content-primary">
+                <BioMartLogo className="w-8 h-8 shrink-0" color="#1F7A5A" />
+                <span className="tracking-tight">BioMart</span>
+              </Link>
+              <p className="text-xs text-content-secondary leading-relaxed max-w-sm">
+                Платформа микро-витрин и умных AI-продаж для брендов в Instagram и Telegram в Узбекистане. Принимайте заказы в один клик без потери клиентов в переписке.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>Telegram бот активен</span>
+                </div>
+                <a
+                  href="https://t.me/BioMartAssistant_bot"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-soft hover:bg-page border border-border text-[11px] font-medium text-content-primary transition-colors"
+                >
+                  <Send className="w-3 h-3 text-accent" />
+                  <span>@BioMartAssistant_bot</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Col 1: Продукт */}
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-content-primary uppercase tracking-wider">Продукт</p>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/demo" className="hover:text-content-primary transition-colors">
+                    Демо-витрина
+                  </Link>
+                </li>
+                <li>
+                  <a href="#features" className="hover:text-content-primary transition-colors">
+                    Возможности
+                  </a>
+                </li>
+                <li>
+                  <a href="#marty" className="hover:text-content-primary transition-colors inline-flex items-center gap-1.5">
+                    <span>AI Марти</span>
+                    <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase rounded-full bg-accent text-white">
+                      Новинка
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#calculator" className="hover:text-content-primary transition-colors">
+                    Калькулятор потерь
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 2: Продавцам */}
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-content-primary uppercase tracking-wider">Продавцам</p>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/faq" className="hover:text-content-primary transition-colors font-medium text-accent">
+                    FAQ для продавцов
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/register" className="hover:text-content-primary transition-colors">
+                    Создать витрину
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="hover:text-content-primary transition-colors">
+                    Вход в кабинет
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setIsSupportOpen(true)}
+                    className="hover:text-content-primary transition-colors text-left"
+                  >
+                    Поддержка 24/7
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Документы & Cookie */}
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-content-primary uppercase tracking-wider">Документы</p>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/rules" className="hover:text-content-primary transition-colors">
+                    Правила сервиса
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:text-content-primary transition-colors">
+                    Публичная оферта
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="hover:text-content-primary transition-colors">
+                    Конфиденциальность
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new Event('biomart_show_cookie_banner'));
+                      }
+                    }}
+                    className="hover:text-content-primary transition-colors text-accent underline cursor-pointer"
+                  >
+                    Настройки Cookie
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div className="text-center sm:text-left text-content-secondary">
-            Онлайн-витрины для Instagram и Telegram в Узбекистане
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <Link href="/demo" className="hover:text-content-primary transition-colors">
-              Демо
-            </Link>
-            <Link href="/shipping" className="hover:text-content-primary transition-colors">
-              Доставка
-            </Link>
-            <Link href="/returns" className="hover:text-content-primary transition-colors">
-              Возврат
-            </Link>
-            <Link href="/faq" className="hover:text-content-primary transition-colors">
-              База знаний
-            </Link>
-            <Link href="/login" className="hover:text-content-primary transition-colors">
-              Вход
-            </Link>
-            <Link href="/register" className="hover:text-content-primary transition-colors">
-              Регистрация
-            </Link>
-            <Link href="/rules" className="hover:text-content-primary transition-colors">
-              Правила
-            </Link>
-            <Link href="/terms" className="hover:text-content-primary transition-colors">
-              Оферта
-            </Link>
-            <Link href="/privacy" className="hover:text-content-primary transition-colors">
-              Конфиденциальность
-            </Link>
-            <button
-              type="button"
-              onClick={() => setIsSupportOpen(true)}
-              className="text-accent hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>Поддержка</span>
-            </button>
+          {/* Bottom Bar */}
+          <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-content-tertiary">
+            <p>© 2026 BioMart. Сделано с заботой о предпринимателях Узбекистана 🇺🇿</p>
+            <div className="flex items-center gap-4">
+              <span>Ташкент, Узбекистан</span>
+              <span>•</span>
+              <span>UZS (Сум)</span>
+            </div>
           </div>
         </div>
       </footer>

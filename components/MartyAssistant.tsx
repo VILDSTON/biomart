@@ -317,9 +317,14 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
             >
               <X className="w-3 h-3" />
             </button>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
-              <span className="text-[11px] font-bold text-content-primary">Марти • AI Консультант</span>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+                <span className="text-[11px] font-bold text-content-primary">Марти • AI Консультант</span>
+              </div>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full bg-accent text-white tracking-wider">
+                Новинка
+              </span>
             </div>
             <p className="text-xs text-content-secondary leading-relaxed">
               👋 Привет! Подскажу по размерам или приму заказ прямо здесь.
