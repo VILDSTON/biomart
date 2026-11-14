@@ -206,7 +206,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
 
           {showSizesOnCard && sizesLabel && product.in_stock && (
-            <div className="absolute bottom-2.5 left-2.5 bg-surface/90 backdrop-blur-xs border border-border text-content-primary text-xs font-medium px-2 py-0.5 rounded-[6px]">
+            <div className="absolute bottom-2.5 left-2.5 bg-surface border border-border text-content-primary text-xs font-semibold px-2 py-0.5 rounded-[6px] shadow-xs">
               {sizesLabel}
             </div>
           )}
@@ -301,7 +301,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Sizes Badge */}
         {showSizesOnCard && sizesLabel && product.in_stock && (
-          <div className="absolute bottom-2 left-2 bg-surface/90 backdrop-blur-xs border border-border text-content-primary text-[10px] font-medium px-1.5 py-0.5 rounded-[6px]">
+          <div className="absolute bottom-2 left-2 bg-surface border border-border text-content-primary text-[10px] font-semibold px-1.5 py-0.5 rounded-[6px] shadow-xs">
             {sizesLabel}
           </div>
         )}

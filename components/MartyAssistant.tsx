@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Phone,
   MessageSquare,
-  Zap,
   Package,
   ArrowRight,
   ChevronDown,
@@ -67,6 +66,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
   const [remainingToday, setRemainingToday] = useState(50);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [createdOrders, setCreatedOrders] = useState<Record<string, boolean>>({});
+  const [isExhausted, setIsExhausted] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -76,6 +76,23 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
   const storeName = storeSettings.store_name || (storeSettings as any).name || 'Tashkent Drip';
   const customAccent = storeSettings.accent_color || '#1F7A5A';
 
+  // Check if AI limit is already reached for this shop on mount
+  useEffect(() => {
+    const slug = storeSettings.slug || 'tashkent_drip';
+    fetch(`/api/ai/marty?shop=${encodeURIComponent(slug)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.dailyLimit !== undefined) setDailyLimit(data.dailyLimit);
+        if (data.remainingToday !== undefined) {
+          setRemainingToday(data.remainingToday);
+          if (data.remainingToday <= 0) {
+            setIsExhausted(true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [storeSettings.slug]);
+
   // Initialize initial welcome message
   useEffect(() => {
     if (messages.length === 0) {
@@ -83,7 +100,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         {
           id: 'welcome',
           role: 'assistant',
-          text: `Здравствуйте! Я Марти (Marty) — ваш персональный AI-консультант в магазине «${storeName}». 🤖✨\n\nЯ отлично знаю весь каталог, помогу подобрать размер, расскажу про доставку или сразу приму ваш заказ прямо здесь в диалоге! Чем могу помочь?`,
+          text: `Здравствуйте! Я консультант магазина «${storeName}». 🤖\n\nЗнаю весь каталог, помогу подобрать размер, расскажу про доставку или приму ваш заказ прямо здесь. Чем могу помочь?`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -160,7 +177,12 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
       const data = await response.json();
 
       if (data.dailyLimit !== undefined) setDailyLimit(data.dailyLimit);
-      if (data.remainingToday !== undefined) setRemainingToday(data.remainingToday);
+      if (data.remainingToday !== undefined) {
+        setRemainingToday(data.remainingToday);
+        if (data.remainingToday <= 0 || data.limitReached) {
+          setIsExhausted(true);
+        }
+      }
 
       if (!response.ok) {
         setMessages((prev) => [
@@ -237,7 +259,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         customer_phone: orderPayload.customer_phone || '+998900000000',
         delivery_type: orderPayload.delivery_type === 'pickup' ? 'pickup' : 'delivery',
         address: orderPayload.address || 'Уточняется менеджером',
-        comment: 'Оформлено через AI-консультанта Марти 🤖',
+        comment: 'Оформлено через онлайн-консультанта 🤖',
         items,
         total_price: unitPrice * (orderPayload.quantity || 1),
         status: 'new',
@@ -295,6 +317,8 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
     ]);
   };
 
+  if (isExhausted) return null;
+
   return (
     <>
       {/* ========================================================================= */}
@@ -317,14 +341,9 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
             >
               <X className="w-3 h-3" />
             </button>
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
-                <span className="text-[11px] font-bold text-content-primary">Марти • AI Консультант</span>
-              </div>
-              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full bg-accent text-white tracking-wider">
-                Новинка
-              </span>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+              <span className="text-[11px] font-bold text-content-primary">Консультант магазина</span>
             </div>
             <p className="text-xs text-content-secondary leading-relaxed">
               👋 Привет! Подскажу по размерам или приму заказ прямо здесь.
@@ -337,7 +356,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
               className="mt-2 w-full py-1.5 px-3 rounded-lg text-xs font-semibold bg-accent text-white flex items-center justify-center gap-1.5 shadow-xs"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Спросить Марти</span>
+              <span>Задать вопрос</span>
             </button>
           </div>
         )}
@@ -348,7 +367,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
             setIsOpen(!isOpen);
             setShowTeaser(false);
           }}
-          aria-label="Открыть AI консультанта Марти"
+          aria-label="Открыть чат с консультантом"
           className="group relative flex items-center gap-2.5 px-3.5 py-2.5 rounded-full bg-surface border border-border/80 hover:border-accent text-content-primary shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
           style={{
             boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.15)',
@@ -361,13 +380,8 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
           </div>
 
           <div className="hidden sm:flex flex-col text-left">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold tracking-tight text-content-primary">Марти</span>
-              <span className="text-[9px] px-1 py-0.2 rounded-sm bg-accent-soft text-accent font-semibold uppercase">
-                AI
-              </span>
-            </div>
-            <span className="text-[10px] text-content-secondary leading-none">Принимает заказы</span>
+            <span className="text-xs font-bold tracking-tight text-content-primary">Консультант</span>
+            <span className="text-[10px] text-content-secondary leading-none">Онлайн</span>
           </div>
 
           <Sparkles className="w-3.5 h-3.5 text-accent animate-spin-slow opacity-80" />
@@ -397,29 +411,15 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-bold text-content-primary">Марти (Marty)</h3>
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-accent-soft text-accent">
-                      Flash-Lite
-                    </span>
-                  </div>
+                  <h3 className="text-sm font-bold text-content-primary">Консультант</h3>
                   <p className="text-[11px] text-content-secondary truncate max-w-[190px]">
-                    AI-консультант {storeName}
+                    Магазин «{storeName}»
                   </p>
                 </div>
               </div>
 
               {/* Header Right Actions */}
               <div className="flex items-center gap-1">
-                {/* Daily limit badge */}
-                <div
-                  title={`Осталось ${remainingToday} из ${dailyLimit} запросов на сегодня`}
-                  className="hidden xs:flex items-center gap-1 px-2 py-1 rounded-full bg-surface border border-border text-[10px] text-content-secondary font-mono"
-                >
-                  <Zap className="w-3 h-3 text-amber-500" />
-                  <span>{remainingToday}/{dailyLimit}</span>
-                </div>
-
                 <button
                   type="button"
                   onClick={handleResetChat}
@@ -558,7 +558,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                     <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" />
                     <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0.2s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0.4s]" />
-                    <span className="text-[11px] ml-1 text-content-secondary">Марти печатает...</span>
+                    <span className="text-[11px] ml-1 text-content-secondary">Консультант печатает...</span>
                   </div>
                 </div>
               )}
@@ -597,7 +597,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Спросите Марти или напишите данные для заказа..."
+                    placeholder="Напишите вопрос или данные для заказа..."
                     disabled={isLoading}
                     className="w-full text-xs py-2.5 pl-3 pr-8 rounded-btn bg-page border border-border text-content-primary placeholder:text-content-secondary/70 focus:outline-hidden focus:border-accent transition-colors"
                   />
@@ -612,11 +612,6 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                   <Send className="w-4 h-4" />
                 </button>
               </form>
-
-              <div className="mt-1.5 flex items-center justify-between text-[10px] text-content-secondary px-1">
-                <span>Google Studio Flash-Lite AI</span>
-                <span>Лимит на сегодня: {remainingToday}/{dailyLimit}</span>
-              </div>
             </div>
           </div>
         </div>

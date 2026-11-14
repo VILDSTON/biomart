@@ -46,11 +46,9 @@ export const HeroVariantA: React.FC = () => {
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             {/* Emerald pill badge matching "Сравнение опыта" */}
             <Reveal delay={60}>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-soft text-accent text-xs font-semibold">
-                <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-accent text-white tracking-wider shadow-xs">
-                  Новинка
-                </span>
-                <span>AI-продавец Марти & Витрины нового поколения</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-soft text-accent text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Мобильные витрины для продаж в Узбекистане</span>
               </div>
             </Reveal>
 

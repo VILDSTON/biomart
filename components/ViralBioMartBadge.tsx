@@ -16,7 +16,7 @@ export const ViralBioMartBadge: React.FC<ViralBioMartBadgeProps> = ({
   if (hideBranding) return null;
 
   return (
-    <div className="py-6 text-center space-y-2">
+    <div className="py-6 text-center">
       <Link
         href="/"
         className="inline-flex items-center gap-1.5 text-xs text-content-secondary hover:text-content-primary transition-colors"
@@ -27,20 +27,6 @@ export const ViralBioMartBadge: React.FC<ViralBioMartBadgeProps> = ({
           <span className="font-semibold text-brand hover:underline">BioMart</span>
         </span>
       </Link>
-
-      <div className="flex items-center justify-center gap-3 text-[10px] text-content-tertiary">
-        <Link href="/faq" className="hover:text-content-secondary transition-colors">
-          FAQ
-        </Link>
-        <span>•</span>
-        <Link href="/privacy" className="hover:text-content-secondary transition-colors">
-          Конфиденциальность
-        </Link>
-        <span>•</span>
-        <Link href="/terms" className="hover:text-content-secondary transition-colors">
-          Оферта
-        </Link>
-      </div>
     </div>
   );
 };

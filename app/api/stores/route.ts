@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { isSlugValid } from '@/lib/security';
 import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -44,6 +45,16 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Anti-spam rate limiting by IP
+  const clientIp = getClientIp(req);
+  const storeLimit = checkRateLimit(`store_create_${clientIp}`, 5, 60 * 60 * 1000);
+  if (!storeLimit.success) {
+    return NextResponse.json(
+      { error: 'Слишком много попыток создания витрины. Пожалуйста, попробуйте позже.' },
+      { status: 429 }
+    );
+  }
+
   if (!isSupabaseConfigured || !supabaseAdmin) {
     return NextResponse.json({ error: 'База данных не подключена' }, { status: 503 });
   }

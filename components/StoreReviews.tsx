@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Star, MessageSquarePlus, CheckCircle2, X, Send, Heart, Sparkles } from 'lucide-react';
 import { StoreReview, StoreSettings } from '@/types';
 import { useBioMartStore } from '@/store/useStore';
-import { DEFAULT_STORE_REVIEWS } from '@/lib/mock-data';
 
 interface StoreReviewsProps {
   settings: StoreSettings;
@@ -21,7 +20,7 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
   const initialReviews: StoreReview[] =
     settings.reviews && settings.reviews.length > 0
       ? settings.reviews
-      : DEFAULT_STORE_REVIEWS;
+      : [];
 
   const [reviewsList, setReviewsList] = useState<StoreReview[]>(initialReviews);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +30,7 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState(false);
 
-  if (!isVisible) return null;
+  if (!isVisible || reviewsList.length === 0) return null;
 
   // Calculate average
   const totalReviews = reviewsList.length;

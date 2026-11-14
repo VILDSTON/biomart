@@ -22,7 +22,7 @@ import { MartyAssistant } from '@/components/MartyAssistant';
 
 export function StorefrontSkeleton() {
   return (
-    <main className="max-w-md mx-auto min-h-[100dvh] bg-surface border-x border-border p-4 space-y-4 animate-pulse">
+    <main className="max-w-md mx-auto min-h-[100dvh] bg-surface border-x border-border p-4 space-y-4">
       {/* Header skeleton */}
       <div className="flex items-center gap-3 pb-3 border-b border-border">
         <div className="w-16 h-16 rounded-[14px] bg-page" />

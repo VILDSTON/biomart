@@ -175,7 +175,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                 aria-label="Открыть Instagram страницу магазина"
                 className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
               >
-                <Instagram className="w-3.5 h-3.5 text-content-primary shrink-0" />
+                <Instagram className="w-3.5 h-3.5 text-accent shrink-0" />
                 <span className="truncate">Instagram</span>
               </a>
             )}

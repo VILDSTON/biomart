@@ -37,7 +37,6 @@ import { MarqueeNiches } from '@/components/landing/MarqueeNiches';
 import { BioMartLogo } from '@/components/BioMartLogo';
 import { SupportModal } from '@/components/SupportModal';
 import { PLAN_LIMITS, IS_SUBSCRIPTION_ENABLED } from '@/lib/constants';
-import { testimonials } from '@/content/proof';
 import { MOCK_PRODUCTS, MOCK_STORE_SETTINGS } from '@/lib/mock-data';
 import { MartyAssistant } from '@/components/MartyAssistant';
 
@@ -311,32 +310,34 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Bento Card 6: AI Assistant Marty (Google Studio Flash-Lite) */}
+            {/* Bento Card 6: AI Consultant */}
             <div className="md:col-span-3 bg-gradient-to-r from-accent-soft/80 via-surface to-accent-soft/40 border border-accent/30 rounded-[16px] p-6 sm:p-7 shadow-xs hover:border-accent transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="space-y-2.5 max-w-xl">
                 <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-accent text-white text-[11px] font-bold shadow-xs">
                   <Bot className="w-3.5 h-3.5" />
-                  <span>Новинка: AI-продавец Марти (Google Studio Flash-Lite)</span>
+                  <span>AI-консультант для вашей витрины</span>
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-content-primary">
-                  Отвечает клиентам понятно и принимает заказы 24/7
+                  Отвечает клиентам и принимает заказы 24/7
                 </h3>
                 <p className="text-xs sm:text-sm text-content-secondary leading-relaxed">
-                  Больше никаких потерянных клиентов по ночам. Марти консультирует по наличию и размерам на русском и узбекском языках, собирает данные доставки и сразу отправляет готовый чек в ваш Telegram. С дневным лимитом запросов для контроля расходов.
+                  Больше никаких потерянных клиентов по ночам. Консультант знает весь ваш каталог, помогает с размерами, собирает данные для доставки и отправляет готовый заказ в ваш Telegram.
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-                <div className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-surface border border-border text-center text-xs">
-                  <span className="text-content-secondary block text-[10px]">Дневной лимит:</span>
-                  <span className="font-bold text-accent">50 запросов / день</span>
-                </div>
+                <Link
+                  href="/marty"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-surface border border-border text-content-primary font-semibold text-xs shadow-xs hover:border-accent transition-all"
+                >
+                  <Bot className="w-4 h-4" />
+                  <span>Узнать подробнее</span>
+                </Link>
                 <Link
                   href="/demo"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-xs shadow-xs hover:brightness-105 active:scale-95 transition-all"
                 >
-                  <Bot className="w-4 h-4" />
-                  <span>Попробовать Марти в демо</span>
+                  <span>Попробовать в демо</span>
                 </Link>
               </div>
             </div>
@@ -354,79 +355,6 @@ export default function LandingPage() {
       {/* Section: Showcase of Demo Stores */}
       <ShowcaseSection />
 
-      {/* Section: Authentic Merchant Reviews / Social Proof */}
-      {testimonials && testimonials.length > 0 && (
-        <section className="py-16 sm:py-24 px-4 border-b border-border bg-page transition-colors">
-          <div className="max-w-5xl mx-auto space-y-12">
-            <div className="text-center space-y-2.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-soft text-accent text-xs font-semibold">
-                <Star className="w-3.5 h-3.5 fill-accent" />
-                <span>Реальные отзывы продавцов</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-content-primary tracking-tight">
-                Нам доверяют бренды в Ташкенте и по всему Узбекистану
-              </h2>
-              <p className="text-xs sm:text-sm text-content-secondary max-w-xl mx-auto">
-                Истории владельцев магазинов, которые автоматизировали прием заказов и увеличили продажи
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {testimonials.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="bg-surface border border-border hover:border-accent/40 rounded-[16px] p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs transition-all hover:-translate-y-0.5"
-                >
-                  <div className="space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-amber-400">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        ))}
-                      </div>
-                      {item.metric && (
-                        <span className="text-[10px] font-semibold text-accent bg-accent-soft px-2 py-0.5 rounded-full">
-                          {item.metric}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs sm:text-[13px] text-content-primary leading-relaxed">
-                      «{item.text}»
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-border flex items-center gap-3">
-                    {item.avatar && (
-                      <div className="w-10 h-10 rounded-full overflow-hidden relative shrink-0 border border-border">
-                        <Image
-                          src={item.avatar}
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-content-primary truncate flex items-center gap-1.5">
-                        <span>{item.name}</span>
-                        {item.city && (
-                          <span className="text-[10px] font-normal text-content-secondary">
-                            ({item.city})
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-content-secondary truncate">
-                        {item.shop} • {item.role}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Section: Tariffs with Monthly / Annual Switcher (Hidden while platform is 100% free) */}
       {IS_SUBSCRIPTION_ENABLED && (
@@ -717,12 +645,9 @@ export default function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <a href="#marty" className="hover:text-content-primary transition-colors inline-flex items-center gap-1.5">
-                    <span>AI Марти</span>
-                    <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase rounded-full bg-accent text-white">
-                      Новинка
-                    </span>
-                  </a>
+                  <Link href="/marty" className="hover:text-content-primary transition-colors">
+                    AI Консультант
+                  </Link>
                 </li>
                 <li>
                   <a href="#calculator" className="hover:text-content-primary transition-colors">

@@ -75,9 +75,6 @@ function DemoContent() {
               <span className="font-semibold text-content-primary truncate">
                 {currentPreset.title}
               </span>
-              <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full bg-accent text-white tracking-wider">
-                Новинка: AI Марти
-              </span>
             </div>
           </div>
 
