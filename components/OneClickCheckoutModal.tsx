@@ -186,10 +186,10 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-surface text-content-primary rounded-t-[20px] sm:rounded-card border border-border shadow-card z-10 max-h-[92vh] flex flex-col animate-slide-up-spring">
+      <div className="relative w-full max-w-md bg-surface text-content-primary rounded-t-[20px] sm:rounded-card border border-border shadow-2xl z-10 max-h-[92vh] flex flex-col animate-smooth-in">
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">

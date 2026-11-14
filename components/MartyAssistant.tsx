@@ -318,7 +318,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
               <X className="w-3 h-3" />
             </button>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
               <span className="text-[11px] font-bold text-content-primary">Марти • AI Консультант</span>
             </div>
             <p className="text-xs text-content-secondary leading-relaxed">
@@ -349,10 +349,10 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
             boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.15)',
           }}
         >
-          {/* Avatar / Robot Icon with Pulse */}
+          {/* Avatar / Robot Icon */}
           <div className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-emerald-400 text-white flex items-center justify-center shadow-xs">
             <Bot className="w-4 h-4" />
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface shadow-xs" />
           </div>
 
           <div className="hidden sm:flex flex-col text-left">
@@ -546,7 +546,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
               {/* Typing indicator */}
               {isLoading && (
                 <div className="flex items-center gap-2 text-content-secondary text-xs p-2">
-                  <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center animate-pulse">
+                  <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center">
                     <Bot className="w-3.5 h-3.5" />
                   </div>
                   <div className="flex gap-1 items-center bg-surface border border-border px-3 py-1.5 rounded-full shadow-xs">

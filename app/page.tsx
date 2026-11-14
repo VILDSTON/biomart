@@ -688,11 +688,23 @@ export default function LandingPage() {
             <Link href="/demo" className="hover:text-content-primary transition-colors">
               Демо
             </Link>
+            <Link href="/shipping" className="hover:text-content-primary transition-colors">
+              Доставка
+            </Link>
+            <Link href="/returns" className="hover:text-content-primary transition-colors">
+              Возврат
+            </Link>
+            <Link href="/faq" className="hover:text-content-primary transition-colors">
+              База знаний
+            </Link>
             <Link href="/login" className="hover:text-content-primary transition-colors">
               Вход
             </Link>
             <Link href="/register" className="hover:text-content-primary transition-colors">
               Регистрация
+            </Link>
+            <Link href="/rules" className="hover:text-content-primary transition-colors">
+              Правила
             </Link>
             <Link href="/terms" className="hover:text-content-primary transition-colors">
               Оферта

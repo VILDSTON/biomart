@@ -300,8 +300,8 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-content-primary">{t.pageTitle}</h1>
             {hasChanges && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-amber-500/20" />
                 {t.unsavedBadge}
               </span>
             )}

@@ -67,12 +67,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               Тарифы
             </a>
           )}
-          <a
-            href="#faq"
+          <Link
+            href="/shipping"
             className="hover:text-content-primary transition-colors cursor-pointer"
           >
-            FAQ
-          </a>
+            Доставка
+          </Link>
+          <Link
+            href="/faq"
+            className="hover:text-content-primary transition-colors cursor-pointer"
+          >
+            База знаний
+          </Link>
           <Link
             href="/demo"
             className="text-accent hover:text-accent-hover font-semibold transition-colors"

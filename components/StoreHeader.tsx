@@ -58,7 +58,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
         </div>
       )}
 
-      <div className={`p-4 ${hasBanner ? 'pt-3' : 'pt-4'}`}>
+      <div className={`p-3 xs:p-4 ${hasBanner ? 'pt-2.5 xs:pt-3' : 'pt-3 xs:pt-4'}`}>
         {/* Profile Row: Avatar & Title */}
         <div className="flex items-start gap-3">
           {/* Avatar */}

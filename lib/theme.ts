@@ -280,9 +280,20 @@ export function computeStoreTokens(accentHex?: string, isDark: boolean = false):
   const rgb = hexToRgb(accentHex || '#111827');
   const L = getRelativeLuminance(rgb);
 
+  // In dark mode, if the accent is dark (like #1F7A5A), lighten it for contrast and readability
+  let effectiveRgb = rgb;
+  if (isDark && L < 0.28) {
+    effectiveRgb = {
+      r: Math.min(255, Math.round(rgb.r * 1.25 + 25)),
+      g: Math.min(255, Math.round(rgb.g * 1.45 + 45)),
+      b: Math.min(255, Math.round(rgb.b * 1.25 + 25)),
+    };
+  }
+  const effectiveL = getRelativeLuminance(effectiveRgb);
+
   // 1. Text color on accent: WCAG contrast check against White and Black
-  const contrastWithWhite = 1.05 / (L + 0.05);
-  const contrastWithBlack = (L + 0.05) / 0.05;
+  const contrastWithWhite = 1.05 / (effectiveL + 0.05);
+  const contrastWithBlack = (effectiveL + 0.05) / 0.05;
 
   let onAccent = '#FFFFFF';
   if (contrastWithWhite < 4.5 && contrastWithBlack >= 4.5) {
@@ -293,37 +304,37 @@ export function computeStoreTokens(accentHex?: string, isDark: boolean = false):
 
   // 2. Hover state:
   let hoverRgb: { r: number; g: number; b: number };
-  if (L > 0.5) {
-    // Very light accent (like #E5FF00 neon or pastel) -> darken by 15%
-    hoverRgb = { r: rgb.r * 0.85, g: rgb.g * 0.85, b: rgb.b * 0.85 };
-  } else if (L < 0.05) {
-    // Very dark accent (like #000000 or #111827) -> lighten for visibility
+  if (effectiveL > 0.5) {
+    // Very light accent -> darken by 15%
+    hoverRgb = { r: effectiveRgb.r * 0.85, g: effectiveRgb.g * 0.85, b: effectiveRgb.b * 0.85 };
+  } else if (effectiveL < 0.05) {
+    // Very dark accent -> lighten for visibility
     hoverRgb = {
-      r: Math.min(255, rgb.r + 35),
-      g: Math.min(255, rgb.g + 35),
-      b: Math.min(255, rgb.b + 35),
+      r: Math.min(255, effectiveRgb.r + 35),
+      g: Math.min(255, effectiveRgb.g + 35),
+      b: Math.min(255, effectiveRgb.b + 35),
     };
   } else {
     // Mid/dark tone:
     if (isDark) {
       hoverRgb = {
-        r: Math.min(255, rgb.r + 28),
-        g: Math.min(255, rgb.g + 28),
-        b: Math.min(255, rgb.b + 28),
+        r: Math.min(255, effectiveRgb.r + 28),
+        g: Math.min(255, effectiveRgb.g + 28),
+        b: Math.min(255, effectiveRgb.b + 28),
       };
     } else {
-      hoverRgb = { r: rgb.r * 0.88, g: rgb.g * 0.88, b: rgb.b * 0.88 };
+      hoverRgb = { r: effectiveRgb.r * 0.88, g: effectiveRgb.g * 0.88, b: effectiveRgb.b * 0.88 };
     }
   }
 
   // 3. Soft background state:
   let softRgb: { r: number; g: number; b: number };
   if (isDark) {
-    // 25% blend over #1E1E1E dark background
+    // Luminous, soft translucent blend over dark background
     softRgb = {
-      r: rgb.r * 0.25 + 30 * 0.75,
-      g: rgb.g * 0.25 + 30 * 0.75,
-      b: rgb.b * 0.25 + 30 * 0.75,
+      r: Math.round(effectiveRgb.r * 0.22 + 28 * 0.78),
+      g: Math.round(effectiveRgb.g * 0.22 + 28 * 0.78),
+      b: Math.round(effectiveRgb.b * 0.22 + 28 * 0.78),
     };
   } else {
     // 12% blend over #FFFFFF light background
@@ -335,7 +346,7 @@ export function computeStoreTokens(accentHex?: string, isDark: boolean = false):
   }
 
   return {
-    accent: rgbToHex(rgb.r, rgb.g, rgb.b),
+    accent: rgbToHex(effectiveRgb.r, effectiveRgb.g, effectiveRgb.b),
     accentHover: rgbToHex(hoverRgb.r, hoverRgb.g, hoverRgb.b),
     accentSoft: rgbToHex(softRgb.r, softRgb.g, softRgb.b),
     onAccent,

@@ -52,12 +52,12 @@
 
 html.dark,
 [data-theme="dark"] {
-  /* BioMart Platform Brand Tokens in Dark Mode */
-  --brand-primary: #1F7A5A;
-  --brand-hover: #26966F;
-  --brand-soft: #163629;
-  --brand-text: #FFFFFF;
-  --brand-border: #1F4234;
+  /* BioMart Platform Brand Tokens in Dark Mode (Lighter & more readable green) */
+  --brand-primary: #2ECC71;
+  --brand-hover: #34D399;
+  --brand-soft: rgba(46, 204, 113, 0.15);
+  --brand-text: #0B1E14;
+  --brand-border: rgba(46, 204, 113, 0.30);
 
   /* Full Dark Theme Tokens (WCAG Contrast compliant >= 4.5:1) */
   --bg-page: #121212;
@@ -70,16 +70,16 @@ html.dark,
   --text-secondary: #A3A3A3;
   --text-tertiary: #737373;
 
-  /* Dark mode Platform Emerald Accent */
-  --accent: #1F7A5A;
-  --accent-hover: #26966F;
-  --accent-soft: #163629;
-  --accent-text: #FFFFFF;
+  /* Dark mode Platform Emerald Accent (Lighter, vibrant mint-emerald) */
+  --accent: #2ECC71;
+  --accent-hover: #34D399;
+  --accent-soft: rgba(46, 204, 113, 0.15);
+  --accent-text: #0B1E14;
 
-  --store-accent: #1F7A5A;
-  --store-accent-hover: #26966F;
-  --store-accent-soft: #163629;
-  --store-on-accent: #FFFFFF;
+  --store-accent: #2ECC71;
+  --store-accent-hover: #34D399;
+  --store-accent-soft: rgba(46, 204, 113, 0.15);
+  --store-on-accent: #0B1E14;
 
   --error: #F87171;
 
@@ -383,6 +383,152 @@ html.dark .hover\:bg-\[\#EFECE6\]:hover,
   display: flex;
   width: max-content;
   animation: marquee 25s linear infinite;
+}
+
+/* ========================================================================= */
+/* GPU-ACCELERATED SMOOTH IN / OUT ANIMATIONS (Inspired by Video 1)         */
+/* ========================================================================= */
+@keyframes smoothScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes smoothScaleOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+}
+
+@keyframes smoothDrawerIn {
+  0% {
+    opacity: 0.2;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes smoothDrawerOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes toastProgress {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+@keyframes thermalPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+.animate-smooth-in {
+  animation: smoothScaleIn 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-smooth-out {
+  animation: smoothScaleOut 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-drawer-in {
+  animation: smoothDrawerIn 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
+}
+
+.animate-drawer-out {
+  animation: smoothDrawerOut 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
+}
+
+.animate-toast-progress {
+  animation: toastProgress var(--toast-duration, 3500ms) linear forwards;
+}
+
+/* ========================================================================= */
+/* VISUAL DEPTH & BACKGROUNDS (Inspired by Video 2)                         */
+/* ========================================================================= */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(231, 228, 220, 0.8);
+}
+
+.dark .glass-panel,
+[data-theme="dark"] .glass-panel {
+  background: rgba(26, 26, 26, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Fluted / Thermal subtle mesh accent (Video 2 technique) */
+.mesh-gradient-thermal {
+  background: radial-gradient(circle at 10% 20%, rgba(46, 204, 113, 0.12) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(52, 211, 153, 0.08) 0%, transparent 45%);
+}
+
+/* Blueprint subtle grid overlay */
+.blueprint-grid {
+  background-size: 24px 24px;
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+}
+
+.dark .blueprint-grid,
+[data-theme="dark"] .blueprint-grid {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* ========================================================================= */
+/* THIN PHONE ADAPTIVITY (320px - 375px)                                     */
+/* ========================================================================= */
+@media (max-width: 360px) {
+  .thin-p {
+    padding-left: 0.625rem !important;
+    padding-right: 0.625rem !important;
+  }
+  .thin-text-xs {
+    font-size: 0.6875rem !important;
+  }
+  .thin-btn {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    height: 2.25rem !important;
+  }
 }
 
 /* Respect prefers-reduced-motion */

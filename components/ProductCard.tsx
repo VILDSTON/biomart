@@ -317,11 +317,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Info & Action */}
-      <div className="p-2.5 sm:p-3 flex flex-col justify-between flex-1">
+      <div className="p-2 xs:p-2.5 sm:p-3 flex flex-col justify-between flex-1">
         <div>
           {/* Price */}
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-bold text-content-primary tabular-nums">
+          <div className="flex flex-wrap items-baseline gap-1 xs:gap-1.5">
+            <span className="text-xs xs:text-sm font-bold text-content-primary tabular-nums">
               {formatPrice(product.price)}
             </span>
             {showOldPrice && product.old_price && product.old_price > product.price && (

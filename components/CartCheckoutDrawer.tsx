@@ -183,10 +183,10 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-fade-in">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-fade-in">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-surface text-content-primary h-full flex flex-col z-10 shadow-card animate-slide-up sm:animate-none">
+      <div className="relative w-full max-w-md bg-surface text-content-primary h-full flex flex-col z-10 shadow-2xl animate-drawer-in">
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">

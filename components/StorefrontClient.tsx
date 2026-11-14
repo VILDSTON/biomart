@@ -426,8 +426,8 @@ export function StorefrontClient({
       }}
       className="min-h-[100dvh] bg-page text-content-primary transition-colors"
     >
-      {/* Centered Mobile Frame (Always max-w-md on desktop with clean border and solid background) */}
-      <main className="max-w-md mx-auto min-h-[100dvh] relative flex flex-col pb-36 border-x border-border bg-surface shadow-subtle">
+      {/* Centered Mobile Frame (Responsive for thin phones as well as ordinary phones) */}
+      <main className="w-full max-w-full sm:max-w-md mx-auto min-h-[100dvh] relative flex flex-col pb-36 border-x-0 sm:border-x border-border bg-surface shadow-subtle overflow-x-hidden">
         {/* 1. Store Header Profile with Banner & Announcement */}
         <StoreHeader
           settings={effectiveSettings}
@@ -487,7 +487,7 @@ export function StorefrontClient({
               )}
             </div>
           ) : (
-            <div className={catalogLayout === 'grid' && effectiveSettings.card_style !== 'single' ? 'grid grid-cols-2 gap-2.5' : 'flex flex-col gap-2.5'}>
+            <div className={catalogLayout === 'grid' && effectiveSettings.card_style !== 'single' ? 'grid grid-cols-2 gap-2 xs:gap-2.5' : 'flex flex-col gap-2.5'}>
               {filteredProducts.map((product) => {
                 const isInCart = currentCart.some((c) => c.product.id === product.id);
                 return (
