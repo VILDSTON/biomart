@@ -207,7 +207,7 @@ async def cmd_start(message: types.Message, command: CommandObject):
         bind_text = (
             f"👋 <b>Здравствуйте, {user_name}!</b>\n\n"
             f"🏪 <b>Запрос на привязку витрины BioMart:</b>\n"
-            f"Магазин: <b>${store_name}</b> (<code>biomart.uz/{target_slug}</code>)\n"
+            f"Магазин: <b>{store_name}</b> (<code>biomart.vercel.app/{target_slug}</code>)\n"
             f"Юзернейм: <code>@{username or target_user}</code>\n"
             f"Ваш Chat ID: <code>{chat_id}</code>\n\n"
             f"Разрешаете ли вы официальному боту <b>BioMart</b> присылать вам мгновенные чеки заказов от ваших покупателей в этот чат?"
@@ -303,7 +303,7 @@ async def cmd_search_prompt(message: types.Message):
         "Отправьте юзернейм или ссылку на магазин, например:\n"
         "• <code>tashkent_drip</code>\n"
         "• <code>samarkand_sweets</code>\n"
-        "• <code>biomart.uz/tashkent_drip</code>"
+        "• <code>biomart.vercel.app/tashkent_drip</code>"
     )
     await message.answer(text)
 
@@ -496,7 +496,14 @@ async def cmd_catalog_param(message: types.Message, command: CommandObject):
 
 @dp.message(F.text)
 async def handle_any_text(message: types.Message):
-    clean = message.text.strip().lower().replace("http://", "").replace("https://", "").replace("biomart.uz/", "")
+    clean = (
+        message.text.strip()
+        .lower()
+        .replace("http://", "")
+        .replace("https://", "")
+        .replace("biomart.vercel.app/", "")
+        .replace("biomart.uz/", "")
+    )
     clean = clean.split("/")[0].strip()
     if clean in STORES_DB:
         await show_store_details(message, clean)

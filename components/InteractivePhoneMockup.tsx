@@ -69,7 +69,7 @@ export const InteractivePhoneMockup: React.FC = () => {
             <div className="bg-surface border-b border-border text-content-primary text-[11px] font-medium py-1.5 px-3 flex items-center justify-between">
               <div className="flex items-center gap-1.5 font-mono text-[10px] text-content-secondary">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                <span>{process.env.NEXT_PUBLIC_SITE_DOMAIN || 'biomart.uz'}/tashkent_drip</span>
+                <span>{process.env.NEXT_PUBLIC_SITE_DOMAIN || 'biomart.vercel.app'}/tashkent_drip</span>
               </div>
               <span className="text-[9px] text-accent font-semibold px-1.5 py-0.5 rounded bg-accent-soft">ДЕМО</span>
             </div>

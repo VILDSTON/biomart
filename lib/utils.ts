@@ -50,16 +50,19 @@ export function normalizePhone(phone: string): string {
 }
 
 /**
- * Returns public canonical URL for a store (defaults to biomart.uz, never leaks localhost)
+ * Returns public canonical URL for a store (defaults to biomart.vercel.app, never leaks localhost)
  */
 export function getStoreUrl(slug: string): string {
-  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://biomart.uz';
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://biomart.vercel.app';
   const cleanBase = base.replace(/\/$/, '');
   return `${cleanBase}/${slug}`;
 }
 
 export function getStoreDisplayUrl(slug: string): string {
-  return `biomart.uz/${slug}`;
+  const domain = process.env.NEXT_PUBLIC_BASE_URL 
+    ? process.env.NEXT_PUBLIC_BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    : 'biomart.vercel.app';
+  return `${domain}/${slug}`;
 }
 
 /**

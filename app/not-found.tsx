@@ -126,7 +126,7 @@ export default function NotFound() {
       {/* Footer */}
       <footer className="w-full border-t border-border py-4 text-center text-[11px] text-content-secondary">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>© {new Date().getFullYear()} BioMart.uz — Платформа витрин для малого бизнеса</span>
+          <span>© {new Date().getFullYear()} BioMart — Платформа витрин для малого бизнеса</span>
           <div className="flex items-center gap-4">
             <Link href="/privacy" className="hover:text-content-primary transition-colors">
               Конфиденциальность

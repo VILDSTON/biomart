@@ -113,7 +113,7 @@ export async function POST(req: Request) {
           const targetSlug = bindParts[2] || 'tashkent_drip';
           const storeName = targetSlug.replace(/_/g, ' ').toUpperCase();
 
-          const bindText = `👋 <b>Здравствуйте, ${firstName}!</b>\n\n🏪 <b>Запрос на привязку витрины BioMart:</b>\nМагазин: <b>${storeName}</b> (<code>biomart.uz/${targetSlug}</code>)\nЮзернейм: <code>@${username || targetUser}</code>\nВаш Chat ID: <code>${chatId}</code>\n\nРазрешаете ли вы официальному боту <b>BioMart</b> присылать вам мгновенные чеки заказов от ваших покупателей в этот чат?`;
+          const bindText = `👋 <b>Здравствуйте, ${firstName}!</b>\n\n🏪 <b>Запрос на привязку витрины BioMart:</b>\nМагазин: <b>${storeName}</b> (<code>biomart.vercel.app/${targetSlug}</code>)\nЮзернейм: <code>@${username || targetUser}</code>\nВаш Chat ID: <code>${chatId}</code>\n\nРазрешаете ли вы официальному боту <b>BioMart</b> присылать вам мгновенные чеки заказов от ваших покупателей в этот чат?`;
 
           await sendTelegramMessage(botToken, chatId, bindText, {
             inline_keyboard: [

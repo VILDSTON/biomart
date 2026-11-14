@@ -200,7 +200,7 @@ export default {
         if (data.startsWith("demo_receipt")) {
           const demoText = 
             `<b>НОВЫЙ ЗАКАЗ #4892</b>\n` +
-            `<b>Магазин:</b> biomart.uz/tashkent_drip\n\n` +
+            `<b>Магазин:</b> biomart.vercel.app/tashkent_drip\n\n` +
             `<b>Клиент:</b> Сардор Рахимов\n` +
             `<b>Телефон:</b> <a href="tel:+998901234567">+998 90 123 45 67</a>\n` +
             `<b>Способ получения:</b> Доставка курьером (Yandex)\n` +
@@ -267,7 +267,7 @@ export default {
             const bindText = 
               `👋 <b>Здравствуйте, ${firstName}!</b>\n\n` +
               `🏪 <b>Запрос на привязку витрины BioMart:</b>\n` +
-              `Магазин: <b>${storeName}</b> (<code>biomart.uz/${targetSlug}</code>)\n` +
+              `Магазин: <b>${storeName}</b> (<code>biomart.vercel.app/${targetSlug}</code>)\n` +
               `Юзернейм: <code>@${username || targetUser}</code>\n` +
               `Ваш Chat ID: <code>${chatId}</code>\n\n` +
               `Разрешаете ли вы официальному боту <b>BioMart</b> присылать вам мгновенные чеки заказов от ваших покупателей в этот чат?`;

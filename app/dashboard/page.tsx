@@ -1518,7 +1518,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] sm:text-[10px] text-content-secondary font-mono truncate">
-                  biomart.uz/{activeSlug}
+                  biomart.vercel.app/{activeSlug}
                 </span>
                 <button
                   type="button"
@@ -3162,7 +3162,7 @@ export default function DashboardPage() {
                     </label>
                     <div className="flex items-center rounded-[10px] bg-page border border-border overflow-hidden focus-within:border-accent">
                       <span className="pl-3.5 pr-1 py-2.5 text-xs font-semibold text-content-secondary font-mono select-none">
-                        biomart.uz/
+                        biomart.vercel.app/
                       </span>
                       <input
                         type="text"
@@ -3364,7 +3364,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-content-secondary">Привязанная витрина:</span>
-                        <span className="font-mono font-medium">biomart.uz/{activeSlug}</span>
+                        <span className="font-mono font-medium">biomart.vercel.app/{activeSlug}</span>
                       </div>
                       <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed pt-1">
                         🚀 <b>Готово к приёму заказов:</b> при каждом новом заказе на вашей витрине бот моментально пришлёт вам подробный чек с именем клиента, списком товаров, телефоном и кнопками быстрого ответа!
@@ -3524,7 +3524,7 @@ export default function DashboardPage() {
                   <span>Пароль администратора и безопасность</span>
                 </h3>
                 <p className="text-xs text-content-secondary">
-                  Пароль используется для авторизации в кабинете управления магазином biomart.uz/{activeSlug}
+                  Пароль используется для авторизации в кабинете управления магазином biomart.vercel.app/{activeSlug}
                 </p>
               </div>
 

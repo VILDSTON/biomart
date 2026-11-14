@@ -1235,7 +1235,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                     <div>
                       <span className="font-semibold text-content-primary block text-xs">{t.hideBrandingTitle}</span>
                       <span className="text-[11px] text-content-secondary">
-                        Бейдж «Сделано в BioMart.uz» внизу витрины
+                        Бейдж «Витрина создана на BioMart» внизу витрины
                       </span>
                     </div>
                     <span className="text-[10px] font-semibold text-content-secondary px-2.5 py-1 rounded-[6px] bg-page border border-border select-none">

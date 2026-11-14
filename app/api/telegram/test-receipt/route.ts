@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     const testText = 
       `🧪 <b>ТЕСТОВЫЙ ЧЕК ЗАКАЗА #7777</b>\n` +
-      `<b>Магазин:</b> biomart.uz/${shopSlug}\n\n` +
+      `<b>Магазин:</b> biomart.vercel.app/${shopSlug}\n\n` +
       `<b>Клиент:</b> Тестовый Покупатель\n` +
       `<b>Телефон:</b> <a href="tel:+998901234567">+998 90 123 45 67</a>\n` +
       `<b>Способ получения:</b> Доставка курьером\n` +
