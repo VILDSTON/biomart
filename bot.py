@@ -34,7 +34,7 @@ def load_local_env():
 
 load_local_env()
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or os.environ.get("TG_BOT_TOKEN") or ""
-BASE_WEB_URL = "http://localhost:3000"
+BASE_WEB_URL = os.environ.get("NEXT_PUBLIC_BASE_URL") or "https://biomart.vercel.app"
 
 TELEGRAM_USERS_FILE = Path(__file__).resolve().parent / "data" / "telegram_users.json"
 
