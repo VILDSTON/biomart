@@ -30,7 +30,13 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState(false);
 
-  if (!isVisible || reviewsList.length === 0) return null;
+  React.useEffect(() => {
+    if (settings.reviews) {
+      setReviewsList(settings.reviews);
+    }
+  }, [settings.reviews]);
+
+  if (!isVisible) return null;
 
   // Calculate average
   const totalReviews = reviewsList.length;
@@ -129,49 +135,65 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
         </div>
       )}
 
-      {/* Reviews Cards List */}
-      <div className="space-y-2.5">
-        {reviewsList.map((review) => (
-          <div
-            key={review.id}
-            className="p-3 rounded-btn bg-surface border border-border shadow-2xs space-y-2 transition-colors hover:border-accent/30"
+      {/* Reviews Cards List or Empty State */}
+      {reviewsList.length === 0 ? (
+        <div className="py-5 px-4 rounded-btn border border-dashed border-border bg-surface text-center space-y-2">
+          <p className="text-xs text-content-secondary">
+            {isUz ? 'Hozircha sharhlar yo‘q. Birinchi bo‘lib fikr bildiring!' : 'Пока нет отзывов. Будьте первым, кто оставит отзыв о покупке!'}
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-btn bg-accent text-white text-xs font-semibold shadow-xs hover:brightness-105 active:scale-95 transition-all"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-content-primary">
-                  {review.author_name}
-                </span>
-                {review.is_verified && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-content-secondary bg-surface-soft px-1.5 py-0.2 rounded-full border border-border">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-accent" />
-                    <span>{isUz ? 'Xaridor' : 'Покупатель'}</span>
+            <MessageSquarePlus className="w-3.5 h-3.5" />
+            <span>{isUz ? 'Fikr qoldirish' : 'Оставить первый отзыв'}</span>
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {reviewsList.map((review) => (
+            <div
+              key={review.id}
+              className="p-3 rounded-btn bg-surface border border-border shadow-2xs space-y-2 transition-colors hover:border-accent/30"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-content-primary">
+                    {review.author_name}
                   </span>
-                )}
+                  {review.is_verified && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-content-secondary bg-surface-soft px-1.5 py-0.2 rounded-full border border-border">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-accent" />
+                      <span>{isUz ? 'Xaridor' : 'Покупатель'}</span>
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] text-content-secondary">{review.date}</span>
               </div>
-              <span className="text-[10px] text-content-secondary">{review.date}</span>
-            </div>
 
-            {/* Stars */}
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={`w-3 h-3 ${
-                    star <= review.rating
-                      ? 'fill-amber-400 text-amber-400'
-                      : 'fill-border text-border'
-                  }`}
-                />
-              ))}
-            </div>
+              {/* Stars */}
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-3 h-3 ${
+                      star <= review.rating
+                        ? 'fill-amber-400 text-amber-400'
+                        : 'fill-border text-border'
+                    }`}
+                  />
+                ))}
+              </div>
 
-            {/* Review text */}
-            <p className="text-xs text-content-primary leading-relaxed whitespace-pre-line">
-              {review.text}
-            </p>
-          </div>
-        ))}
-      </div>
+              {/* Review text */}
+              <p className="text-xs text-content-primary leading-relaxed whitespace-pre-line">
+                {review.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Review Modal Form */}
       {isModalOpen && (

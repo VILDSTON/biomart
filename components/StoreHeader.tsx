@@ -22,12 +22,14 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
   const { language, setLanguage } = useBioMartStore();
   const t = translations[language];
 
-  const hasBanner = Boolean(settings.banner_url);
+  const [bannerError, setBannerError] = useState(false);
+  const hasBanner = Boolean(settings.banner_url && settings.banner_url.trim() !== '') && !bannerError;
   const customAccent = settings.accent_color || '#1F7A5A';
 
   React.useEffect(() => {
     setAvatarError(false);
-  }, [settings.avatar_url]);
+    setBannerError(false);
+  }, [settings.avatar_url, settings.banner_url]);
 
   const cleanTg = settings.telegram_username ? settings.telegram_username.replace('@', '').trim() : '';
   const tgInquiryText = language === 'uz'
@@ -46,7 +48,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
 
       {/* Hero Banner Cover */}
       {hasBanner && (
-        <div className="relative aspect-[3/1] w-full bg-page overflow-hidden border-b border-border">
+        <div className="relative w-full h-[120px] xs:h-[135px] sm:h-[155px] bg-page overflow-hidden border-b border-border">
           <Image
             src={settings.banner_url!}
             alt={`${settings.store_name} banner`}
@@ -54,6 +56,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
             className="object-cover"
             priority
             unoptimized
+            onError={() => setBannerError(true)}
           />
         </div>
       )}

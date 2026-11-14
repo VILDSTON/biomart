@@ -56,7 +56,9 @@ import {
   User,
   Save,
   Sparkles,
+  Percent,
 } from 'lucide-react';
+import { compressImage } from '@/lib/image-compress';
 import { useBioMartStore } from '@/store/useStore';
 import { ACCENT_COLOR_PRESETS } from '@/lib/mock-data';
 import { QRCodeCard } from '@/components/QRCodeCard';
@@ -94,7 +96,7 @@ function cleanDisplayAiText(text: string): string {
     .trim();
 }
 
-type DashboardTab = 'orders' | 'products' | 'links' | 'share' | 'telegram' | 'branding' | 'design' | 'team' | 'tariff' | 'ai';
+type DashboardTab = 'orders' | 'products' | 'promos' | 'links' | 'share' | 'telegram' | 'branding' | 'design' | 'team' | 'tariff' | 'ai';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -111,7 +113,7 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
       const tab = sp.get('tab') as DashboardTab;
-      const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', 'team', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
+      const allowedTabs = ['orders', 'products', 'promos', 'links', 'share', 'telegram', 'branding', 'design', 'team', 'ai', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
       if (allowedTabs.includes(tab)) return tab;
     }
     return 'orders';
@@ -250,7 +252,7 @@ export default function DashboardPage() {
       setIsAuthenticated(true);
     }
     const tabParam = searchParams?.get('tab') as DashboardTab | null;
-    const allowedTabs = ['orders', 'products', 'links', 'share', 'telegram', 'branding', 'design', 'team', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
+    const allowedTabs = ['orders', 'products', 'promos', 'links', 'share', 'telegram', 'branding', 'design', 'team', 'ai', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
     if (tabParam && allowedTabs.includes(tabParam)) {
       setActiveTab(tabParam);
     }
@@ -427,10 +429,11 @@ export default function DashboardPage() {
       showToast('Размер файла превышает 5 МБ');
       return;
     }
-    showToast('Загрузка фото в облако...');
+    showToast('Сжатие и загрузка фото в облако...');
     try {
+      const compressedFile = await compressImage(file, 1200, 1200, 0.82);
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', compressedFile);
       fd.append('folder', `products/${activeSlug}`);
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -879,6 +882,16 @@ export default function DashboardPage() {
     setSettingsForm({ ...settingsForm, promo_codes: updated });
     updateShopSettings(activeSlug, { promo_codes: updated });
     showToast(`Промокод ${codeToDelete} удалён`);
+  };
+
+  const handleTogglePromo = (code: string) => {
+    const existingCodes = settingsForm.promo_codes || [];
+    const updated = existingCodes.map((c) =>
+      c.code === code ? { ...c, active: c.active === false ? true : false } : c
+    );
+    setSettingsForm({ ...settingsForm, promo_codes: updated });
+    updateShopSettings(activeSlug, { promo_codes: updated });
+    showToast(`Статус промокода ${code} изменён`);
   };
 
   // Custom Links Handlers
@@ -1428,6 +1441,23 @@ export default function DashboardPage() {
           >
             <Package className="w-3.5 h-3.5" />
             <span>Товары ({products.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('promos')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'promos'
+                ? 'bg-[#1F7A5A] text-white shadow-xs'
+                : 'text-content-secondary hover:bg-page hover:text-content-primary'
+            }`}
+          >
+            <Percent className="w-3.5 h-3.5" />
+            <span>Промокоды</span>
+            {((settingsForm.promo_codes || settings.promo_codes)?.length || 0) > 0 && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-page text-content-primary font-mono font-semibold">
+                {(settingsForm.promo_codes || settings.promo_codes)?.filter((p) => p.active !== false).length}
+              </span>
+            )}
           </button>
 
           <button
@@ -2567,6 +2597,153 @@ export default function DashboardPage() {
           )}
 
           {/* ========================================================================= */}
+          {/* TAB: PROMO CODES (ПРОМОКОДЫ ДЛЯ ПОКУПАТЕЛЕЙ) */}
+          {/* ========================================================================= */}
+          {activeTab === 'promos' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border pb-3">
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-content-primary flex items-center gap-2">
+                    <Percent className="w-4 h-4 text-accent" />
+                    <span>Промокоды и скидки витрины</span>
+                  </h2>
+                  <p className="text-xs text-content-secondary mt-0.5">
+                    Создавайте скидочные промокоды для акций в Instagram, Stories и Telegram
+                  </p>
+                </div>
+              </div>
+
+              {/* Create Promo Code Card */}
+              <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-5 space-y-4">
+                <h3 className="text-xs font-bold text-content-primary">
+                  Создать новый промокод
+                </h3>
+                <form onSubmit={handleAddPromo} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                  <div className="sm:col-span-6">
+                    <label className="block text-xs font-semibold text-content-primary mb-1">
+                      Код (латиница и цифры):
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newPromoCode}
+                      onChange={(e) => setNewPromoCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))}
+                      placeholder="Например: VESNA15, DRIP20, SALE10"
+                      className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs font-mono font-semibold text-content-primary focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <label className="block text-xs font-semibold text-content-primary mb-1">
+                      Скидка (%):
+                    </label>
+                    <div className="flex items-center rounded-[10px] bg-page border border-border px-3 py-2.5 focus-within:border-accent">
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        required
+                        value={newPromoPercent}
+                        onChange={(e) => setNewPromoPercent(e.target.value)}
+                        placeholder="10"
+                        className="w-full bg-transparent text-xs font-mono font-bold text-content-primary focus:outline-none"
+                      />
+                      <span className="text-xs font-semibold text-content-secondary">%</span>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <button
+                      type="submit"
+                      disabled={!newPromoCode.trim()}
+                      className="w-full py-2.5 px-4 bg-accent hover:bg-accent-hover text-white font-medium text-xs rounded-[10px] transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Добавить</span>
+                    </button>
+                  </div>
+                </form>
+                <p className="text-[11px] text-content-secondary leading-relaxed">
+                  💡 Покупатели смогут ввести этот промокод в корзине или при быстром заказе в 1 клик на вашей витрине. Скидка применится к итоговой сумме автоматически.
+                </p>
+              </div>
+
+              {/* Active Promo Codes List */}
+              <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-5 space-y-3">
+                <h3 className="text-xs font-bold text-content-primary">
+                  Список промокодов ({(settingsForm.promo_codes || settings.promo_codes || []).length})
+                </h3>
+
+                {(settingsForm.promo_codes || settings.promo_codes || []).length === 0 ? (
+                  <div className="py-8 text-center border border-dashed border-border rounded-[10px] p-4 space-y-2">
+                    <Percent className="w-8 h-8 text-content-secondary mx-auto opacity-40" />
+                    <p className="text-xs text-content-secondary">
+                      У вас пока нет созданных промокодов. Добавьте первый промокод выше, чтобы порадовать покупателей скидкой!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(settingsForm.promo_codes || settings.promo_codes || []).map((promo) => (
+                      <div
+                        key={promo.code}
+                        className={`p-3.5 rounded-[12px] border transition-all flex items-center justify-between gap-3 ${
+                          promo.active !== false
+                            ? 'bg-page border-border hover:border-accent/40'
+                            : 'bg-page/50 border-border/50 opacity-60'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-sm text-content-primary tracking-wide">
+                              {promo.code}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent-soft text-accent">
+                              -{promo.discount_percent}%
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-content-secondary mt-0.5 block">
+                            {promo.active !== false ? '🟢 Активен на витрине' : '⚪ Приостановлен'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(promo.code);
+                              showToast(`Код ${promo.code} скопирован!`);
+                            }}
+                            title="Скопировать код"
+                            className="p-1.5 rounded-[8px] bg-surface hover:bg-surface-soft text-content-secondary hover:text-content-primary border border-border transition-colors cursor-pointer"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePromo(promo.code)}
+                            title={promo.active !== false ? 'Приостановить действие' : 'Активировать промокод'}
+                            className="px-2.5 py-1 rounded-[8px] bg-surface hover:bg-surface-soft text-[11px] font-medium text-content-primary border border-border transition-colors cursor-pointer"
+                          >
+                            {promo.active !== false ? 'Пауза' : 'Вкл'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePromo(promo.code)}
+                            title="Удалить промокод"
+                            className="p-1.5 rounded-[8px] bg-surface hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-500 border border-border hover:border-rose-300 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
           {/* TAB: CUSTOM LINKS & ACTION BUTTONS */}
           {/* ========================================================================= */}
           {activeTab === 'links' && (
@@ -3038,6 +3215,28 @@ export default function DashboardPage() {
                       Поддерживается ввод как в формате <code>@username</code>, так и числовой ID. Если ввели юзернейм, убедитесь, что нажали Start в боте.
                     </p>
                   </div>
+
+                  {/* Interactive Username Deep-Link Confirmation Notice */}
+                  {settingsForm.telegram_chat_id && (
+                    <div className="p-3 rounded-[10px] bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-200 text-xs space-y-2">
+                      <div className="flex items-center gap-1.5 font-semibold">
+                        <Send className="w-4 h-4 text-[#2AABEE]" />
+                        <span>Обязательный шаг для приёма заказов на @{settingsForm.telegram_chat_id.replace(/^@/, '')}:</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-sky-800 dark:text-sky-300">
+                        Telegram запрещает ботам писать незнакомым пользователям без их разрешения. Нажмите кнопку ниже, чтобы открыть бота и нажать <b>«✅ Да, подтверждаю привязку»</b>. После этого бот сможет моментально доставлять вам чеки всех заказов!
+                      </p>
+                      <a
+                        href={`https://t.me/BioMartAssistant_bot?start=bind_${encodeURIComponent(settingsForm.telegram_chat_id.replace(/^@/, '').toLowerCase())}_${encodeURIComponent(activeSlug)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-semibold shadow-xs transition-colors"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Подтвердить привязку в @BioMartAssistant_bot →</span>
+                      </a>
+                    </div>
+                  )}
 
                   {tgSavedToast && (
                     <div className="p-2.5 rounded-[10px] bg-accent-soft text-accent text-xs font-medium flex items-center gap-1.5 animate-fade-in border border-accent/20">
@@ -3757,121 +3956,97 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {currentPlan !== 'pro' ? (
-                /* Pro Gatekeeper Screen */
-                <div className="p-6 bg-surface rounded-[14px] border border-border text-center space-y-4">
-                  <div className="w-12 h-12 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] flex items-center justify-center mx-auto">
-                    <Bot className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-content-primary">
-                      AI-Ассистент доступен на тарифе Pro
-                    </h3>
-                    <p className="text-xs text-content-secondary mt-1 max-w-md mx-auto leading-relaxed">
-                      Перейдите на тариф Pro, чтобы составлять продающие описания товаров, придумывать акции для Stories и получать быстрые советы по продажам.
-                    </p>
-                  </div>
+              {/* Active AI Chat Screen */}
+              <div className="bg-surface rounded-[14px] border border-border flex flex-col h-[520px] overflow-hidden shadow-xs">
+                {/* Quick Prompts Bar */}
+                <div className="p-3 border-b border-border flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   <button
                     type="button"
-                    onClick={() => setActiveTab('tariff')}
-                    className="px-5 py-2.5 bg-[#1F7A5A] hover:bg-[#17634A] text-white rounded-[10px] text-xs font-medium transition-colors cursor-pointer"
+                    onClick={() => handleSendAiMessage('Составь продающее описание для товара в Instagram Stories с ценой и размерами')}
+                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
                   >
-                    Перейти на тариф Pro (129 000 сум) →
+                    Текст для Stories
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSendAiMessage('Придумай 3 идеи промокодов и механику акции на выходные для магазина в Ташкенте')}
+                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
+                  >
+                    Идеи акций
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSendAiMessage('Как организовать доставку через Yandex Delivery и BTS по Узбекистану? Дай пошаговую инструкцию')}
+                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
+                  >
+                    Совет по доставке
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSendAiMessage('Напиши вежливый скрипт ответа клиенту в Telegram, который спросил «Сколько стоит?»')}
+                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
+                  >
+                    Скрипт ответа в Direct
                   </button>
                 </div>
-              ) : (
-                /* Active Pro Chat Screen */
-                <div className="bg-surface rounded-[14px] border border-border flex flex-col h-[520px] overflow-hidden shadow-xs">
-                  {/* Quick Prompts Bar */}
-                  <div className="p-3 border-b border-border flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                    <button
-                      type="button"
-                      onClick={() => handleSendAiMessage('Составь продающее описание для товара в Instagram Stories с ценой и размерами')}
-                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-[#E7E4DC] text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                    >
-                      Текст для Stories
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSendAiMessage('Придумай 3 идеи промокодов и механику акции на выходные для магазина в Ташкенте')}
-                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-[#E7E4DC] text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                    >
-                      Идеи акций
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSendAiMessage('Как организовать доставку через Yandex Delivery и BTS по Узбекистану? Дай пошаговую инструкцию')}
-                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-[#E7E4DC] text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                    >
-                      Совет по доставке
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSendAiMessage('Напиши вежливый скрипт ответа клиенту в Telegram, который спросил «Сколько стоит?»')}
-                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-[#E7E4DC] text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                    >
-                      Скрипт ответа в Direct
-                    </button>
-                  </div>
 
-                  {/* Messages Feed */}
-                  <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-page">
-                    {aiMessages.map((msg, i) => (
-                      <div
-                        key={i}
-                        className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        {msg.role === 'assistant' && (
-                          <div className="w-7 h-7 rounded-[8px] bg-[#E4F1EB] text-[#1F7A5A] flex items-center justify-center shrink-0">
-                            <Bot className="w-4 h-4" />
-                          </div>
-                        )}
-                        <div
-                          className={`max-w-[85%] p-3 rounded-[10px] text-xs leading-relaxed whitespace-pre-wrap break-words ${
-                            msg.role === 'user'
-                              ? 'bg-[#1F7A5A] text-white'
-                              : 'bg-surface border border-border text-content-primary'
-                          }`}
-                        >
-                          {cleanDisplayAiText(msg.content)}
+                {/* Messages Feed */}
+                <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-page">
+                  {aiMessages.map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      {msg.role === 'assistant' && (
+                        <div className="w-7 h-7 rounded-[8px] bg-accent-soft text-accent flex items-center justify-center shrink-0">
+                          <Bot className="w-4 h-4" />
                         </div>
+                      )}
+                      <div
+                        className={`max-w-[85%] p-3 rounded-[10px] text-xs leading-relaxed whitespace-pre-wrap break-words ${
+                          msg.role === 'user'
+                            ? 'bg-accent text-accent-text'
+                            : 'bg-surface border border-border text-content-primary'
+                        }`}
+                      >
+                        {cleanDisplayAiText(msg.content)}
                       </div>
-                    ))}
-                    {isAiLoading && (
-                      <div className="flex items-center gap-2 text-xs text-content-secondary p-2">
-                        <Bot className="w-4 h-4 animate-spin text-[#1F7A5A]" />
-                        <span>AI готовит ответ...</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Input Box */}
-                  <div className="p-3 border-t border-border flex items-center gap-2 bg-surface">
-                    <input
-                      type="text"
-                      value={aiInput}
-                      onChange={(e) => setAiInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleSendAiMessage();
-                        }
-                      }}
-                      placeholder="Задайте вопрос AI-ассистенту..."
-                      className="flex-1 min-w-0 px-3.5 py-2 bg-surface border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-[#1F7A5A]"
-                    />
-                    <button
-                      type="button"
-                      disabled={!aiInput.trim() || isAiLoading}
-                      onClick={() => handleSendAiMessage()}
-                      className="px-3.5 py-2 bg-[#1F7A5A] hover:bg-[#17634A] disabled:opacity-50 text-white rounded-[10px] text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Отправить</span>
-                    </button>
-                  </div>
+                    </div>
+                  ))}
+                  {isAiLoading && (
+                    <div className="flex items-center gap-2 text-xs text-content-secondary p-2">
+                      <Bot className="w-4 h-4 animate-spin text-accent" />
+                      <span>AI готовит ответ...</span>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Input Box */}
+                <div className="p-3 border-t border-border flex items-center gap-2 bg-surface">
+                  <input
+                    type="text"
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSendAiMessage();
+                      }
+                    }}
+                    placeholder="Задайте вопрос AI-ассистенту..."
+                    className="flex-1 min-w-0 px-3.5 py-2 bg-surface border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-accent"
+                  />
+                  <button
+                    type="button"
+                    disabled={!aiInput.trim() || isAiLoading}
+                    onClick={() => handleSendAiMessage()}
+                    className="px-3.5 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-accent-text rounded-[10px] text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer shadow-xs"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Отправить</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

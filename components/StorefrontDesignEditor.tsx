@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
+import { compressImage } from '@/lib/image-compress';
 import {
   Palette,
   Check,
@@ -269,27 +270,34 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
     setAiTooltip(null);
   };
 
-  // Local image upload handler
-  const handleImageUpload = (
+  // Local image upload handler with client-side compression
+  const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     field: 'avatar_url' | 'banner_url'
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert(isUz ? 'Fayl hajmi 2MB dan oshmasligi kerak' : 'Размер файла не должен превышать 2 МБ');
-      return;
+    try {
+      const compressedFile = await compressImage(file, 1200, 1200, 0.82);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          setForm((prev) => ({ ...prev, [field]: dataUrl }));
+        }
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          setForm((prev) => ({ ...prev, [field]: dataUrl }));
+        }
+      };
+      reader.readAsDataURL(file);
     }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setForm((prev) => ({ ...prev, [field]: dataUrl }));
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   return (

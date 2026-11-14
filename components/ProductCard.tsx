@@ -206,7 +206,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
 
           {showSizesOnCard && sizesLabel && product.in_stock && (
-            <div className="absolute bottom-2.5 left-2.5 bg-surface border border-border text-content-primary text-xs font-semibold px-2 py-0.5 rounded-[6px] shadow-xs">
+            <div className="absolute bottom-2.5 left-2.5 bg-neutral-900/90 text-white border border-white/20 text-xs font-bold px-2.5 py-0.5 rounded-[6px] shadow-md backdrop-blur-xs select-none pointer-events-none">
               {sizesLabel}
             </div>
           )}
@@ -286,9 +286,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-content-secondary">
-            <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
-            <span className="text-xs font-medium">Нет фото</span>
+          <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-page to-surface text-content-secondary border-b border-border/50">
+            <div className="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center mb-1.5 text-accent shadow-xs">
+              <ImageIcon className="w-5 h-5 opacity-70" />
+            </div>
+            <span className="text-[11px] font-medium text-content-secondary line-clamp-1 px-2">{product.title}</span>
           </div>
         )}
 
@@ -301,7 +303,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Sizes Badge */}
         {showSizesOnCard && sizesLabel && product.in_stock && (
-          <div className="absolute bottom-2 left-2 bg-surface border border-border text-content-primary text-[10px] font-semibold px-1.5 py-0.5 rounded-[6px] shadow-xs">
+          <div className="absolute bottom-2 left-2 bg-neutral-900/90 text-white border border-white/20 text-[10px] font-bold px-2 py-0.5 rounded-[6px] shadow-md backdrop-blur-xs select-none pointer-events-none">
             {sizesLabel}
           </div>
         )}

@@ -178,18 +178,33 @@ export async function POST(request: Request) {
       });
     }
 
-    // Server-side promo code verification
+    // Server-side promo code verification (supports database and mock store promo codes)
     let discountAmount = 0;
     let verifiedPromoCode: string | null = null;
     if (promo_code) {
       const cleanPromo = promo_code.trim().toUpperCase();
-      const validPromo = MOCK_STORE_SETTINGS.promo_codes?.find(
-        (p) => p.code.toUpperCase() === cleanPromo && p.active
+      let availablePromos = [...(MOCK_STORE_SETTINGS.promo_codes || [])];
+
+      if (isSupabaseConfigured && supabaseAdmin && shop_slug) {
+        try {
+          const { data: storeData } = await supabaseAdmin
+            .from('stores')
+            .select('promo_codes')
+            .eq('slug', shop_slug.toLowerCase())
+            .maybeSingle();
+          if (storeData?.promo_codes && Array.isArray(storeData.promo_codes)) {
+            availablePromos = [...storeData.promo_codes, ...availablePromos];
+          }
+        } catch {}
+      }
+
+      const validPromo = availablePromos.find(
+        (p: any) => p.code?.toUpperCase() === cleanPromo && (p.active !== false)
       );
 
       if (validPromo) {
         verifiedPromoCode = validPromo.code;
-        discountAmount = Math.round((authoritativeSubtotal * validPromo.discount_percent) / 100);
+        discountAmount = Math.round((authoritativeSubtotal * (validPromo.discount_percent || 0)) / 100);
       }
     }
 

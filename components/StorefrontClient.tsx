@@ -418,8 +418,14 @@ export function StorefrontClient({
     slug: base?.slug || shopSlug || 'store',
     store_name: base?.store_name || shopSlug || 'Магазин',
     description: base?.description || '',
-    avatar_url: themeSettings.avatar_url || base?.avatar_url || '',
-    banner_url: themeSettings.banner_url || base?.banner_url,
+    avatar_url: (themeSettings.avatar_url && themeSettings.avatar_url.trim() !== '') ? themeSettings.avatar_url : (base?.avatar_url || initialSettings?.avatar_url || ''),
+    banner_url: (themeSettings.banner_url && themeSettings.banner_url.trim() !== '')
+      ? themeSettings.banner_url
+      : ((base?.banner_url && base.banner_url.trim() !== '')
+        ? base.banner_url
+        : ((initialSettings?.banner_url && initialSettings.banner_url.trim() !== '')
+          ? initialSettings.banner_url
+          : (shopSlug === 'tashkent_drip' ? 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1200&q=80' : ''))),
     instagram_url: base?.instagram_url || '',
     telegram_username: base?.telegram_username || '',
     telegram_chat_id: base?.telegram_chat_id,

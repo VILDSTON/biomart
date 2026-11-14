@@ -13,10 +13,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Файл не передан' }, { status: 400 });
     }
 
-    // Validate size (max 5MB)
-    const MAX_SIZE = 5 * 1024 * 1024;
+    // Validate size (max 1.2MB for Supabase 1GB storage quota preservation)
+    const MAX_SIZE = 1.2 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'Размер файла превышает 5 МБ' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'Размер файла превышает 1.2 МБ. Пожалуйста, выберите сжатое изображение для экономии хранилища' 
+      }, { status: 400 });
     }
 
     // Validate mime type

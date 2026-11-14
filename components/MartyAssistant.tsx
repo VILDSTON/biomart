@@ -17,6 +17,8 @@ import {
   ChevronDown,
   ExternalLink,
   Flame,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Category, Order, OrderItem, Product, StoreSettings } from '@/types';
@@ -67,11 +69,68 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [createdOrders, setCreatedOrders] = useState<Record<string, boolean>>({});
   const [isExhausted, setIsExhausted] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
-  const { addShopOrder } = useBioMartStore();
+  const { addShopOrder, language } = useBioMartStore();
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition =
+      typeof window !== 'undefined' &&
+      ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+    if (!SpeechRecognition) {
+      alert(language === 'uz' ? 'Ovozli kiritish brauzeringizda qo‘llab-quvvatlanmaydi' : 'Голосовой ввод не поддерживается вашим браузером');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = language === 'uz' ? 'uz-UZ' : 'ru-RU';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript.trim()) {
+          setInput(transcript);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn('Speech recognition failed to start:', err);
+      setIsListening(false);
+    }
+  };
 
   const storeName = storeSettings.store_name || (storeSettings as any).name || 'Tashkent Drip';
   const customAccent = storeSettings.accent_color || '#1F7A5A';
@@ -607,11 +666,32 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Напишите вопрос или данные для заказа..."
+                    placeholder={isListening ? (language === 'uz' ? 'Gapiring, eshitmoqdaman...' : 'Говорите, Марти слушает...') : 'Напишите вопрос или данные для заказа...'}
                     disabled={isLoading}
-                    className="w-full text-xs py-2.5 pl-3 pr-8 rounded-btn bg-page border border-border text-content-primary placeholder:text-content-secondary/70 focus:outline-hidden focus:border-accent transition-colors"
+                    className={`w-full text-xs py-2.5 pl-3 pr-3 rounded-btn bg-page border text-content-primary placeholder:text-content-secondary/70 focus:outline-hidden transition-colors ${
+                      isListening ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-border focus:border-accent'
+                    }`}
                   />
                 </div>
+
+                {/* Voice Input Button */}
+                <button
+                  type="button"
+                  onClick={toggleVoiceInput}
+                  title={isListening ? 'Остановить запись' : 'Голосовой ввод'}
+                  aria-label={isListening ? 'Остановить запись' : 'Голосовой ввод'}
+                  className={`w-9 h-9 rounded-btn flex items-center justify-center shrink-0 border transition-all ${
+                    isListening
+                      ? 'bg-rose-500/15 border-rose-500 text-rose-500 shadow-xs'
+                      : 'bg-page border-border text-content-secondary hover:text-content-primary hover:bg-surface-soft active:scale-95'
+                  }`}
+                >
+                  {isListening ? (
+                    <Mic className="w-4 h-4 animate-bounce text-rose-500" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
+                  )}
+                </button>
 
                 <button
                   type="submit"

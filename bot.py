@@ -197,6 +197,28 @@ async def cmd_start(message: types.Message, command: CommandObject):
         await message.answer("Быстрый переход:", reply_markup=kb.as_markup())
         return
 
+    # Deep-link support for interactive store binding: /start bind_username_slug
+    if args and args.startswith("bind_"):
+        parts = args.split("_")
+        target_user = parts[1] if len(parts) > 1 else (username or "seller")
+        target_slug = parts[2] if len(parts) > 2 else "tashkent_drip"
+        store_name = target_slug.replace("_", " ").upper()
+        
+        bind_text = (
+            f"👋 <b>Здравствуйте, {user_name}!</b>\n\n"
+            f"🏪 <b>Запрос на привязку витрины BioMart:</b>\n"
+            f"Магазин: <b>${store_name}</b> (<code>biomart.uz/{target_slug}</code>)\n"
+            f"Юзернейм: <code>@{username or target_user}</code>\n"
+            f"Ваш Chat ID: <code>{chat_id}</code>\n\n"
+            f"Разрешаете ли вы официальному боту <b>BioMart</b> присылать вам мгновенные чеки заказов от ваших покупателей в этот чат?"
+        )
+        kb = InlineKeyboardBuilder()
+        kb.button(text="✅ Да, подтверждаю привязку", callback_data=f"confirm_bind_{target_slug}")
+        kb.button(text="❌ Отклонить", callback_data="reject_bind")
+        kb.adjust(1)
+        await message.answer(bind_text, reply_markup=kb.as_markup())
+        return
+
     # Deep-link support: /start store_tashkent_drip
     if args and args.startswith("store_"):
         slug = args.replace("store_", "").strip().lower()
@@ -333,6 +355,44 @@ async def cb_order_accept(callback: types.CallbackQuery):
             callback.message.text + "\n\n🟢 <b>Статус: Принят в работу продавцом</b>",
             reply_markup=None
         )
+
+@dp.callback_query(F.data.startswith("confirm_bind_"))
+async def cb_confirm_bind(callback: types.CallbackQuery):
+    target_slug = callback.data.replace("confirm_bind_", "").strip()
+    chat_id = callback.message.chat.id if callback.message else callback.from_user.id
+    username = callback.from_user.username
+    first_name = callback.from_user.first_name
+    register_user(chat_id, username, first_name)
+
+    # Store in mapping
+    try:
+        if os.path.exists(USERS_FILE):
+            with open(USERS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            data = {}
+        data[f"store_{target_slug.lower()}"] = chat_id
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to record store mapping: {e}")
+
+    await callback.answer("Привязка успешно подтверждена!", show_alert=True)
+    user_str = f"@{username}" if username else str(chat_id)
+    confirmed_text = (
+        f"🎉 <b>Привязка успешно подтверждена!</b>\n\n"
+        f"✅ Ваш Telegram-аккаунт <code>{user_str}</code> успешно подключён к магазину <code>{target_slug}</code>.\n"
+        f"🆔 Ваш Chat ID: <code>{chat_id}</code>\n\n"
+        f"Теперь при каждом заказе на вашей витрине вы моментально получите чек прямо сюда! 📦🚀"
+    )
+    if callback.message:
+        await callback.message.edit_text(confirmed_text)
+
+@dp.callback_query(F.data == "reject_bind")
+async def cb_reject_bind(callback: types.CallbackQuery):
+    await callback.answer("Привязка отклонена", show_alert=False)
+    if callback.message:
+        await callback.message.edit_text("❌ Привязка витрины отклонена.")
 
 @dp.callback_query(F.data.startswith("catalog_"))
 async def cb_show_catalog(callback: types.CallbackQuery):
