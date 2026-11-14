@@ -1,0 +1,13 @@
+{
+  "name": "biomart-telegram-bot",
+  "version": "1.0.0",
+  "description": "BioMart 24/7 Telegram Bot on Cloudflare Workers",
+  "main": "worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  }
+}

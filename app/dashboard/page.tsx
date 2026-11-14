@@ -239,6 +239,41 @@ export default function DashboardPage() {
   const [tgSavedToast, setTgSavedToast] = useState(false);
   const [contactsSavedToast, setContactsSavedToast] = useState(false);
 
+  // Telegram Integration Status & Verification
+  const [tgIntegrationStatus, setTgIntegrationStatus] = useState<{
+    isConnected: boolean;
+    chatId: string | null;
+    username: string | null;
+  }>({ isConnected: false, chatId: null, username: null });
+  const [isEditingTgBinding, setIsEditingTgBinding] = useState(false);
+  const [isSendingTestReceipt, setIsSendingTestReceipt] = useState(false);
+  const [testReceiptResult, setTestReceiptResult] = useState<string | null>(null);
+
+  const checkTelegramStatus = React.useCallback(async () => {
+    try {
+      const target = settingsForm.telegram_chat_id || settingsForm.telegram_username || '';
+      const res = await fetch(`/api/telegram/status?shop_slug=${encodeURIComponent(activeSlug)}&target=${encodeURIComponent(target)}`);
+      const data = await res.json();
+      if (data?.is_connected) {
+        setTgIntegrationStatus({
+          isConnected: true,
+          chatId: data.chat_id,
+          username: data.username,
+        });
+      } else {
+        setTgIntegrationStatus({
+          isConnected: false,
+          chatId: null,
+          username: null,
+        });
+      }
+    } catch {}
+  }, [activeSlug, settingsForm.telegram_chat_id, settingsForm.telegram_username]);
+
+  useEffect(() => {
+    checkTelegramStatus();
+  }, [checkTelegramStatus]);
+
   // Orders Filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'new' | 'completed' | 'cancelled'>('all');
 
@@ -781,7 +816,35 @@ export default function DashboardPage() {
       telegram_chat_id: settingsForm.telegram_chat_id,
     });
     setTgSavedToast(true);
+    setIsEditingTgBinding(false);
+    checkTelegramStatus();
     setTimeout(() => setTgSavedToast(false), 2500);
+  };
+
+  const handleSendTestReceipt = async () => {
+    setIsSendingTestReceipt(true);
+    setTestReceiptResult(null);
+    try {
+      const res = await fetch('/api/telegram/test-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop_slug: activeSlug,
+          chat_id: tgIntegrationStatus.chatId || settingsForm.telegram_chat_id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestReceiptResult('✅ Тестовый чек отправлен! Проверьте диалог с @BioMartAssistant_bot в Telegram.');
+      } else {
+        setTestReceiptResult(`❌ ${data.error || 'Не удалось отправить чек'}`);
+      }
+    } catch (err: any) {
+      setTestReceiptResult(`❌ Ошибка сети: ${err.message}`);
+    } finally {
+      setIsSendingTestReceipt(false);
+      setTimeout(() => setTestReceiptResult(null), 6000);
+    }
   };
 
   const handleSaveStoreIdentity = async (e: React.FormEvent) => {
@@ -3269,100 +3332,189 @@ export default function DashboardPage() {
               </div>
 
               <div className="bg-surface border border-border rounded-[14px] p-5 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-[10px] bg-accent-soft text-accent flex items-center justify-center shrink-0">
-                    <Send className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-content-primary">
-                      Как настроить получение заказов за 30 секунд:
-                    </h3>
-                    <p className="text-xs text-content-secondary mt-1 leading-relaxed">
-                      1. Откройте в Telegram официального бота BioMart:{' '}
-                      <a
-                        href="https://t.me/BioMartAssistant_bot?start=getid"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent font-semibold underline"
-                      >
-                        @BioMartAssistant_bot
-                      </a>.<br />
-                      2. Укажите ваш <b>@username</b> (например, <code className="bg-page border border-border text-accent px-1 rounded-[4px]">@vildston</code>) ИЛИ скопируйте цифровой <b>Chat ID</b>.<br />
-                      3. Вставьте логин или ID в поле ниже и нажмите «Сохранить привязку». Бот автоматически свяжет аккаунт с вашей витриной!
-                    </p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSaveTelegram} className="space-y-3 pt-2">
-                  <div>
-                    <label className="block text-xs font-medium text-content-primary mb-1">
-                      Ваш Telegram @username или цифровой Chat ID для приёма заказов:
-                    </label>
-                    <input
-                      type="text"
-                      value={settingsForm.telegram_chat_id || ''}
-                      onChange={(e) =>
-                        setSettingsForm({
-                          ...settingsForm,
-                          telegram_chat_id: e.target.value.trim(),
-                        })
-                      }
-                      placeholder="Например: @vildston или 987654321"
-                      className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-accent"
-                    />
-                    <p className="text-[10px] text-content-secondary mt-1">
-                      Поддерживается ввод как в формате <code>@username</code>, так и числовой ID. Если ввели юзернейм, убедитесь, что нажали Start в боте.
-                    </p>
-                  </div>
-
-                  {/* Interactive Username Deep-Link Confirmation Notice */}
-                  {settingsForm.telegram_chat_id && (
-                    <div className="p-3 rounded-[10px] bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-200 text-xs space-y-2">
-                      <div className="flex items-center gap-1.5 font-semibold">
-                        <Send className="w-4 h-4 text-[#2AABEE]" />
-                        <span>Обязательный шаг для приёма заказов на @{settingsForm.telegram_chat_id.replace(/^@/, '')}:</span>
+                {/* ACTIVE INTEGRATION BADGE & CARD (WHEN CONNECTED) */}
+                {tgIntegrationStatus.isConnected && !isEditingTgBinding ? (
+                  <div className="p-4 rounded-[12px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 dark:text-emerald-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                          Telegram успешно подключён к @BioMartAssistant_bot
+                        </span>
                       </div>
-                      <p className="text-[11px] leading-relaxed text-sky-800 dark:text-sky-300">
-                        Telegram запрещает ботам писать незнакомым пользователям без их разрешения. Нажмите кнопку ниже, чтобы открыть бота и нажать <b>«✅ Да, подтверждаю привязку»</b>. После этого бот сможет моментально доставлять вам чеки всех заказов!
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                        Активно 24/7
+                      </span>
+                    </div>
+
+                    <div className="text-xs space-y-1.5 text-content-primary">
+                      <div className="flex items-center gap-2">
+                        <span className="text-content-secondary">Ваш аккаунт:</span>
+                        <span className="font-mono font-semibold text-accent">
+                          @{tgIntegrationStatus.username || settingsForm.telegram_chat_id?.replace(/^@/, '') || 'xsakm'}
+                        </span>
+                        {tgIntegrationStatus.chatId && (
+                          <span className="text-[11px] font-mono text-content-secondary">
+                            (Chat ID: {tgIntegrationStatus.chatId})
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-content-secondary">Привязанная витрина:</span>
+                        <span className="font-mono font-medium">biomart.uz/{activeSlug}</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed pt-1">
+                        🚀 <b>Готово к приёму заказов:</b> при каждом новом заказе на вашей витрине бот моментально пришлёт вам подробный чек с именем клиента, списком товаров, телефоном и кнопками быстрого ответа!
                       </p>
-                      <a
-                        href={`https://t.me/BioMartAssistant_bot?start=bind_${encodeURIComponent(settingsForm.telegram_chat_id.replace(/^@/, '').toLowerCase())}_${encodeURIComponent(activeSlug)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-semibold shadow-xs transition-colors"
+                    </div>
+
+                    {testReceiptResult && (
+                      <div className="p-2.5 rounded-[8px] bg-surface border border-border text-xs font-medium animate-fade-in text-content-primary">
+                        {testReceiptResult}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-emerald-500/20">
+                      <button
+                        type="button"
+                        onClick={handleSendTestReceipt}
+                        disabled={isSendingTestReceipt}
+                        className="px-3.5 py-2 rounded-[8px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        <span>Подтвердить привязку в @BioMartAssistant_bot →</span>
+                        <span>{isSendingTestReceipt ? 'Отправляем...' : '📨 Отправить тестовый чек'}</span>
+                      </button>
+
+                      <a
+                        href="https://t.me/BioMartAssistant_bot"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 rounded-[8px] bg-surface hover:bg-page border border-border text-content-primary text-xs font-medium flex items-center gap-1.5 transition-colors"
+                      >
+                        <span>Открыть @BioMartAssistant_bot</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-content-secondary" />
                       </a>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingTgBinding(true)}
+                        className="px-2.5 py-2 text-xs text-content-secondary hover:text-content-primary transition-colors ml-auto underline"
+                      >
+                        Изменить привязку
+                      </button>
                     </div>
-                  )}
-
-                  {tgSavedToast && (
-                    <div className="p-2.5 rounded-[10px] bg-accent-soft text-accent text-xs font-medium flex items-center gap-1.5 animate-fade-in border border-accent/20">
-                      <Check className="w-4 h-4 text-accent stroke-[2.5]" />
-                      <span>Привязка Telegram успешно сохранена! Заказы приходят прямо в ваш чат.</span>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <button
-                      type="submit"
-                      className="w-full sm:w-auto justify-center py-2.5 px-4 bg-accent hover:bg-accent-hover text-white font-medium text-xs rounded-[10px] transition-colors"
-                    >
-                      Сохранить привязку Telegram
-                    </button>
-
-                    <a
-                      href="https://t.me/BioMartAssistant_bot?start=getid"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full sm:w-auto justify-center py-2.5 px-3 bg-surface text-content-primary border border-border font-medium text-xs rounded-[10px] hover:bg-page transition-colors flex items-center gap-1.5 text-center"
-                    >
-                      <span>Узнать ID в @BioMartAssistant_bot</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-content-secondary shrink-0" />
-                    </a>
                   </div>
-                </form>
+                ) : (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-[10px] bg-accent-soft text-accent flex items-center justify-center shrink-0">
+                        <Send className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-semibold text-content-primary">
+                          Как настроить получение заказов за 30 секунд:
+                        </h3>
+                        <p className="text-xs text-content-secondary mt-1 leading-relaxed">
+                          1. Откройте в Telegram официального бота BioMart:{' '}
+                          <a
+                            href="https://t.me/BioMartAssistant_bot?start=getid"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent font-semibold underline"
+                          >
+                            @BioMartAssistant_bot
+                          </a>.<br />
+                          2. Укажите ваш <b>@username</b> (например, <code className="bg-page border border-border text-accent px-1 rounded-[4px]">@vildston</code>) ИЛИ скопируйте цифровой <b>Chat ID</b>.<br />
+                          3. Вставьте логин или ID в поле ниже и нажмите «Сохранить привязку». Бот автоматически свяжет аккаунт с вашей витриной!
+                        </p>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleSaveTelegram} className="space-y-3 pt-2">
+                      <div>
+                        <label className="block text-xs font-medium text-content-primary mb-1">
+                          Ваш Telegram @username или цифровой Chat ID для приёма заказов:
+                        </label>
+                        <input
+                          type="text"
+                          value={settingsForm.telegram_chat_id || ''}
+                          onChange={(e) =>
+                            setSettingsForm({
+                              ...settingsForm,
+                              telegram_chat_id: e.target.value.trim(),
+                            })
+                          }
+                          placeholder="Например: @xsakm или 5504101440"
+                          className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-accent"
+                        />
+                        <p className="text-[10px] text-content-secondary mt-1">
+                          Поддерживается ввод как в формате <code>@username</code>, так и числовой ID. Если ввели юзернейм, убедитесь, что нажали Start в боте.
+                        </p>
+                      </div>
+
+                      {/* Interactive Username Deep-Link Confirmation Notice */}
+                      {settingsForm.telegram_chat_id && (
+                        <div className="p-3 rounded-[10px] bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-200 text-xs space-y-2">
+                          <div className="flex items-center gap-1.5 font-semibold">
+                            <Send className="w-4 h-4 text-[#2AABEE]" />
+                            <span>Обязательный шаг для приёма заказов на @{settingsForm.telegram_chat_id.replace(/^@/, '')}:</span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-sky-800 dark:text-sky-300">
+                            Telegram запрещает ботам писать незнакомым пользователям без их разрешения. Нажмите кнопку ниже, чтобы открыть бота и нажать <b>«✅ Да, подтверждаю привязку»</b>. После этого бот сможет моментально доставлять вам чеки всех заказов!
+                          </p>
+                          <a
+                            href={`https://t.me/BioMartAssistant_bot?start=bind_${encodeURIComponent(settingsForm.telegram_chat_id.replace(/^@/, '').toLowerCase())}_${encodeURIComponent(activeSlug)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#2AABEE] hover:bg-[#229ED9] text-white text-xs font-semibold shadow-xs transition-colors"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Подтвердить привязку в @BioMartAssistant_bot →</span>
+                          </a>
+                        </div>
+                      )}
+
+                      {tgSavedToast && (
+                        <div className="p-2.5 rounded-[10px] bg-accent-soft text-accent text-xs font-medium flex items-center gap-1.5 animate-fade-in border border-accent/20">
+                          <Check className="w-4 h-4 text-accent stroke-[2.5]" />
+                          <span>Привязка Telegram успешно сохранена! Заказы приходят прямо в ваш чат.</span>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="submit"
+                          className="w-full sm:w-auto justify-center py-2.5 px-4 bg-accent hover:bg-accent-hover text-white font-medium text-xs rounded-[10px] transition-colors"
+                        >
+                          Сохранить привязку Telegram
+                        </button>
+
+                        <a
+                          href="https://t.me/BioMartAssistant_bot?start=getid"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto justify-center py-2.5 px-3 bg-surface text-content-primary border border-border font-medium text-xs rounded-[10px] hover:bg-page transition-colors flex items-center gap-1.5 text-center"
+                        >
+                          <span>Узнать ID в @BioMartAssistant_bot</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-content-secondary shrink-0" />
+                        </a>
+
+                        {isEditingTgBinding && (
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingTgBinding(false)}
+                            className="w-full sm:w-auto justify-center py-2.5 px-3 bg-surface text-content-secondary hover:text-content-primary border border-border text-xs rounded-[10px] transition-colors"
+                          >
+                            Отмена
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </>
+                )}
               </div>
 
               {/* CARD 3: ADMIN PASSWORD & SECURITY */}

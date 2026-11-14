@@ -1,0 +1,7 @@
+name = "biomart-telegram-bot"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+BASE_WEB_URL = "https://biomart.vercel.app"
+

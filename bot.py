@@ -341,7 +341,6 @@ async def send_demo_order_receipt(message: types.Message):
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Принять в обработку", callback_data="order_accept_1042")
     kb.button(text="💬 Написать покупателю", url="https://t.me/sardor_alimov")
-    kb.button(text="📞 Позвонить клиенту", url="tel:+998901234567")
     kb.adjust(1)
 
     await message.answer(text, reply_markup=kb.as_markup(), disable_web_page_preview=True)
@@ -366,13 +365,17 @@ async def cb_confirm_bind(callback: types.CallbackQuery):
 
     # Store in mapping
     try:
-        if os.path.exists(USERS_FILE):
-            with open(USERS_FILE, "r", encoding="utf-8") as f:
+        if TELEGRAM_USERS_FILE.exists():
+            with open(TELEGRAM_USERS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
         else:
             data = {}
         data[f"store_{target_slug.lower()}"] = chat_id
-        with open(USERS_FILE, "w", encoding="utf-8") as f:
+        data[target_slug.lower()] = chat_id
+        if str(chat_id) in data and isinstance(data[str(chat_id)], dict):
+            data[str(chat_id)]["store_slug"] = target_slug.lower()
+            data[str(chat_id)]["verified"] = True
+        with open(TELEGRAM_USERS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
         logger.warning(f"Failed to record store mapping: {e}")
@@ -523,7 +526,7 @@ async def handle_any_text(message: types.Message):
 
 async def main():
     logger.info("Starting BioMart Telegram Bot (@BioMartAssistant_bot)...")
-    await bot.delete_webhook(drop_pending_updates=True)
+    await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

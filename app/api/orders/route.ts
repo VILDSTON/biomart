@@ -8,23 +8,33 @@ import { createOrderSchema, escapeTelegramHtml } from '@/lib/security';
 import { MOCK_PRODUCTS, MOCK_STORE_SETTINGS } from '@/lib/mock-data';
 import { OrderItem } from '@/types';
 
-function resolveSellerChatId(sellerChatId?: string, sellerUsername?: string): string | null {
+async function resolveSellerChatId(
+  sellerChatId?: string,
+  sellerUsername?: string,
+  shopSlug?: string
+): Promise<string | null> {
   // 1. If explicitly provided numeric chat id (or negative group chat id like -100...)
   if (sellerChatId && /^-?\d+$/.test(sellerChatId.trim())) {
     return sellerChatId.trim();
   }
 
-  // 2. If provided username or string containing letters, resolve via data/telegram_users.json
+  // 2. Collect candidate keys to check against mapping
   const candidates: string[] = [];
   if (sellerChatId) {
     const clean = sellerChatId.trim().toLowerCase().replace(/^@/, '');
-    if (clean) candidates.push(clean);
+    if (clean && !candidates.includes(clean)) candidates.push(clean);
   }
   if (sellerUsername) {
     const clean = sellerUsername.trim().toLowerCase().replace(/^@/, '');
     if (clean && !candidates.includes(clean)) candidates.push(clean);
   }
+  if (shopSlug) {
+    const cleanSlug = shopSlug.trim().toLowerCase();
+    if (!candidates.includes(`store_${cleanSlug}`)) candidates.push(`store_${cleanSlug}`);
+    if (!candidates.includes(cleanSlug)) candidates.push(cleanSlug);
+  }
 
+  // 3. Check data/telegram_users.json
   if (candidates.length > 0) {
     try {
       const mappingPath = path.join(process.cwd(), 'data', 'telegram_users.json');
@@ -32,15 +42,23 @@ function resolveSellerChatId(sellerChatId?: string, sellerUsername?: string): st
         const raw = fs.readFileSync(mappingPath, 'utf-8');
         const mapping = JSON.parse(raw);
         for (const candidate of candidates) {
+          // Direct check
           if (mapping[candidate]) {
             const val = mapping[candidate];
             const resolved = typeof val === 'object' ? val.chat_id : val;
-            if (resolved) return String(resolved);
+            if (resolved) {
+              console.log(`[Orders API] Resolved chat ID ${resolved} for candidate "${candidate}"`);
+              return String(resolved);
+            }
           }
+          // @check
           if (mapping[`@${candidate}`]) {
             const val = mapping[`@${candidate}`];
             const resolved = typeof val === 'object' ? val.chat_id : val;
-            if (resolved) return String(resolved);
+            if (resolved) {
+              console.log(`[Orders API] Resolved chat ID ${resolved} for candidate "@${candidate}"`);
+              return String(resolved);
+            }
           }
         }
       }
@@ -49,7 +67,40 @@ function resolveSellerChatId(sellerChatId?: string, sellerUsername?: string): st
     }
   }
 
-  // 3. Fallback to process.env.TELEGRAM_CHAT_ID default
+  // 4. Check Supabase stores table if shop_slug is provided
+  if (shopSlug && isSupabaseConfigured && supabaseAdmin) {
+    try {
+      const cleanSlug = shopSlug.trim().toLowerCase();
+      const { data: storeRecord } = await supabaseAdmin
+        .from('stores')
+        .select('telegram_chat_id, telegram_username')
+        .eq('slug', cleanSlug)
+        .maybeSingle();
+
+      if (storeRecord) {
+        if (storeRecord.telegram_chat_id && /^-?\d+$/.test(String(storeRecord.telegram_chat_id).trim())) {
+          return String(storeRecord.telegram_chat_id).trim();
+        }
+        if (storeRecord.telegram_username) {
+          const cleanUser = storeRecord.telegram_username.trim().toLowerCase().replace(/^@/, '');
+          // Re-check mapping for this username
+          try {
+            const mappingPath = path.join(process.cwd(), 'data', 'telegram_users.json');
+            if (fs.existsSync(mappingPath)) {
+              const mapping = JSON.parse(fs.readFileSync(mappingPath, 'utf-8'));
+              const val = mapping[cleanUser] || mapping[`@${cleanUser}`];
+              const resolved = typeof val === 'object' ? val.chat_id : val;
+              if (resolved) return String(resolved);
+            }
+          } catch {}
+        }
+      }
+    } catch (err) {
+      console.warn('[Orders API] Supabase store lookup failed:', err);
+    }
+  }
+
+  // 5. Fallback to process.env.TELEGRAM_CHAT_ID default
   return process.env.TELEGRAM_CHAT_ID?.trim() || null;
 }
 
@@ -294,19 +345,16 @@ ${itemsFormatted}
     const botToken =
       process.env.TELEGRAM_BOT_TOKEN?.trim() ||
       process.env.TG_BOT_TOKEN?.trim();
-    const targetChatId = resolveSellerChatId(seller_chat_id, seller_username);
+    const targetChatId = await resolveSellerChatId(seller_chat_id, seller_username, shop_slug);
     let telegramSent = false;
     let telegramError = null;
 
     if (botToken && targetChatId) {
+      console.log(`[Orders API] Dispatching order #${orderId} to Telegram chat ${targetChatId}`);
       const inlineButtons: Array<Array<{ text: string; url: string }>> = [
         [
           {
-            text: 'Позвонить клиенту',
-            url: `tel:${cleanPhone}`,
-          },
-          {
-            text: 'Чат в Telegram',
+            text: '💬 Чат в Telegram с клиентом',
             url: `https://t.me/${cleanPhone.replace('+', '')}`,
           },
         ],
