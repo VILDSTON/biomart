@@ -250,17 +250,33 @@ export function StorefrontClient({
 
     // 2. Default catalog layout
     const savedLayout = localStorage.getItem(`biomart_layout_${shopSlug}`);
-    if (savedLayout === 'grid' || savedLayout === 'list') {
-      setCatalogLayout(savedLayout);
-    } else if (themeSettings.catalog_layout) {
-      setCatalogLayout(themeSettings.catalog_layout);
+    const preferredLayout =
+      (savedLayout === 'grid' || savedLayout === 'list')
+        ? savedLayout
+        : (themeSettings.catalog_layout || 'grid');
+
+    if (catalogLayout !== preferredLayout) {
+      setCatalogLayout(preferredLayout);
     }
 
     // 3. Default language
     if (currentSettings?.default_language && !localStorage.getItem('biomart_user_lang')) {
-      setLanguage(currentSettings.default_language);
+      if (language !== currentSettings.default_language) {
+        setLanguage(currentSettings.default_language);
+      }
     }
-  }, [isClient, shopSlug, themeSettings, currentSettings, setCatalogLayout, setLanguage]);
+  }, [
+    isClient,
+    shopSlug,
+    queryTheme,
+    themeSettings.theme,
+    themeSettings.catalog_layout,
+    currentSettings?.default_language,
+    catalogLayout,
+    language,
+    setCatalogLayout,
+    setLanguage,
+  ]);
 
   // Compute dynamic tokens for the storefront root
   const isDarkCurrent = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');

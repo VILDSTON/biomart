@@ -275,12 +275,12 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         created_at: new Date().toISOString(),
       };
 
-      // 1. Dispatch to Zustand store
-      addShopOrder(storeSettings.slug || 'tashkent_drip', newOrder);
-
-      // 2. Trigger parent callback if provided
+      // 1. Trigger parent callback if provided (which already adds order & opens success modal),
+      // otherwise fallback to dispatching directly to Zustand store
       if (onOrderCreated) {
         onOrderCreated(newOrder);
+      } else {
+        addShopOrder(storeSettings.slug || 'tashkent_drip', newOrder);
       }
 
       // 3. Mark processed

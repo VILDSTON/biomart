@@ -277,7 +277,18 @@ export function getRelativeLuminance({ r, g, b }: { r: number; g: number; b: num
  * with strict WCAG AA contrast (>= 4.5:1 for button text).
  */
 export function computeStoreTokens(accentHex?: string, isDark: boolean = false): StoreAccentTokens {
-  const rgb = hexToRgb(accentHex || '#111827');
+  let rawHex = accentHex || (isDark ? '#2BB584' : '#1F7A5A');
+
+  // If in dark mode and store accent is dark emerald/forest green (#1F7A5A, #17634A, etc.),
+  // lighten it to a vibrant, crisp #2BB584 so text, buttons and badges are beautifully readable!
+  if (isDark) {
+    const lower = rawHex.toLowerCase().trim();
+    if (lower === '#1f7a5a' || lower === '#17634a' || lower === '#2a483e' || lower === '#1b5e20' || lower === '#065f46') {
+      rawHex = '#2BB584';
+    }
+  }
+
+  const rgb = hexToRgb(rawHex);
   const L = getRelativeLuminance(rgb);
 
   const effectiveRgb = rgb;
@@ -322,11 +333,11 @@ export function computeStoreTokens(accentHex?: string, isDark: boolean = false):
   // 3. Soft background state:
   let softRgb: { r: number; g: number; b: number };
   if (isDark) {
-    // Luminous, soft translucent blend over dark background
+    // Lighter, fresh translucent green blend over dark background
     softRgb = {
-      r: Math.round(effectiveRgb.r * 0.22 + 28 * 0.78),
-      g: Math.round(effectiveRgb.g * 0.22 + 28 * 0.78),
-      b: Math.round(effectiveRgb.b * 0.22 + 28 * 0.78),
+      r: Math.round(effectiveRgb.r * 0.28 + 32 * 0.72),
+      g: Math.round(effectiveRgb.g * 0.28 + 32 * 0.72),
+      b: Math.round(effectiveRgb.b * 0.28 + 32 * 0.72),
     };
   } else {
     // 12% blend over #FFFFFF light background

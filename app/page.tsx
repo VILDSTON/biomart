@@ -38,7 +38,6 @@ import { BioMartLogo } from '@/components/BioMartLogo';
 import { SupportModal } from '@/components/SupportModal';
 import { PLAN_LIMITS, IS_SUBSCRIPTION_ENABLED } from '@/lib/constants';
 import { MOCK_PRODUCTS, MOCK_STORE_SETTINGS } from '@/lib/mock-data';
-import { MartyAssistant } from '@/components/MartyAssistant';
 
 export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -740,12 +739,6 @@ export default function LandingPage() {
         isOpen={isSupportOpen}
         onClose={() => setIsSupportOpen(false)}
         defaultCategory="other"
-      />
-
-      {/* Embedded Marty AI Assistant (Live Demo on Landing) */}
-      <MartyAssistant
-        storeSettings={MOCK_STORE_SETTINGS}
-        products={MOCK_PRODUCTS}
       />
     </div>
   );

@@ -1031,10 +1031,14 @@ export default function DashboardPage() {
     showToast('Кнопка удалена');
   };
 
-  // Orders period filter
+  // Orders period filter with deduplication
   const getOrdersByPeriod = () => {
     const now = Date.now();
-    return orders.filter((o) => {
+    const seen = new Set<string | number>();
+    return orders.filter((o: Order) => {
+      if (seen.has(o.id)) return false;
+      seen.add(o.id);
+
       // 1. Status filter
       if (orderStatusFilter !== 'all' && o.status !== orderStatusFilter) return false;
 
@@ -1179,12 +1183,21 @@ export default function DashboardPage() {
     showToast('Экспорт отчета в CSV завершен');
   };
 
-  // Analytics Metrics
-  const validOrders = orders.filter((o) => o.status !== 'cancelled');
-  const totalRevenue = validOrders.reduce((sum, o) => sum + o.total_price, 0);
-  const completedOrdersCount = orders.filter((o) => o.status === 'completed').length;
+  // Analytics Metrics with deduplication
+  const uniqueOrders: Order[] = React.useMemo(() => {
+    const seen = new Set<string | number>();
+    return (orders || []).filter((o: Order) => {
+      if (seen.has(o.id)) return false;
+      seen.add(o.id);
+      return true;
+    });
+  }, [orders]);
+
+  const validOrders = uniqueOrders.filter((o: Order) => o.status !== 'cancelled');
+  const totalRevenue = validOrders.reduce((sum: number, o: Order) => sum + o.total_price, 0);
+  const completedOrdersCount = uniqueOrders.filter((o: Order) => o.status === 'completed').length;
   const avgOrderValue = validOrders.length > 0 ? Math.round(totalRevenue / validOrders.length) : 0;
-  const conversionRate = orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0;
+  const conversionRate = uniqueOrders.length > 0 ? Math.round((completedOrdersCount / uniqueOrders.length) * 100) : 0;
 
   // Top Products calculation
   const productSalesMap: Record<string, { title: string; count: number; revenue: number }> = {};
@@ -1269,7 +1282,7 @@ export default function DashboardPage() {
     );
   }
 
-  const newOrdersCount = orders.filter((o) => o.status === 'new').length;
+  const newOrdersCount = uniqueOrders.filter((o: Order) => o.status === 'new').length;
 
   return (
     <div className="min-h-[100dvh] bg-page text-content-primary">
@@ -2213,7 +2226,7 @@ export default function DashboardPage() {
               <div className="bg-surface border border-border rounded-[10px] p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-content-primary">
                   <span className="text-content-secondary">Заказов:</span>
-                  <span className="font-semibold">{orders.length}</span>
+                  <span className="font-semibold">{uniqueOrders.length}</span>
                   <span className="text-content-secondary/40">•</span>
                   <span className="text-content-secondary">Выручка:</span>
                   <span className="font-semibold text-[#1F7A5A]">{formatPrice(totalRevenue, settings.currency)}</span>

@@ -360,12 +360,19 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         const shop = get().shops[clean] || get().shops['tashkent_drip'];
         if (!shop) return;
 
+        // Prevent duplicate order insertion by ID
+        const existingIndex = shop.orders.findIndex((o) => o.id === order.id);
+        const updatedOrders =
+          existingIndex >= 0
+            ? shop.orders.map((o) => (o.id === order.id ? order : o))
+            : [order, ...shop.orders];
+
         set({
           shops: {
             ...get().shops,
             [clean]: {
               ...shop,
-              orders: [order, ...shop.orders],
+              orders: updatedOrders,
             },
           },
         });
@@ -580,9 +587,17 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
       searchQuery: '',
       setSearchQuery: (query) => set({ searchQuery: query }),
       activeCategorySlug: 'all',
-      setActiveCategorySlug: (slug) => set({ activeCategorySlug: slug }),
+      setActiveCategorySlug: (slug) => {
+        if (get().activeCategorySlug !== slug) {
+          set({ activeCategorySlug: slug });
+        }
+      },
       catalogLayout: 'grid',
-      setCatalogLayout: (layout) => set({ catalogLayout: layout }),
+      setCatalogLayout: (layout) => {
+        if (get().catalogLayout !== layout) {
+          set({ catalogLayout: layout });
+        }
+      },
       isOrderSuccessOpen: false,
       setOrderSuccessOpen: (isOpen) => set({ isOrderSuccessOpen: isOpen }),
       lastCompletedOrder: null,
