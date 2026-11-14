@@ -137,6 +137,9 @@ export function StorefrontClient({
   // Merge shopData with initialSettings fallback and ensure custom_links are preserved
   const rawBaseSettings = isDemo && initialSettings ? initialSettings : (shopData?.settings || initialSettings);
   const currentSettings = useMemo(() => {
+    if (!isClient && initialSettings) {
+      return initialSettings;
+    }
     if (!rawBaseSettings) return initialSettings;
     const isDemoStore = isDemo || shopSlug === 'tashkent_drip' || shopSlug === 'volt_gadgets' || shopSlug === 'aura_perfume';
     return {
@@ -158,7 +161,7 @@ export function StorefrontClient({
           ? shopData.settings.custom_links
           : (initialSettings?.custom_links !== undefined ? initialSettings.custom_links : (isDemoStore ? rawBaseSettings.custom_links || [] : [])),
     };
-  }, [rawBaseSettings, shopData?.settings, initialSettings, isDemo, shopSlug]);
+  }, [isClient, rawBaseSettings, shopData?.settings, initialSettings, isDemo, shopSlug]);
   const currentCategories = useMemo(() => {
     const source = isDemo && initialCategories && initialCategories.length > 0
       ? initialCategories
@@ -524,15 +527,17 @@ export function StorefrontClient({
           onClickCheckout={() => setCartDrawerOpen(true)}
         />
 
-        {/* 5.1 Marty AI Sales & Order Assistant (Google Studio Flash-Lite) */}
-        <MartyAssistant
-          storeSettings={effectiveSettings}
-          products={currentProducts}
-          categories={currentCategories}
-          cartCount={cartCount}
-          onAddToCart={(p, s, q) => addToCart(p, s, q, shopSlug)}
-          onOrderCreated={handleOrderSuccess}
-        />
+        {/* 5.1 AI Consultant */}
+        {effectiveSettings.ai_assistant_enabled !== false && (
+          <MartyAssistant
+            storeSettings={effectiveSettings}
+            products={currentProducts}
+            categories={currentCategories}
+            cartCount={cartCount}
+            onAddToCart={(p, s, q) => addToCart(p, s, q, shopSlug)}
+            onOrderCreated={handleOrderSuccess}
+          />
+        )}
 
         {/* 6. Product Detail Modal / Bottom Sheet */}
         <ProductDetailModal

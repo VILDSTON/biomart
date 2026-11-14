@@ -205,10 +205,14 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         processOrderCreation(data.orderData);
       }
 
+      const cleanReply = (data.reply || 'Я здесь, чтобы помочь с любым вопросом!')
+        .replace(/\[\s*(?:SUGGEST_PRODUCT|CREATE_ORDER|ORDER|PRODUCT)\b[\s\S]*?(?:\]|$)/gi, '')
+        .trim();
+
       const botMsg: ChatMessage = {
         id: `bot_${Date.now()}`,
         role: 'assistant',
-        text: data.reply || 'Я здесь, чтобы помочь с любым вопросом!',
+        text: cleanReply || 'Чем я могу помочь вам по ассортименту магазина?',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         suggestedProducts: data.suggestedProducts,
         orderData: data.orderData,
@@ -317,7 +321,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
     ]);
   };
 
-  if (isExhausted) return null;
+  if (isExhausted || storeSettings.ai_assistant_enabled === false) return null;
 
   return (
     <>
@@ -342,7 +346,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
               <X className="w-3 h-3" />
             </button>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+              <span className="w-2 h-2 rounded-full bg-accent ring-2 ring-accent/20" />
               <span className="text-[11px] font-bold text-content-primary">Консультант магазина</span>
             </div>
             <p className="text-xs text-content-secondary leading-relaxed">
@@ -353,7 +357,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                 setShowTeaser(false);
                 setIsOpen(true);
               }}
-              className="mt-2 w-full py-1.5 px-3 rounded-lg text-xs font-semibold bg-accent text-white flex items-center justify-center gap-1.5 shadow-xs"
+              className="mt-2 w-full py-1.5 px-3 rounded-lg text-xs font-semibold bg-accent text-accent-text flex items-center justify-center gap-1.5 shadow-xs"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               <span>Задать вопрос</span>
@@ -374,9 +378,9 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
           }}
         >
           {/* Avatar / Robot Icon */}
-          <div className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-emerald-400 text-white flex items-center justify-center shadow-xs">
+          <div className="relative w-8 h-8 rounded-full bg-accent text-accent-text flex items-center justify-center shadow-xs">
             <Bot className="w-4 h-4" />
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface shadow-xs" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent ring-2 ring-surface shadow-xs" />
           </div>
 
           <div className="hidden sm:flex flex-col text-left">
@@ -406,9 +410,9 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
             {/* Header */}
             <div className="px-4 py-3.5 border-b border-border bg-page/80 backdrop-blur-md flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="relative w-9 h-9 rounded-full bg-gradient-to-tr from-accent to-emerald-400 text-white flex items-center justify-center shadow-xs">
+                <div className="relative w-9 h-9 rounded-full bg-accent text-accent-text flex items-center justify-center shadow-xs">
                   <Bot className="w-5 h-5" />
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-accent ring-2 ring-surface" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-content-primary">Консультант</h3>
@@ -459,8 +463,8 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
 
                     {/* Order Confirmation Card (if Marty created an order) */}
                     {msg.orderData && (
-                      <div className="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-content-primary space-y-2">
-                        <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                      <div className="mt-3 p-3 rounded-xl bg-accent-soft border border-accent/30 text-content-primary space-y-2">
+                        <div className="flex items-center gap-1.5 text-accent font-bold text-xs">
                           <CheckCircle2 className="w-4 h-4" />
                           <span>Заказ успешно принят!</span>
                         </div>
@@ -484,7 +488,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                             </p>
                           )}
                         </div>
-                        <div className="pt-1.5 border-t border-emerald-500/20 flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400">
+                        <div className="pt-1.5 border-t border-accent/20 flex items-center justify-between text-[10px] text-accent">
                           <span>Уведомление в Telegram продавцу отправлено</span>
                           <CheckCircle2 className="w-3 h-3" />
                         </div>

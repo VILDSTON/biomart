@@ -125,6 +125,7 @@ export interface StoreSettings {
   custom_badges?: TrustBadgeItem[];
   show_reviews?: boolean;
   reviews?: StoreReview[];
+  ai_assistant_enabled?: boolean;
 }
 
 export interface Category {

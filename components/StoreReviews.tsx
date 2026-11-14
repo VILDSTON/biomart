@@ -119,8 +119,8 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
 
       {/* Success Notification */}
       {successToast && (
-        <div className="p-2.5 mb-3 rounded-btn bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
+        <div className="p-2.5 mb-3 rounded-btn bg-accent-soft border border-accent/30 text-accent text-xs font-semibold flex items-center gap-2 animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-accent" />
           <span>
             {isUz
               ? 'Rahmat! Fikringiz muvaffaqiyatli saqlandi va vitrinada ko‘rinadi.'
@@ -142,8 +142,8 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
                   {review.author_name}
                 </span>
                 {review.is_verified && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded-full border border-emerald-500/20">
-                    <CheckCircle2 className="w-2.5 h-2.5" />
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-content-secondary bg-surface-soft px-1.5 py-0.2 rounded-full border border-border">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-accent" />
                     <span>{isUz ? 'Xaridor' : 'Покупатель'}</span>
                   </span>
                 )}

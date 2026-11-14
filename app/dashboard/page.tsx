@@ -223,6 +223,25 @@ export default function DashboardPage() {
   // Orders Filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'new' | 'completed' | 'cancelled'>('all');
 
+  // AI Assistant Tab State
+  const [aiLimitData, setAiLimitData] = useState<{ dailyLimit: number; remainingToday: number; isEnabled: boolean } | null>(null);
+  const [isAiLoadingLimit, setIsAiLoadingLimit] = useState(false);
+
+  const fetchAiLimitData = React.useCallback(() => {
+    setIsAiLoadingLimit(true);
+    fetch(`/api/ai/marty?shop=${encodeURIComponent(activeSlug)}`)
+      .then((res) => res.json())
+      .then((data) => setAiLimitData(data))
+      .catch(() => {})
+      .finally(() => setIsAiLoadingLimit(false));
+  }, [activeSlug]);
+
+  useEffect(() => {
+    if (activeTab === 'ai') {
+      fetchAiLimitData();
+    }
+  }, [activeTab, fetchAiLimitData]);
+
   useEffect(() => {
     setIsClient(true);
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -3578,61 +3597,147 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* CARD 1: Marty AI Assistant for Storefront */}
-              <div className="p-5 bg-surface rounded-[16px] border border-border shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* CARD 1: AI Consultant Configuration & Real-Time Limits */}
+              <div className="p-5 bg-surface rounded-[16px] border border-border shadow-xs space-y-5">
+                {/* Header Row with Toggle */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accent to-emerald-400 text-white flex items-center justify-center shadow-xs">
+                    <div className="w-10 h-10 rounded-full bg-accent text-accent-text flex items-center justify-center shadow-xs">
                       <Bot className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-content-primary">Марти (Marty) — AI Консультант</h3>
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
-                          Активен на витрине
-                        </span>
+                        <h3 className="text-sm font-bold text-content-primary">AI-Консультант витрины</h3>
+                        {settings.ai_assistant_enabled === false ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-surface-soft text-content-secondary border border-border">
+                            Отключен
+                          </span>
+                        ) : aiLimitData && aiLimitData.remainingToday === 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            Лимит исчерпан
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-accent-soft text-accent border border-accent/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                            Активен на витрине
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-content-secondary mt-0.5">
-                        Google Studio Flash-Lite AI • Автоматический прием заказов и консультирование
+                        Отвечает на вопросы покупателей по каталогу и принимает заказы 24/7
                       </p>
                     </div>
                   </div>
 
-                  <a
-                    href={`/${activeSlug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-btn bg-accent text-white text-xs font-semibold shadow-xs hover:brightness-105 active:scale-95 transition-all shrink-0"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Проверить Марти на витрине</span>
-                  </a>
+                  {/* Toggle Button */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextVal = settings.ai_assistant_enabled === false;
+                        updateShopSettings(activeSlug, { ai_assistant_enabled: nextVal });
+                      }}
+                      className={`px-4 py-2 rounded-btn text-xs font-semibold flex items-center gap-2 transition-all shadow-xs ${
+                        settings.ai_assistant_enabled !== false
+                          ? 'bg-accent text-accent-text hover:bg-accent-hover'
+                          : 'bg-page hover:bg-surface-soft border border-border text-content-primary'
+                      }`}
+                    >
+                      <Bot className="w-3.5 h-3.5" />
+                      <span>{settings.ai_assistant_enabled !== false ? 'Включен на витрине (ВКЛ)' : 'Включить на витрине'}</span>
+                    </button>
+
+                    {settings.ai_assistant_enabled !== false && (
+                      <button
+                        type="button"
+                        onClick={() => updateShopSettings(activeSlug, { ai_assistant_enabled: false })}
+                        title="Отключить консультанта"
+                        className="px-2.5 py-2 rounded-btn text-xs text-content-secondary hover:text-red-500 hover:bg-page border border-border transition-colors"
+                      >
+                        Выкл
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border">
+                {/* Real-time Limits Monitor */}
+                <div className="p-4 rounded-xl bg-page border border-border/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-content-primary">Дневной лимит витрины</span>
+                      <button
+                        type="button"
+                        onClick={fetchAiLimitData}
+                        title="Обновить данные лимитов"
+                        className="p-1 rounded-md text-content-secondary hover:text-content-primary hover:bg-surface transition-colors"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isAiLoadingLimit ? 'animate-spin' : ''}`} />
+                      </button>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-accent font-mono">
+                        {aiLimitData?.remainingToday ?? 50} / {aiLimitData?.dailyLimit ?? 50}
+                      </span>
+                      <span className="text-[10px] text-content-secondary ml-1">запросов</span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full h-2 rounded-full bg-surface border border-border overflow-hidden">
+                    <div
+                      className="h-full bg-accent transition-all duration-500 rounded-full"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, (((aiLimitData?.remainingToday ?? 50) / (aiLimitData?.dailyLimit ?? 50)) * 100)))}%`,
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-content-secondary pt-0.5">
+                    <span>
+                      {aiLimitData?.remainingToday === 0
+                        ? 'Лимит на сегодня исчерпан. Виджет скрыт от покупателей.'
+                        : `Осталось ${aiLimitData?.remainingToday ?? 50} обращений на сегодня.`}
+                    </span>
+                    <span className="font-mono text-[10px]">Сброс в 00:00 UTC</span>
+                  </div>
+                </div>
+
+                {/* 3 Metric Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 rounded-xl bg-page border border-border/70 space-y-1">
-                    <span className="text-[10px] text-content-secondary font-medium">Модель AI</span>
-                    <p className="text-xs font-bold text-content-primary">Google Flash-Lite</p>
-                    <p className="text-[10px] text-content-secondary">Быстрый отклик за 0.8 сек</p>
+                    <span className="text-[10px] text-content-secondary font-medium">Каталог в памяти</span>
+                    <p className="text-xs font-bold text-content-primary">{products.length} товаров</p>
+                    <p className="text-[10px] text-content-secondary">Синхронизировано автоматически</p>
                   </div>
                   <div className="p-3 rounded-xl bg-page border border-border/70 space-y-1">
-                    <span className="text-[10px] text-content-secondary font-medium">Дневной лимит</span>
-                    <p className="text-xs font-bold text-accent">50 запросов / день</p>
-                    <p className="text-[10px] text-content-secondary">Защита от перерасхода</p>
+                    <span className="text-[10px] text-content-secondary font-medium">Языки общения</span>
+                    <p className="text-xs font-bold text-content-primary">RU / UZ</p>
+                    <p className="text-[10px] text-content-secondary">Автоопределение языка</p>
                   </div>
                   <div className="p-3 rounded-xl bg-page border border-border/70 space-y-1">
                     <span className="text-[10px] text-content-secondary font-medium">Прием заказов</span>
-                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">В диалоге + Telegram</p>
+                    <p className="text-xs font-bold text-accent">Чат + Telegram</p>
                     <p className="text-[10px] text-content-secondary">Имя, тел, адрес, размер</p>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-accent-soft/50 border border-accent/20 text-xs text-content-primary flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    Марти видит все товары из вкладки «Товары», знает актуальные цены и размеры, консультирует на узбекском и русском языках. Когда клиент готов купить, Марти сам формирует заказ, который мгновенно появляется во вкладке «Заказы» и в вашем Telegram!
+                {/* Quick Action Link to View */}
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-[11px] text-content-secondary">
+                    {settings.ai_assistant_enabled === false
+                      ? 'Консультант отключен в настройках витрины.'
+                      : 'Консультант активен и отображается покупателям в нижнем правом углу витрины.'}
                   </p>
+                  <a
+                    href={`/${activeSlug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline shrink-0"
+                  >
+                    <span>Открыть витрину</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </div>
               </div>
 

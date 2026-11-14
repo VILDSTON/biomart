@@ -70,16 +70,16 @@ html.dark,
   --text-secondary: #A3A3A3;
   --text-tertiary: #737373;
 
-  /* Dark mode Platform Emerald Accent */
-  --accent: #1F7A5A;
-  --accent-hover: #26966f;
-  --accent-soft: rgba(31, 122, 90, 0.22);
-  --accent-text: #FFFFFF;
+  /* Dark mode Default Accent: Clean high-contrast neutral fallback (store custom accent overrides this) */
+  --accent: #FFFFFF;
+  --accent-hover: #E5E5E5;
+  --accent-soft: rgba(255, 255, 255, 0.12);
+  --accent-text: #121212;
 
-  --store-accent: #1F7A5A;
-  --store-accent-hover: #26966f;
-  --store-accent-soft: rgba(31, 122, 90, 0.22);
-  --store-on-accent: #FFFFFF;
+  --store-accent: #FFFFFF;
+  --store-accent-hover: #E5E5E5;
+  --store-accent-soft: rgba(255, 255, 255, 0.12);
+  --store-on-accent: #121212;
 
   --error: #F87171;
 

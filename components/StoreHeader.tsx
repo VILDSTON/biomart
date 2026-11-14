@@ -42,7 +42,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
   const isLongDescription = desc.length > 80;
 
   return (
-    <header className="relative bg-surface border-b border-border text-content-primary transition-colors">
+    <header suppressHydrationWarning className="relative bg-surface border-b border-border text-content-primary transition-colors">
 
       {/* Hero Banner Cover */}
       {hasBanner && (

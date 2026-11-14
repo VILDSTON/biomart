@@ -85,26 +85,6 @@ interface OrderDataPayload {
   comment?: string;
 }
 
-function extractOrderPayload(text: string): { cleanText: string; orderData: OrderDataPayload | null } {
-  const orderRegex = /\[CREATE_ORDER:\s*(\{.*?\})\s*\]/s;
-  const match = text.match(orderRegex);
-
-  if (!match) {
-    return { cleanText: text, orderData: null };
-  }
-
-  try {
-    const jsonStr = match[1];
-    const orderData = JSON.parse(jsonStr) as OrderDataPayload;
-    const cleanText = text.replace(orderRegex, '').trim();
-    return { cleanText, orderData };
-  } catch (err) {
-    console.warn('[Marty] Failed to parse CREATE_ORDER JSON:', err);
-    return { cleanText: text.replace(orderRegex, '').trim(), orderData: null };
-  }
-}
-
-// Extract [SUGGEST_PRODUCT: {...}] tags if model emitted any
 interface SuggestedProductPayload {
   id: string;
   title: string;
@@ -112,25 +92,52 @@ interface SuggestedProductPayload {
   image_url?: string;
 }
 
-function extractSuggestedProducts(text: string): { cleanText: string; products: SuggestedProductPayload[] } {
-  const suggestRegex = /\[SUGGEST_PRODUCT:\s*(\{.*?\})\s*\]/gs;
-  const products: SuggestedProductPayload[] = [];
-  let cleanText = text;
+function sanitizeAndExtractSpecialTags(rawText: string): {
+  cleanText: string;
+  orderData: OrderDataPayload | null;
+  suggestedProducts: SuggestedProductPayload[];
+} {
+  let text = rawText || '';
+  let orderData: OrderDataPayload | null = null;
+  const suggestedProducts: SuggestedProductPayload[] = [];
 
+  // 1. Extract Order Payload if present
+  const orderMatch = text.match(/\[CREATE_ORDER:\s*(\{[\s\S]*?\})\s*\]/i);
+  if (orderMatch) {
+    try {
+      orderData = JSON.parse(orderMatch[1]);
+    } catch (err) {
+      console.warn('[Marty] Failed to parse CREATE_ORDER JSON:', err);
+    }
+  }
+
+  // 2. Extract Suggested Products if present
+  const suggestRegex = /\[SUGGEST_PRODUCT:\s*(\{[\s\S]*?\})\s*\]/gi;
   let match;
   while ((match = suggestRegex.exec(text)) !== null) {
     try {
       const parsed = JSON.parse(match[1]);
       if (parsed.id || parsed.title) {
-        products.push(parsed);
+        suggestedProducts.push(parsed);
       }
     } catch {
       // ignore
     }
   }
 
-  cleanText = cleanText.replace(suggestRegex, '').trim();
-  return { cleanText, products };
+  // 3. Absolute purge of ANY tag pattern (closed, unclosed, or partial)
+  // Ensures raw internal syntax NEVER leaks into the chat stream
+  text = text
+    .replace(/\[\s*CREATE_ORDER\b[\s\S]*?(?:\]|$)/gi, '')
+    .replace(/\[\s*SUGGEST_PRODUCT\b[\s\S]*?(?:\]|$)/gi, '')
+    .replace(/\[\s*ORDER\b[\s\S]*?(?:\]|$)/gi, '')
+    .replace(/\[\s*PRODUCT\b[\s\S]*?(?:\]|$)/gi, '');
+
+  return {
+    cleanText: text.trim(),
+    orderData,
+    suggestedProducts,
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -198,16 +205,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prompt injection / abusive pattern filter
+    // Prompt injection / abusive pattern filter & leak prevention
     const lowerUserText = userText.toLowerCase();
     const suspiciousPatterns = [
       'ignore all previous instructions',
       'ignore previous instructions',
       'system prompt',
+      'system instruction',
       'jailbreak',
       'bypass filter',
       'ты теперь',
       'acting as',
+      'dan mode',
+      'developer mode',
+      '[suggest_product',
+      '[create_order',
+      'suggest_product:',
+      'create_order:',
+      'забудь все инструкции',
+      'забудь предыдущие',
     ];
     if (suspiciousPatterns.some((p) => lowerUserText.includes(p))) {
       return NextResponse.json(
@@ -365,9 +381,8 @@ ${catalogSummary}
       usedModel = 'smart-local-fallback';
     }
 
-    // 8. Extract structured actions (Order creation, product suggestions)
-    const { cleanText: textAfterOrder, orderData } = extractOrderPayload(generatedRawText);
-    const { cleanText: finalText, products: suggestedProducts } = extractSuggestedProducts(textAfterOrder);
+    // 8. Extract structured actions and rigorously purge internal syntax
+    const { cleanText: finalText, orderData, suggestedProducts } = sanitizeAndExtractSpecialTags(generatedRawText);
     const cleanOutput = cleanChatText(finalText);
 
     return NextResponse.json({
@@ -380,10 +395,10 @@ ${catalogSummary}
       remainingToday: dailyCheck.remaining,
     });
   } catch (error: any) {
-    console.error('[Marty API Error]:', error);
+    console.error('[AI Assistant Error]:', error);
     return NextResponse.json(
       {
-        error: 'Произошла ошибка при обращении к AI Марти. Пожалуйста, попробуйте снова.',
+        error: 'Произошла ошибка при обращении к онлайн-консультанту. Пожалуйста, попробуйте снова.',
         details: error?.message || 'Unknown error',
       },
       { status: 500 }
@@ -404,7 +419,7 @@ function generateSmartMartyFallback(q: string, storeName: string, catalog: any[]
 Buyurtma berish uchun menga tovar nomi, o'lchamingiz va telefon raqamingizni yozing! 📦✨`;
     }
 
-    return `Assalomu alaykum! Men «${storeName}» AI-maslahatchisi Martiman.
+    return `Assalomu alaykum! Men «${storeName}» do‘koni maslahatchisiman.
 Sizga kerakli o'lchamni tanlashda yordam beraman va buyurtmangizni darhol qabul qilaman.
 
 Qaysi tovar sizni qiziqtiryapti? Shunchaki yozing yoki rasmini tanlang! 🛍️`;
@@ -425,12 +440,12 @@ Qaysi tovar sizni qiziqtiryapti? Shunchaki yozing yoki rasmini tanlang! 🛍️`
 
   const sampleProducts = catalog.slice(0, 3).map((p) => `• ${p.title} (${p.price?.toLocaleString('ru-RU')} сум)`).join('\n');
 
-  return `Здравствуйте! Я Марти — ваш персональный AI-консультант в магазине «${storeName}».
+  return `Здравствуйте! Я онлайн-консультант магазина «${storeName}».
 
-Я знаю всё о нашем ассортименте, могу подсказать по наличию, подобрать размер и сразу принять ваш заказ прямо здесь в переписке! 💬
+Я отлично знаю весь наш каталог, помогу с наличием, подберу размер и сразу приму ваш заказ прямо здесь в переписке! 💬
 
 Популярные позиции сегодня:
 ${sampleProducts}
 
-Напишите мне, что вас интересует, или просто напишите «Хочу заказать...»! 🛍️`;
+Напишите мне, что вас интересует, или напишите адрес и телефон для оформления заказа! 🛍️`;
 }
