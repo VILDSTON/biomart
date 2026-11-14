@@ -6,13 +6,15 @@ Provides store lookup, catalog browsing, order notifications, and merchant manag
 """
 
 import asyncio
+import json
 import logging
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Dict, Any, List
 
-from aiogram import Bot, Dispatcher, F, types
+from aiogram import Bot, Dispatcher, F, types, BaseMiddleware
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart, CommandObject
@@ -33,6 +35,37 @@ def load_local_env():
 load_local_env()
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or os.environ.get("TG_BOT_TOKEN") or ""
 BASE_WEB_URL = "http://localhost:3000"
+
+TELEGRAM_USERS_FILE = Path(__file__).resolve().parent / "data" / "telegram_users.json"
+
+def register_user(chat_id: int, username: str | None = None, first_name: str | None = None):
+    """Save user telegram info so web orders can map username -> numeric chat_id"""
+    try:
+        TELEGRAM_USERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        data = {}
+        if TELEGRAM_USERS_FILE.exists():
+            try:
+                with open(TELEGRAM_USERS_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+
+        chat_key = str(chat_id)
+        clean_user = username.lstrip("@").lower().strip() if username else ""
+        data[chat_key] = {
+            "chat_id": chat_id,
+            "username": clean_user,
+            "first_name": first_name or "",
+            "updated_at": time.time(),
+        }
+        if clean_user:
+            data[f"@{clean_user}"] = chat_id
+            data[clean_user] = chat_id
+
+        with open(TELEGRAM_USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to register telegram user: {e}")
 
 # Mock stores database synced with Next.js BioMart mock data
 STORES_DB: Dict[str, Dict[str, Any]] = {
@@ -113,10 +146,20 @@ logger = logging.getLogger(__name__)
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
+class AutoRegisterUserMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event: types.TelegramObject, data: dict):
+        if isinstance(event, types.Message) and event.from_user:
+            register_user(event.chat.id, event.from_user.username, event.from_user.first_name)
+        elif isinstance(event, types.CallbackQuery) and event.from_user:
+            chat_id = event.message.chat.id if event.message else event.from_user.id
+            register_user(chat_id, event.from_user.username, event.from_user.first_name)
+        return await handler(event, data)
+
+dp.message.outer_middleware(AutoRegisterUserMiddleware())
+dp.callback_query.outer_middleware(AutoRegisterUserMiddleware())
 
 def format_sum(amount: int) -> str:
     return f"{amount:,}".replace(",", " ") + " сум"
-
 
 def get_main_menu_keyboard():
     builder = ReplyKeyboardBuilder()
@@ -129,12 +172,30 @@ def get_main_menu_keyboard():
     builder.adjust(2, 2, 2)
     return builder.as_markup(resize_keyboard=True)
 
-
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message, command: CommandObject):
     args = command.args
     user_name = message.from_user.first_name if message.from_user else "друг"
     chat_id = message.chat.id
+    username = message.from_user.username if message.from_user else None
+
+    # Deep-link support for retrieving ID: /start getid
+    if args and args.strip().lower() == "getid":
+        user_mention = f" или юзернейм <code>@{username}</code>" if username else ""
+        text = (
+            f"🆔 <b>Ваш Telegram Chat ID:</b> <code>{chat_id}</code>\n"
+            "<i>(Нажмите на номер выше, чтобы скопировать)</i>\n\n"
+            f"✅ <b>Готово! Бот запомнил ваш аккаунт.</b>\n"
+            f"В панели управления BioMart (вкладка «Telegram») укажите этот Chat ID{user_mention}.\n\n"
+            "🚀 Теперь чеки всех новых заказов с вашей витрины будут мгновенно приходить прямо в этот чат!"
+        )
+        kb = InlineKeyboardBuilder()
+        kb.button(text="⚙️ Открыть кабинет BioMart", url=f"{BASE_WEB_URL}/dashboard?tab=telegram")
+        kb.button(text="📦 Получить демо-чек", callback_data="demo_receipt")
+        kb.adjust(1)
+        await message.answer(text, reply_markup=get_main_menu_keyboard())
+        await message.answer("Быстрый переход:", reply_markup=kb.as_markup())
+        return
 
     # Deep-link support: /start store_tashkent_drip
     if args and args.startswith("store_"):
@@ -142,16 +203,18 @@ async def cmd_start(message: types.Message, command: CommandObject):
         await show_store_details(message, slug)
         return
 
+    user_str = f"@{username}" if username else f"ID: {chat_id}"
     text = (
         f"👋 <b>Ассалому алейкум, {user_name}! Добро пожаловать в официальный бот BioMart!</b>\n\n"
         "⚡ <b>BioMart</b> — платформа быстрых мобильных витрин для продавцов в Instagram и Telegram в Узбекистане.\n\n"
         f"🆔 <b>Ваш Telegram Chat ID:</b> <code>{chat_id}</code>\n"
-        "<i>(Скопируйте этот номер и укажите в кабинете BioMart → вкладка «Telegram», чтобы бот моментально присылал вам уведомления о каждом заказе!)</i>\n\n"
+        f"👤 <b>Ваш аккаунт:</b> <code>{user_str}</code>\n\n"
+        "<i>(Скопируйте этот номер или укажите ваш @username в кабинете BioMart → вкладка «Telegram», чтобы бот моментально присылал вам уведомления о каждом заказе!)</i>\n\n"
         "<b>Возможности бота:</b>\n"
-        "• Мгновенные уведомления о заказах с товарами, размером и контактами покупателя\n"
-        "• Кнопки быстрого звонка, чата с клиентом и адреса в Яндекс Картах\n"
+        "• Мгновенные уведомления о заказах с товарами, размером, адресом и телефоном\n"
+        "• Кнопки быстрого звонка клиенту и адреса в Яндекс Картах\n"
         "• Просмотр каталогов и демо чеков\n\n"
-        "Выберите действие в меню ниже или введите слаг магазина (например: <code>tashkent_drip</code>):"
+        "Выберите действие в меню ниже:"
     )
 
     kb = InlineKeyboardBuilder()
@@ -164,24 +227,25 @@ async def cmd_start(message: types.Message, command: CommandObject):
     await message.answer(text, reply_markup=get_main_menu_keyboard())
     await message.answer("Быстрые действия:", reply_markup=kb.as_markup())
 
-
 @dp.message(F.text == "🆔 Мой Chat ID")
 @dp.message(Command("myid"))
 @dp.message(Command("id"))
 async def cmd_my_id(message: types.Message):
+    username = message.from_user.username if message.from_user else None
+    user_hint = f"\n👤 <b>Ваш юзернейм:</b> <code>@{username}</code>" if username else ""
     await message.answer(
-        f"🆔 <b>Ваш Telegram Chat ID:</b> <code>{message.chat.id}</code>\n\n"
-        "Вставьте этот ID в панели управления BioMart (вкладка <b>Telegram</b>), "
-        "чтобы мгновенно получать чеки заказов от ваших покупателей в этот чат.",
+        f"🆔 <b>Ваш Telegram Chat ID:</b> <code>{message.chat.id}</code>\n"
+        f"<i>(Нажмите на номер, чтобы скопировать)</i>{user_hint}\n\n"
+        "💡 <b>Как привязать приём заказов:</b>\n"
+        f"Вставьте этот ID или ваш юзернейм <code>@{username or 'username'}</code> в панели управления BioMart (вкладка <b>Telegram</b>). "
+        "После этого бот будет присылать все оформленные заказы прямо в этот чат!",
         reply_markup=get_main_menu_keyboard()
     )
-
 
 @dp.message(F.text == "🛍 Магазин Tashkent Drip")
 @dp.message(Command("demo"))
 async def cmd_demo_store(message: types.Message):
     await show_store_details(message, "tashkent_drip")
-
 
 async def show_store_details(message: types.Message, slug: str):
     store = STORES_DB.get(slug)
@@ -210,7 +274,6 @@ async def show_store_details(message: types.Message, slug: str):
 
     await message.answer(text, reply_markup=kb.as_markup())
 
-
 @dp.message(F.text == "🔍 Поиск магазина")
 async def cmd_search_prompt(message: types.Message):
     text = (
@@ -222,19 +285,16 @@ async def cmd_search_prompt(message: types.Message):
     )
     await message.answer(text)
 
-
 @dp.message(F.text == "📦 Демо чека заказа")
 @dp.message(Command("demo_order"))
 async def cmd_demo_order(message: types.Message):
     await send_demo_order_receipt(message)
-
 
 @dp.callback_query(F.data == "demo_receipt")
 async def cb_demo_receipt(callback: types.CallbackQuery):
     await callback.answer()
     if callback.message:
         await send_demo_order_receipt(callback.message)
-
 
 async def send_demo_order_receipt(message: types.Message):
     text = (
@@ -245,6 +305,7 @@ async def send_demo_order_receipt(message: types.Message):
         "📞 <b>Телефон:</b> +998 90 123 45 67\n"
         "🚚 <b>Доставка:</b> Курьер Yandex\n"
         "📍 <b>Адрес:</b> г. Ташкент, Чиланзар-9, дом 14, кв. 28\n"
+        "💬 <b>Комментарий:</b> <i>Подъезд 2, этаж 4, домофон 28В</i>\n"
         "🗺 <a href=\"https://yandex.uz/maps\">Показать адрес на Яндекс Карте</a>\n\n"
         "🛍 <b>Состав заказа:</b>\n"
         "1. Худи Оверсайз «Ташкент» Drip Edition\n"
@@ -252,7 +313,7 @@ async def send_demo_order_receipt(message: types.Message):
         "💰 <b>Итого к оплате:</b> <b>320 000 сум</b>\n"
         "💳 <b>Оплата:</b> Переводом Payme / Click\n"
         "━━━━━━━━━━━━━━━━━━━━━\n"
-        "⏰ <i>Только что • Оформлено через BioMart Web</i>"
+        "⏰ <i>Только что • Оформлено через BioMart</i>"
     )
 
     kb = InlineKeyboardBuilder()
@@ -263,7 +324,6 @@ async def send_demo_order_receipt(message: types.Message):
 
     await message.answer(text, reply_markup=kb.as_markup(), disable_web_page_preview=True)
 
-
 @dp.callback_query(F.data.startswith("order_accept_"))
 async def cb_order_accept(callback: types.CallbackQuery):
     order_id = callback.data.split("_")[-1]
@@ -273,7 +333,6 @@ async def cb_order_accept(callback: types.CallbackQuery):
             callback.message.text + "\n\n🟢 <b>Статус: Принят в работу продавцом</b>",
             reply_markup=None
         )
-
 
 @dp.callback_query(F.data.startswith("catalog_"))
 async def cb_show_catalog(callback: types.CallbackQuery):
@@ -309,7 +368,6 @@ async def cb_show_catalog(callback: types.CallbackQuery):
             logger.warning(f"Failed to send photo for {p['id']}: {e}")
             await callback.message.answer(caption, reply_markup=kb.as_markup())
 
-
 @dp.message(F.text == "🚀 Создать витрину")
 async def cmd_create_store(message: types.Message):
     text = (
@@ -324,7 +382,6 @@ async def cmd_create_store(message: types.Message):
     kb.button(text="✨ Открыть регистрацию", url=f"{BASE_WEB_URL}/register")
     kb.adjust(1)
     await message.answer(text, reply_markup=kb.as_markup())
-
 
 @dp.message(F.text == "ℹ️ О сервисе BioMart")
 async def cmd_about(message: types.Message):
@@ -342,7 +399,6 @@ async def cmd_about(message: types.Message):
     kb.adjust(1)
     await message.answer(text, reply_markup=kb.as_markup())
 
-
 @dp.message(Command("store"))
 async def cmd_store_param(message: types.Message, command: CommandObject):
     if not command.args:
@@ -351,7 +407,6 @@ async def cmd_store_param(message: types.Message, command: CommandObject):
     slug = command.args.strip().lower()
     await show_store_details(message, slug)
 
-
 @dp.message(Command("catalog"))
 async def cmd_catalog_param(message: types.Message, command: CommandObject):
     slug = command.args.strip().lower() if command.args else "tashkent_drip"
@@ -359,7 +414,6 @@ async def cmd_catalog_param(message: types.Message, command: CommandObject):
     if not store:
         await message.answer(f"Магазин {slug} не найден.")
         return
-    # Use fake callback query simulation or send products directly
     products = store.get("products", [])
     for p in products:
         old_price_text = f" <s>{format_sum(p['old_price'])}</s>" if p.get("old_price") else ""
@@ -377,26 +431,40 @@ async def cmd_catalog_param(message: types.Message, command: CommandObject):
         except Exception:
             await message.answer(caption, reply_markup=kb.as_markup())
 
-
 @dp.message(F.text)
 async def handle_any_text(message: types.Message):
     clean = message.text.strip().lower().replace("http://", "").replace("https://", "").replace("biomart.uz/", "")
     clean = clean.split("/")[0].strip()
     if clean in STORES_DB:
         await show_store_details(message, clean)
-    else:
-        await message.answer(
-            f"Не удалось найти магазин по запросу «{message.text}».\n\n"
-            "Попробуйте <code>tashkent_drip</code> или выберите команду в меню."
-        )
+        return
 
+    user_name = message.from_user.first_name if message.from_user else "друг"
+    chat_id = message.chat.id
+    username = message.from_user.username if message.from_user else None
+    user_str = f" (@{username})" if username else ""
+
+    text = (
+        f"👋 Здравствуйте, <b>{user_name}</b>{user_str}!\n\n"
+        "Я официальный бот платформы <b>BioMart</b>. Я помогаю продавцам мгновенно получать заказы покупателей с их витрин прямо сюда в Telegram.\n\n"
+        f"🆔 <b>Ваш Telegram Chat ID:</b> <code>{chat_id}</code>\n"
+        f"{f'👤 <b>Ваш юзернейм:</b> <code>@{username}</code>\n' if username else ''}\n"
+        "Вы можете указать этот ID или ваш @username в кабинете продавца BioMart, чтобы принимать чеки заказов.\n\n"
+        "Выберите действие ниже или отправьте слаг магазина (например: <code>tashkent_drip</code>):"
+    )
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🛍 Открыть витрину (Tashkent Drip)", url=f"{BASE_WEB_URL}/tashkent_drip")
+    kb.button(text="📦 Демо чека заказа", callback_data="demo_receipt")
+    kb.button(text="⚙️ Панель продавца", url=f"{BASE_WEB_URL}/dashboard?tab=telegram")
+    kb.adjust(1)
+
+    await message.answer(text, reply_markup=get_main_menu_keyboard())
+    await message.answer("Быстрые действия:", reply_markup=kb.as_markup())
 
 async def main():
-    logger.info("Starting BioMart Telegram Bot...")
-    # Drop pending updates to avoid backlog spam on startup
+    logger.info("Starting BioMart Telegram Bot (@BioMartAssistant_bot)...")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     try:

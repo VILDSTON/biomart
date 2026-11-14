@@ -265,6 +265,7 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     show_reviews: themeSettings.show_reviews !== undefined ? themeSettings.show_reviews : (storeSettings.show_reviews ?? true),
     reviews: storeSettings.reviews,
     custom_links: storeSettings.custom_links || [],
+    ai_assistant_enabled: storeSettings.ai_assistant_enabled !== false,
     theme_settings: themeSettings,
   };
 

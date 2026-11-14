@@ -2981,7 +2981,7 @@ export default function DashboardPage() {
 
               <div className="bg-surface border border-border rounded-[14px] p-5 space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-[10px] bg-accent-soft text-accent flex items-center justify-center shrink-0">
                     <Send className="w-4 h-4" />
                   </div>
                   <div>
@@ -2991,15 +2991,15 @@ export default function DashboardPage() {
                     <p className="text-xs text-content-secondary mt-1 leading-relaxed">
                       1. Откройте в Telegram официального бота BioMart:{' '}
                       <a
-                        href="https://t.me/BioMartAssistant_bot"
+                        href="https://t.me/BioMartAssistant_bot?start=getid"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#1F7A5A] font-semibold underline"
+                        className="text-accent font-semibold underline"
                       >
                         @BioMartAssistant_bot
                       </a>.<br />
-                      2. Скопируйте цифры вашего <b>Id</b> (например, <code className="bg-page border border-border text-[#1F7A5A] px-1 rounded-[4px]">123456789</code>).<br />
-                      3. Вставьте ваш Chat ID в поле ниже и нажмите «Сохранить привязку».
+                      2. Укажите ваш <b>@username</b> (например, <code className="bg-page border border-border text-accent px-1 rounded-[4px]">@vildston</code>) ИЛИ скопируйте цифровой <b>Chat ID</b>.<br />
+                      3. Вставьте логин или ID в поле ниже и нажмите «Сохранить привязку». Бот автоматически свяжет аккаунт с вашей витриной!
                     </p>
                   </div>
                 </div>
@@ -3007,7 +3007,7 @@ export default function DashboardPage() {
                 <form onSubmit={handleSaveTelegram} className="space-y-3 pt-2">
                   <div>
                     <label className="block text-xs font-medium text-content-primary mb-1">
-                      Ваш Telegram Chat ID для заказов:
+                      Ваш Telegram @username или цифровой Chat ID для приёма заказов:
                     </label>
                     <input
                       type="text"
@@ -3018,28 +3018,31 @@ export default function DashboardPage() {
                           telegram_chat_id: e.target.value.trim(),
                         })
                       }
-                      placeholder="Например: 987654321 (или ID вашей группы)"
-                      className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-[#1F7A5A]"
+                      placeholder="Например: @vildston или 987654321"
+                      className="w-full px-3.5 py-2.5 bg-surface border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-accent"
                     />
+                    <p className="text-[10px] text-content-secondary mt-1">
+                      Поддерживается ввод как в формате <code>@username</code>, так и числовой ID. Если ввели юзернейм, убедитесь, что нажали Start в боте.
+                    </p>
                   </div>
 
                   {tgSavedToast && (
-                    <div className="p-2.5 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] text-xs font-medium flex items-center gap-1.5 animate-fade-in border border-[#1F7A5A]/20">
-                      <Check className="w-4 h-4 text-[#1F7A5A] stroke-[2.5]" />
-                      <span>Telegram Chat ID успешно сохранён! Заказы приходят прямо в ваш чат.</span>
+                    <div className="p-2.5 rounded-[10px] bg-accent-soft text-accent text-xs font-medium flex items-center gap-1.5 animate-fade-in border border-accent/20">
+                      <Check className="w-4 h-4 text-accent stroke-[2.5]" />
+                      <span>Привязка Telegram успешно сохранена! Заказы приходят прямо в ваш чат.</span>
                     </div>
                   )}
 
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       type="submit"
-                      className="w-full sm:w-auto justify-center py-2.5 px-4 bg-[#1F7A5A] hover:bg-[#17634A] text-white font-medium text-xs rounded-[10px] transition-colors"
+                      className="w-full sm:w-auto justify-center py-2.5 px-4 bg-accent hover:bg-accent-hover text-white font-medium text-xs rounded-[10px] transition-colors"
                     >
                       Сохранить привязку Telegram
                     </button>
 
                     <a
-                      href="https://t.me/BioMartAssistant_bot"
+                      href="https://t.me/BioMartAssistant_bot?start=getid"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full sm:w-auto justify-center py-2.5 px-3 bg-surface text-content-primary border border-border font-medium text-xs rounded-[10px] hover:bg-page transition-colors flex items-center gap-1.5 text-center"

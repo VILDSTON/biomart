@@ -243,6 +243,14 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
             },
           },
         });
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('biomart_theme_updated', {
+              detail: { slug: clean, themeSettings: newSettings.theme_settings, settings: mergedSettings },
+            })
+          );
+        }
       },
 
       addShopProduct: (slug, productData) => {

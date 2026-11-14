@@ -80,6 +80,7 @@ export function StorefrontClient({
 
   // Zustand Store
   const {
+    shops,
     getShopData,
     addShopOrder,
     cart,
@@ -131,11 +132,15 @@ export function StorefrontClient({
   }, [shopSlug]);
 
   const shopData = useMemo(() => {
-    return getShopData(shopSlug);
-  }, [shopSlug, getShopData]);
+    const clean = shopSlug?.toLowerCase();
+    return (shops && shops[clean]) || getShopData(shopSlug);
+  }, [shopSlug, shops, getShopData]);
 
   // Merge shopData with initialSettings fallback and ensure custom_links are preserved
-  const rawBaseSettings = isDemo && initialSettings ? initialSettings : (shopData?.settings || initialSettings);
+  const rawBaseSettings = (shopData?.settings && Object.keys(shopData.settings).length > 0)
+    ? { ...(initialSettings || {}), ...shopData.settings }
+    : (initialSettings || shopData?.settings);
+
   const currentSettings = useMemo(() => {
     if (!isClient && initialSettings) {
       return initialSettings;
@@ -144,6 +149,16 @@ export function StorefrontClient({
     const isDemoStore = isDemo || shopSlug === 'tashkent_drip' || shopSlug === 'volt_gadgets' || shopSlug === 'aura_perfume';
     return {
       ...rawBaseSettings,
+      ai_assistant_enabled:
+        shopData?.settings?.ai_assistant_enabled !== undefined
+          ? shopData.settings.ai_assistant_enabled
+          : (initialSettings?.ai_assistant_enabled !== undefined
+              ? initialSettings.ai_assistant_enabled
+              : true),
+      telegram_chat_id:
+        shopData?.settings?.telegram_chat_id !== undefined
+          ? shopData.settings.telegram_chat_id
+          : (initialSettings?.telegram_chat_id !== undefined ? initialSettings.telegram_chat_id : rawBaseSettings.telegram_chat_id),
       instagram_url:
         shopData?.settings?.instagram_url !== undefined
           ? shopData.settings.instagram_url
@@ -409,6 +424,7 @@ export function StorefrontClient({
     announcement_active: themeSettings.announcement_active,
     announcement_text: themeSettings.announcement_text,
     hide_branding: themeSettings.hide_branding,
+    ai_assistant_enabled: base?.ai_assistant_enabled !== undefined ? base.ai_assistant_enabled : true,
     theme_settings: themeSettings,
   };
 

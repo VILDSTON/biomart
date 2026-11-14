@@ -170,7 +170,8 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shop_slug: storeSettings.slug,
-          seller_chat_id: storeSettings.telegram_chat_id,
+          seller_chat_id: storeSettings.telegram_chat_id || storeSettings.telegram_username,
+          seller_username: storeSettings.telegram_username,
           ...newOrder,
         }),
       }).catch(() => null);

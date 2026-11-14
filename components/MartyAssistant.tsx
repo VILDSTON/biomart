@@ -256,6 +256,11 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         },
       ];
 
+      const buyerComment =
+        orderPayload.comment && String(orderPayload.comment).trim() !== ''
+          ? String(orderPayload.comment).trim()
+          : 'Без комментария';
+
       const newOrder: Order = {
         id: orderId,
         shop_slug: storeSettings.slug || 'tashkent_drip',
@@ -263,7 +268,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         customer_phone: orderPayload.customer_phone || '+998900000000',
         delivery_type: orderPayload.delivery_type === 'pickup' ? 'pickup' : 'delivery',
         address: orderPayload.address || 'Уточняется менеджером',
-        comment: 'Оформлено через онлайн-консультанта 🤖',
+        comment: buyerComment,
         items,
         total_price: unitPrice * (orderPayload.quantity || 1),
         status: 'new',
@@ -290,7 +295,8 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shop_slug: storeSettings.slug || 'tashkent_drip',
-          seller_chat_id: storeSettings.telegram_chat_id,
+          seller_chat_id: storeSettings.telegram_chat_id || storeSettings.telegram_username,
+          seller_username: storeSettings.telegram_username,
           ...newOrder,
         }),
       }).catch((err) => console.warn('[Marty] Order notify error:', err));

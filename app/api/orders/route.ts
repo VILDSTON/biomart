@@ -1,10 +1,57 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { formatPrice } from '@/lib/utils';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { createOrderSchema, escapeTelegramHtml } from '@/lib/security';
 import { MOCK_PRODUCTS, MOCK_STORE_SETTINGS } from '@/lib/mock-data';
 import { OrderItem } from '@/types';
+
+function resolveSellerChatId(sellerChatId?: string, sellerUsername?: string): string | null {
+  // 1. If explicitly provided numeric chat id (or negative group chat id like -100...)
+  if (sellerChatId && /^-?\d+$/.test(sellerChatId.trim())) {
+    return sellerChatId.trim();
+  }
+
+  // 2. If provided username or string containing letters, resolve via data/telegram_users.json
+  const candidates: string[] = [];
+  if (sellerChatId) {
+    const clean = sellerChatId.trim().toLowerCase().replace(/^@/, '');
+    if (clean) candidates.push(clean);
+  }
+  if (sellerUsername) {
+    const clean = sellerUsername.trim().toLowerCase().replace(/^@/, '');
+    if (clean && !candidates.includes(clean)) candidates.push(clean);
+  }
+
+  if (candidates.length > 0) {
+    try {
+      const mappingPath = path.join(process.cwd(), 'data', 'telegram_users.json');
+      if (fs.existsSync(mappingPath)) {
+        const raw = fs.readFileSync(mappingPath, 'utf-8');
+        const mapping = JSON.parse(raw);
+        for (const candidate of candidates) {
+          if (mapping[candidate]) {
+            const val = mapping[candidate];
+            const resolved = typeof val === 'object' ? val.chat_id : val;
+            if (resolved) return String(resolved);
+          }
+          if (mapping[`@${candidate}`]) {
+            const val = mapping[`@${candidate}`];
+            const resolved = typeof val === 'object' ? val.chat_id : val;
+            if (resolved) return String(resolved);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[Orders API] Could not read telegram_users.json:', e);
+    }
+  }
+
+  // 3. Fallback to process.env.TELEGRAM_CHAT_ID default
+  return process.env.TELEGRAM_CHAT_ID?.trim() || null;
+}
 
 export async function POST(request: Request) {
   try {
@@ -54,6 +101,7 @@ export async function POST(request: Request) {
     const {
       shop_slug,
       seller_chat_id,
+      seller_username,
       customer_name,
       customer_phone,
       delivery_type,
@@ -227,11 +275,11 @@ ${itemsFormatted}
 
 <b>ИТОГО К ОПЛАТЕ: ${formatPrice(authoritativeTotalPrice)}</b>`;
 
-    // 7. Resolve Seller Telegram Chat ID (Multi-tenant)
+    // 7. Resolve Seller Telegram Chat ID (Multi-tenant with Username / Chat ID mapping)
     const botToken =
       process.env.TELEGRAM_BOT_TOKEN?.trim() ||
       process.env.TG_BOT_TOKEN?.trim();
-    const targetChatId = seller_chat_id?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
+    const targetChatId = resolveSellerChatId(seller_chat_id, seller_username);
     let telegramSent = false;
     let telegramError = null;
 

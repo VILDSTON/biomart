@@ -39,3 +39,5 @@ video/node_modules
 video/build
 __pycache__
 assets-raw
+data/*.json
+!data/.gitkeep

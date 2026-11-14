@@ -62,6 +62,7 @@ export const orderItemSchema = z.object({
 export const createOrderSchema = z.object({
   shop_slug: z.string().min(2).max(50),
   seller_chat_id: z.string().max(50).optional(),
+  seller_username: z.string().max(50).optional(),
   customer_name: z.string().min(1, 'Укажите ваше имя').max(60, 'Имя слишком длинное'),
   customer_phone: z
     .string()
