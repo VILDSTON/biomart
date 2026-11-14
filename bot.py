@@ -1,6 +1,5 @@
 """
 BioMart Official Telegram Bot
-Token: 9023083705:AAHRnvV1ihvAENYcZiKW8UDn7cbD4iEMdm0
 Username: @BioMartAssistant_bot
 
 Provides store lookup, catalog browsing, order notifications, and merchant management.
@@ -8,7 +7,9 @@ Provides store lookup, catalog browsing, order notifications, and merchant manag
 
 import asyncio
 import logging
+import os
 import sys
+from pathlib import Path
 from typing import Dict, Any, List
 
 from aiogram import Bot, Dispatcher, F, types
@@ -17,7 +18,20 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
-BOT_TOKEN = "9023083705:AAHRnvV1ihvAENYcZiKW8UDn7cbD4iEMdm0"
+def load_local_env():
+    env_file = Path(__file__).resolve().parent / ".env.local"
+    if env_file.exists():
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    k, v = k.strip(), v.strip().strip("'\"")
+                    if k and not os.environ.get(k):
+                        os.environ[k] = v
+
+load_local_env()
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or os.environ.get("TG_BOT_TOKEN") or ""
 BASE_WEB_URL = "http://localhost:3000"
 
 # Mock stores database synced with Next.js BioMart mock data

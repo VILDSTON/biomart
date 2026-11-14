@@ -186,10 +186,10 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
       dbStore?.store_name ||
       cookieContacts?.store_name ||
       (demoPreset ? demoPreset.settings.store_name : cleanSlug.replace(/_/g, ' ').toUpperCase()),
-    instagram_url: cookieContacts?.instagram_url ?? dbStore?.instagram_url ?? (demoPreset ? demoPreset.settings.instagram_url : ''),
-    telegram_username: cookieContacts?.telegram_username ?? dbStore?.telegram_username ?? (demoPreset ? demoPreset.settings.telegram_username : ''),
-    phone: cookieContacts?.phone ?? dbStore?.phone ?? (demoPreset ? demoPreset.settings.phone : ''),
-    custom_links: cookieContacts?.custom_links !== undefined ? cookieContacts.custom_links : (dbStore?.custom_links ?? fallbackSettings.custom_links ?? []),
+    instagram_url: cookieContacts?.instagram_url ?? dbStore?.instagram_url ?? (isDemoSlug && demoPreset ? demoPreset.settings.instagram_url : (cleanSlug === 'tashkent_drip' ? fallbackSettings.instagram_url : '')),
+    telegram_username: cookieContacts?.telegram_username ?? dbStore?.telegram_username ?? (isDemoSlug && demoPreset ? demoPreset.settings.telegram_username : (cleanSlug === 'tashkent_drip' ? fallbackSettings.telegram_username : '')),
+    phone: cookieContacts?.phone ?? dbStore?.phone ?? (isDemoSlug && demoPreset ? demoPreset.settings.phone : (cleanSlug === 'tashkent_drip' ? fallbackSettings.phone : '')),
+    custom_links: cookieContacts?.custom_links !== undefined ? cookieContacts.custom_links : (dbStore?.custom_links ?? (isDemoSlug ? fallbackSettings.custom_links ?? [] : [])),
   };
 
   // 4. Check moderation status: if banned or rejected, show polite unavailable screen

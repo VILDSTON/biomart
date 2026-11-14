@@ -20,7 +20,9 @@ interface BioMartMultiStoreState {
 
   // Multi-shop registry
   shops: Record<string, ShopData>;
-  registerShop: (slug: string, storeName: string, instagramUsername?: string, email?: string) => ShopData;
+  registerShop: (slug: string, storeName: string, instagramUsername?: string, email?: string, adminPassword?: string) => ShopData;
+  updateAdminPassword: (slug: string, newPassword: string) => void;
+  addShopReview: (slug: string, review: import('@/types').StoreReview) => void;
   getShopData: (slug: string) => ShopData;
   updateShopSettings: (slug: string, settings: Partial<StoreSettings>) => void;
   addShopProduct: (slug: string, product: Omit<Product, 'id'>) => void;
@@ -94,7 +96,7 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         aura_perfume: DEMO_PRESET_SHOPS.aura_perfume,
       },
 
-      registerShop: (rawSlug, storeName, instagramUsername = '', email = '') => {
+      registerShop: (rawSlug, storeName, instagramUsername = '', email = '', adminPassword = '') => {
         const cleanSlug = rawSlug.toLowerCase().replace(/[^a-z0-9_-]/g, '') || `shop_${Date.now()}`;
         const existing = get().shops[cleanSlug];
         if (existing) {
@@ -128,8 +130,11 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
             instagram_url: instagramUsername ? `https://instagram.com/${instagramUsername.replace('@', '')}` : '',
             telegram_username: '',
             telegram_chat_id: '',
-            phone: '+998 90 123 45 67',
+            phone: '',
             email: email.trim(),
+            admin_password: adminPassword?.trim() || 'admin123',
+            custom_links: [],
+            reviews: [],
             currency: 'сум',
             delivery_info: 'Доставка по Ташкенту и всему Узбекистану.',
             accent_color: defaultThemeSettings.accent_color,
@@ -156,6 +161,43 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
         });
 
         return newShop;
+      },
+
+      updateAdminPassword: (slug, newPassword) => {
+        const clean = slug?.toLowerCase();
+        const shop = get().shops[clean];
+        if (!shop) return;
+        set({
+          shops: {
+            ...get().shops,
+            [clean]: {
+              ...shop,
+              settings: {
+                ...shop.settings,
+                admin_password: newPassword,
+              },
+            },
+          },
+        });
+      },
+
+      addShopReview: (slug, review) => {
+        const clean = slug?.toLowerCase();
+        const shop = get().shops[clean];
+        if (!shop) return;
+        const currentReviews = shop.settings.reviews || [];
+        set({
+          shops: {
+            ...get().shops,
+            [clean]: {
+              ...shop,
+              settings: {
+                ...shop.settings,
+                reviews: [review, ...currentReviews],
+              },
+            },
+          },
+        });
       },
 
       getShopData: (slug) => {

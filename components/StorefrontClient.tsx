@@ -137,14 +137,27 @@ export function StorefrontClient({
   const rawBaseSettings = isDemo && initialSettings ? initialSettings : (shopData?.settings || initialSettings);
   const currentSettings = useMemo(() => {
     if (!rawBaseSettings) return initialSettings;
+    const isDemoStore = isDemo || shopSlug === 'tashkent_drip' || shopSlug === 'volt_gadgets' || shopSlug === 'aura_perfume';
     return {
       ...rawBaseSettings,
+      instagram_url:
+        shopData?.settings?.instagram_url !== undefined
+          ? shopData.settings.instagram_url
+          : (initialSettings?.instagram_url !== undefined ? initialSettings.instagram_url : (isDemoStore ? rawBaseSettings.instagram_url || '' : '')),
+      telegram_username:
+        shopData?.settings?.telegram_username !== undefined
+          ? shopData.settings.telegram_username
+          : (initialSettings?.telegram_username !== undefined ? initialSettings.telegram_username : (isDemoStore ? rawBaseSettings.telegram_username || '' : '')),
+      phone:
+        shopData?.settings?.phone !== undefined
+          ? shopData.settings.phone
+          : (initialSettings?.phone !== undefined ? initialSettings.phone : (isDemoStore ? rawBaseSettings.phone || '' : '')),
       custom_links:
-        (shopData?.settings?.custom_links && shopData.settings.custom_links.length > 0)
+        shopData?.settings?.custom_links !== undefined
           ? shopData.settings.custom_links
-          : (initialSettings?.custom_links || rawBaseSettings.custom_links || []),
+          : (initialSettings?.custom_links !== undefined ? initialSettings.custom_links : (isDemoStore ? rawBaseSettings.custom_links || [] : [])),
     };
-  }, [rawBaseSettings, shopData?.settings?.custom_links, initialSettings]);
+  }, [rawBaseSettings, shopData?.settings, initialSettings, isDemo, shopSlug]);
   const currentCategories = useMemo(() => {
     const source = isDemo && initialCategories && initialCategories.length > 0
       ? initialCategories

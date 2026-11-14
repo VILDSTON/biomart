@@ -86,6 +86,7 @@ export interface StoreSettings {
   telegram_chat_id?: string; // Telegram Chat ID продавца для получения заказов!
   phone: string;
   email?: string;
+  admin_password?: string;
   currency: string;
   delivery_info: string;
   accent_color: string;

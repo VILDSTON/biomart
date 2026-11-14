@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const FOUNDER_TELEGRAM_ID = '5504101440';
     const botToken =
       process.env.TELEGRAM_BOT_TOKEN?.trim() ||
-      '9023083705:AAHRnvV1ihvAENYcZiKW8UDn7cbD4iEMdm0';
+      process.env.TG_BOT_TOKEN?.trim();
 
     // Map category
     const categoryLabels: Record<string, string> = {

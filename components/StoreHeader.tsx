@@ -165,44 +165,46 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
         </div>
 
         {/* Action Buttons: Instagram, Telegram, Phone (Touch targets min-h-[40px]) */}
-        <div className="flex items-center gap-2 mt-3.5">
-          {settings.instagram_url && (
-            <a
-              href={settings.instagram_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Открыть Instagram страницу магазина"
-              className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
-            >
-              <Instagram className="w-3.5 h-3.5 text-content-primary shrink-0" />
-              <span className="truncate">Instagram</span>
-            </a>
-          )}
+        {(Boolean(settings.instagram_url) || Boolean(cleanTg) || Boolean(settings.phone)) && (
+          <div className="flex items-center gap-2 mt-3.5">
+            {settings.instagram_url && (
+              <a
+                href={settings.instagram_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Открыть Instagram страницу магазина"
+                className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
+              >
+                <Instagram className="w-3.5 h-3.5 text-content-primary shrink-0" />
+                <span className="truncate">Instagram</span>
+              </a>
+            )}
 
-          {cleanTg && (
-            <a
-              href={tgInquiryUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Telegram"
-              className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
-            >
-              <Send className="w-3.5 h-3.5 text-accent shrink-0" />
-              <span className="truncate">Telegram</span>
-            </a>
-          )}
+            {cleanTg && (
+              <a
+                href={tgInquiryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telegram"
+                className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
+              >
+                <Send className="w-3.5 h-3.5 text-accent shrink-0" />
+                <span className="truncate">Telegram</span>
+              </a>
+            )}
 
-          {settings.phone && (
-            <a
-              href={`tel:${settings.phone.replace(/[^\d+]/g, '')}`}
-              aria-label={`Позвонить по номеру ${settings.phone}`}
-              className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
-            >
-              <Phone className="w-3.5 h-3.5 text-accent shrink-0" />
-              <span className="truncate">{language === 'uz' ? 'Qo‘ng‘iroq' : 'Позвонить'}</span>
-            </a>
-          )}
-        </div>
+            {settings.phone && (
+              <a
+                href={`tel:${settings.phone.replace(/[^\d+]/g, '')}`}
+                aria-label={`Позвонить по номеру ${settings.phone}`}
+                className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
+              >
+                <Phone className="w-3.5 h-3.5 text-accent shrink-0" />
+                <span className="truncate">{language === 'uz' ? 'Qo‘ng‘iroq' : 'Позвонить'}</span>
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Custom Quick Links Buttons (configured in Dashboard -> Ссылки) */}
         {settings.custom_links && settings.custom_links.filter((l) => l.is_active).length > 0 && (

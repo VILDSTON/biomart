@@ -12,7 +12,7 @@ interface StoreReviewsProps {
 }
 
 export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className = '' }) => {
-  const { language } = useBioMartStore();
+  const { language, addShopReview } = useBioMartStore();
   const isUz = language === 'uz';
 
   const isVisible = settings.show_reviews !== false && settings.theme_settings?.show_reviews !== false;
@@ -55,13 +55,16 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
       is_verified: true,
     };
 
-    // Update local state
+    // Update persistent store & local state
+    if (settings.slug) {
+      addShopReview(settings.slug, createdReview);
+    }
     setReviewsList((prev) => [createdReview, ...prev]);
 
     // Send Telegram alert to seller if configured
     try {
-      if (settings.telegram_chat_id) {
-        await fetch(`https://api.telegram.org/bot${process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || '9023083705:AAHRnvV1ihvAENYcZiKW8UDn7cbD4iEMdm0'}/sendMessage`, {
+      if (settings.telegram_chat_id && process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN) {
+        await fetch(`https://api.telegram.org/bot${process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

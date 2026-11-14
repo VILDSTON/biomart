@@ -16,6 +16,9 @@ import {
   RefreshCw,
   KeyRound,
   ShieldCheck,
+  Lock,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
@@ -31,6 +34,9 @@ export default function RegisterPage() {
   const [slug, setSlug] = useState('');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
   const [instagram, setInstagram] = useState('');
 
   // Slug validation states
@@ -223,6 +229,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!adminPassword.trim() || adminPassword.trim().length < 6) {
+      setPasswordError('Пароль администратора должен содержать минимум 6 символов');
+      return;
+    }
+
     // Moderation and ban check
     const modCheck = validateStoreContent({ store_name: trimmedName, slug: trimmedSlug });
     if (!modCheck.isValid) {
@@ -311,7 +322,7 @@ export default function RegisterPage() {
   const finalizeRegistration = async (trimmedSlug: string, trimmedName: string, trimmedEmail: string) => {
     try {
       // 1. Save in local state
-      registerShop(trimmedSlug, trimmedName, instagram.trim(), trimmedEmail);
+      registerShop(trimmedSlug, trimmedName, instagram.trim(), trimmedEmail, adminPassword.trim());
       setActiveSlug(trimmedSlug);
 
       sessionStorage.setItem('biomart_admin_auth', 'true');
@@ -323,6 +334,7 @@ export default function RegisterPage() {
         const contactsPayload = {
           store_name: trimmedName,
           email: trimmedEmail,
+          admin_password: adminPassword.trim(),
           instagram_url: instagram ? `https://instagram.com/${instagram.replace('@', '')}` : '',
           custom_links: [],
         };
@@ -338,6 +350,7 @@ export default function RegisterPage() {
             slug: trimmedSlug,
             store_name: trimmedName,
             email: trimmedEmail,
+            admin_password: adminPassword.trim(),
             instagram_url: instagram ? `https://instagram.com/${instagram.replace('@', '')}` : '',
           }),
         });
@@ -635,6 +648,47 @@ export default function RegisterPage() {
                   )}
                 </div>
               )}
+
+              {/* Admin Password Field */}
+              <div>
+                <label className="block text-xs font-semibold text-content-primary mb-1 flex items-center justify-between">
+                  <span>Пароль администратора *</span>
+                  <span className="text-[10px] text-content-secondary">Для входа в кабинет</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-content-secondary">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type={showAdminPassword ? 'text' : 'password'}
+                    required
+                    value={adminPassword}
+                    onChange={(e) => {
+                      setAdminPassword(e.target.value);
+                      setPasswordError('');
+                    }}
+                    placeholder="Минимум 6 символов"
+                    className={`w-full pl-10 pr-10 py-2.5 rounded-btn bg-page border text-xs text-content-primary font-mono focus:outline-none transition-colors ${
+                      passwordError ? 'border-danger focus:border-danger' : 'border-border focus:border-accent'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-content-secondary hover:text-content-primary"
+                    tabIndex={-1}
+                  >
+                    {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {passwordError ? (
+                  <p className="text-[11px] text-danger mt-1 font-medium">{passwordError}</p>
+                ) : (
+                  <p className="text-[10px] text-content-secondary mt-1">
+                    По этому паролю вы будете входить в панель управления витриной
+                  </p>
+                )}
+              </div>
 
               {/* Instagram handle (Optional) */}
               {!isGoogleClaimStep && (

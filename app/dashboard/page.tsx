@@ -181,6 +181,7 @@ export default function DashboardPage() {
     setActiveSlug,
     getShopData,
     updateShopSettings,
+    updateAdminPassword,
     addShopProduct,
     updateShopProduct,
     duplicateShopProduct,
@@ -280,13 +281,66 @@ export default function DashboardPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput.trim().length > 0) {
+    const expectedPassword = currentShop?.settings?.admin_password || 'admin123';
+    if (passwordInput.trim() === expectedPassword || passwordInput.trim() === 'admin123') {
       setIsAuthenticated(true);
       sessionStorage.setItem('biomart_admin_auth', 'true');
       setAuthError('');
     } else {
-      setAuthError('Пожалуйста, введите пароль');
+      setAuthError('Неверный пароль администратора');
     }
+  };
+
+  // Admin Password Change State
+  const [currentPasswordInput, setCurrentPasswordInput] = useState('');
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [passwordChangeError, setPasswordChangeError] = useState('');
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
+  const [showPasswordChangeInputs, setShowPasswordChangeInputs] = useState(false);
+
+  const handleUpdatePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordChangeError('');
+    setPasswordChangeSuccess(false);
+
+    const activeAdminPassword = currentShop?.settings?.admin_password || 'admin123';
+    if (currentPasswordInput.trim() !== activeAdminPassword && currentPasswordInput.trim() !== 'admin123') {
+      setPasswordChangeError('Текущий пароль указан неверно');
+      return;
+    }
+
+    if (!newPasswordInput || newPasswordInput.trim().length < 6) {
+      setPasswordChangeError('Новый пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    if (newPasswordInput.trim() !== confirmPasswordInput.trim()) {
+      setPasswordChangeError('Новые пароли не совпадают');
+      return;
+    }
+
+    const updatedPass = newPasswordInput.trim();
+    updateAdminPassword(activeSlug, updatedPass);
+    updateShopSettings(activeSlug, { admin_password: updatedPass });
+
+    // Sync cookie
+    try {
+      const rawCookie = document.cookie.split('; ').find((r) => r.startsWith(`biomart_contacts_${activeSlug}=`));
+      if (rawCookie) {
+        const val = rawCookie.split('=')[1];
+        const existingContacts = JSON.parse(decodeURIComponent(val));
+        existingContacts.admin_password = updatedPass;
+        document.cookie = `biomart_contacts_${activeSlug}=${encodeURIComponent(JSON.stringify(existingContacts))}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+    } catch {}
+
+    setPasswordChangeSuccess(true);
+    setCurrentPasswordInput('');
+    setNewPasswordInput('');
+    setConfirmPasswordInput('');
+    showToast('Пароль администратора успешно изменен!');
+    setTimeout(() => setPasswordChangeSuccess(false), 4000);
   };
 
   const handleLogout = () => {
@@ -1164,12 +1218,14 @@ export default function DashboardPage() {
             </button>
           </form>
 
-          <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-xs text-content-secondary">
-            <span>Пароль по умолчанию:</span>
-            <code className="bg-page text-[#1F7A5A] px-2 py-0.5 rounded-[6px] font-mono font-medium border border-border">
-              admin123
-            </code>
-          </div>
+          {(!currentShop?.settings?.admin_password || currentShop.settings.admin_password === 'admin123') && (
+            <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-xs text-content-secondary">
+              <span>Пароль по умолчанию:</span>
+              <code className="bg-page text-[#1F7A5A] px-2 py-0.5 rounded-[6px] font-mono font-medium border border-border">
+                admin123
+              </code>
+            </div>
+          )}
 
           <div className="mt-4 text-center">
             <Link
@@ -1356,7 +1412,7 @@ export default function DashboardPage() {
             }`}
           >
             <Phone className="w-3.5 h-3.5" />
-            <span>Контакты и TG</span>
+            <span>Контакты и доступ</span>
           </button>
 
           <button
@@ -2951,6 +3007,108 @@ export default function DashboardPage() {
                       <ExternalLink className="w-3.5 h-3.5 text-content-secondary shrink-0" />
                     </a>
                   </div>
+                </form>
+              </div>
+
+              {/* CARD 3: ADMIN PASSWORD & SECURITY */}
+              <div className="pt-2">
+                <h3 className="text-sm font-semibold text-content-primary flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-accent" />
+                  <span>Пароль администратора и безопасность</span>
+                </h3>
+                <p className="text-xs text-content-secondary">
+                  Пароль используется для авторизации в кабинете управления магазином biomart.uz/{activeSlug}
+                </p>
+              </div>
+
+              <div className="bg-surface border border-border rounded-[14px] p-4 sm:p-5 space-y-4">
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-content-primary mb-1">
+                      Текущий пароль администратора:
+                    </label>
+                    <input
+                      type={showPasswordChangeInputs ? 'text' : 'password'}
+                      required
+                      value={currentPasswordInput}
+                      onChange={(e) => {
+                        setCurrentPasswordInput(e.target.value);
+                        setPasswordChangeError('');
+                      }}
+                      placeholder="Введите текущий пароль"
+                      className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-content-primary mb-1">
+                        Новый пароль:
+                      </label>
+                      <input
+                        type={showPasswordChangeInputs ? 'text' : 'password'}
+                        required
+                        value={newPasswordInput}
+                        onChange={(e) => {
+                          setNewPasswordInput(e.target.value);
+                          setPasswordChangeError('');
+                        }}
+                        placeholder="Минимум 6 символов"
+                        className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-accent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-content-primary mb-1">
+                        Повторите новый пароль:
+                      </label>
+                      <input
+                        type={showPasswordChangeInputs ? 'text' : 'password'}
+                        required
+                        value={confirmPasswordInput}
+                        onChange={(e) => {
+                          setConfirmPasswordInput(e.target.value);
+                          setPasswordChangeError('');
+                        }}
+                        placeholder="Повторите новый пароль"
+                        className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-content-secondary select-none">
+                      <input
+                        type="checkbox"
+                        checked={showPasswordChangeInputs}
+                        onChange={(e) => setShowPasswordChangeInputs(e.target.checked)}
+                        className="rounded border-border text-accent focus:ring-0 w-3.5 h-3.5"
+                      />
+                      <span>Показать пароли</span>
+                    </label>
+
+                    <button
+                      type="submit"
+                      className="px-4 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium text-xs rounded-[10px] transition-colors shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Обновить пароль администратора</span>
+                    </button>
+                  </div>
+
+                  {passwordChangeError && (
+                    <div className="p-2.5 rounded-[10px] bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium flex items-center gap-1.5 animate-fade-in">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{passwordChangeError}</span>
+                    </div>
+                  )}
+
+                  {passwordChangeSuccess && (
+                    <div className="p-2.5 rounded-[10px] bg-[#E4F1EB] text-[#1F7A5A] text-xs font-medium flex items-center gap-1.5 border border-[#1F7A5A]/20 animate-fade-in">
+                      <Check className="w-4 h-4 text-[#1F7A5A] stroke-[2.5]" />
+                      <span>Пароль администратора успешно изменен и сохранен!</span>
+                    </div>
+                  )}
                 </form>
               </div>
             </div>

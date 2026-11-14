@@ -230,7 +230,7 @@ ${itemsFormatted}
     // 7. Resolve Seller Telegram Chat ID (Multi-tenant)
     const botToken =
       process.env.TELEGRAM_BOT_TOKEN?.trim() ||
-      '9023083705:AAHRnvV1ihvAENYcZiKW8UDn7cbD4iEMdm0';
+      process.env.TG_BOT_TOKEN?.trim();
     const targetChatId = seller_chat_id?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
     let telegramSent = false;
     let telegramError = null;
