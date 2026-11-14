@@ -12,7 +12,7 @@ Serverless Telegram Bot for BioMart running 24/7 on Cloudflare Workers (Edge).
 2. Установите секретный токен бота:
    ```bash
    npx wrangler secret put TELEGRAM_BOT_TOKEN
-   # Вставьте: 9023083705:AAHTQ9YwgBR8NVRzx1vc-wDQHitLpK6scyI
+   # Вставьте токен вашего бота от @BotFather
    ```
 3. Задеплойте воркер на Cloudflare:
    ```bash
@@ -28,6 +28,6 @@ Serverless Telegram Bot for BioMart running 24/7 on Cloudflare Workers (Edge).
 1. Откройте [dash.cloudflare.com](https://dash.cloudflare.com/) → **Compute (Workers & Pages)** → **Create Application** → **Create Worker**.
 2. Вставьте код из `worker.js` в онлайн-редактор и нажмите **Save & Deploy**.
 3. В **Settings** → **Variables and Secrets** добавьте:
-   - `TELEGRAM_BOT_TOKEN`: `9023083705:AAHTQ9YwgBR8NVRzx1vc-wDQHitLpK6scyI`
+   - `TELEGRAM_BOT_TOKEN`: `<токен вашего бота из BotFather>`
    - `BASE_WEB_URL`: `https://biomart.vercel.app`
 4. Перейдите по ссылке `https://<your-worker>.workers.dev/set-webhook` для мгновенной привязки к Telegram!
