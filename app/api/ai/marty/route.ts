@@ -96,6 +96,7 @@ function sanitizeAndExtractSpecialTags(rawText: string): {
   cleanText: string;
   orderData: OrderDataPayload | null;
   suggestedProducts: SuggestedProductPayload[];
+  options: string[];
 } {
   let text = rawText || '';
   let orderData: OrderDataPayload | null = null;
@@ -125,11 +126,26 @@ function sanitizeAndExtractSpecialTags(rawText: string): {
     }
   }
 
-  // 3. Absolute purge of ANY tag pattern (closed, unclosed, or partial)
+  // 3. Extract Options if present [OPTIONS: ["...", "..."]]
+  let options: string[] = [];
+  const optionsMatch = text.match(/\[OPTIONS:\s*(\[[\s\S]*?\])\s*\]/i);
+  if (optionsMatch) {
+    try {
+      const parsed = JSON.parse(optionsMatch[1]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        options = parsed.map((o: any) => String(o).trim()).filter(Boolean);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 4. Absolute purge of ANY tag pattern (closed, unclosed, or partial)
   // Ensures raw internal syntax NEVER leaks into the chat stream
   text = text
     .replace(/\[\s*CREATE_ORDER\b[\s\S]*?(?:\]|$)/gi, '')
     .replace(/\[\s*SUGGEST_PRODUCT\b[\s\S]*?(?:\]|$)/gi, '')
+    .replace(/\[\s*OPTIONS\b[\s\S]*?(?:\]|$)/gi, '')
     .replace(/\[\s*ORDER\b[\s\S]*?(?:\]|$)/gi, '')
     .replace(/\[\s*PRODUCT\b[\s\S]*?(?:\]|$)/gi, '');
 
@@ -137,6 +153,7 @@ function sanitizeAndExtractSpecialTags(rawText: string): {
     cleanText: text.trim(),
     orderData,
     suggestedProducts,
+    options,
   };
 }
 
@@ -308,6 +325,11 @@ ${catalogSummary}
    (Где comment — РЕАЛЬНЫЙ комментарий и пожелания от покупателя своими словами, либо "Без комментария", если клиент сказал, что пожеланий нет. НЕ используй шаблонные фразы).
 3. Если предлагаешь конкретный товар из каталога, можешь добавить:
    [SUGGEST_PRODUCT: {"id": "ID", "title": "Название", "price": 100000}]
+4. ИНТЕРАКТИВНЫЕ ВАРИАНТЫ ДЛЯ КЛИЕНТА (ОЧЕНЬ ВАЖНО):
+   Если ты задаешь клиенту вопрос с выбором (например, выбор размера [S, M, L], способа оплаты, категории или уточняющий вопрос), ОБЯЗАТЕЛЬНО добавь в конце ответа блок:
+   [OPTIONS: ["Вариант 1", "Вариант 2", "Вариант 3"]]
+   (например: [OPTIONS: ["M (в наличии)", "L (в наличии)", "Таблица размеров"]] или [OPTIONS: ["Доставка курьером", "Самовывоз"]])
+   Тогда покупатель сможет нажать готовую кнопку в 1 клик!
 
 СТИЛЬ ОБЩЕНИЯ:
 • Общайся дружелюбно, профессионально, с эмодзи (🛍️, ✨, 📦).
@@ -384,12 +406,13 @@ ${catalogSummary}
     }
 
     // 8. Extract structured actions and rigorously purge internal syntax
-    const { cleanText: finalText, orderData, suggestedProducts } = sanitizeAndExtractSpecialTags(generatedRawText);
+    const { cleanText: finalText, orderData, suggestedProducts, options } = sanitizeAndExtractSpecialTags(generatedRawText);
     const cleanOutput = cleanChatText(finalText);
 
     return NextResponse.json({
       success: true,
       reply: cleanOutput,
+      options: options.length > 0 ? options : null,
       orderData: orderData || null,
       suggestedProducts: suggestedProducts.length > 0 ? suggestedProducts : null,
       model: usedModel,

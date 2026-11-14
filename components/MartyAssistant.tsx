@@ -42,6 +42,7 @@ interface ChatMessage {
   timestamp: string;
   suggestedProducts?: { id: string; title: string; price: number; image_url?: string }[];
   orderData?: any;
+  options?: string[];
 }
 
 const STARTER_PROMPTS = [
@@ -275,6 +276,7 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         suggestedProducts: data.suggestedProducts,
         orderData: data.orderData,
+        options: data.options || undefined,
       };
 
       setMessages((prev) => [...prev, botMsg]);
@@ -525,6 +527,24 @@ export const MartyAssistant: React.FC<MartyAssistantProps> = ({
                     }`}
                   >
                     <p className="whitespace-pre-line">{msg.text}</p>
+
+                    {/* Interactive Choice Options (A, B, C or 1, 2, 3) */}
+                    {msg.options && msg.options.length > 0 && (
+                      <div className="mt-2.5 flex flex-wrap gap-1.5 pt-1 border-t border-border/40">
+                        {msg.options.map((opt, optIdx) => (
+                          <button
+                            key={optIdx}
+                            type="button"
+                            disabled={isLoading}
+                            onClick={() => handleSendMessage(opt)}
+                            className="px-2.5 py-1.5 rounded-lg bg-page hover:bg-accent-soft text-content-primary hover:text-accent border border-border hover:border-accent/40 text-[11px] font-medium transition-all shadow-2xs active:scale-95 text-left cursor-pointer flex items-center gap-1.5"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                            <span>{opt}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Order Confirmation Card (if Marty created an order) */}
                     {msg.orderData && (

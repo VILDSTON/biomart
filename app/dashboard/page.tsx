@@ -168,15 +168,32 @@ export default function DashboardPage() {
   const [editInStock, setEditInStock] = useState<boolean>(true);
   const [editFormError, setEditFormError] = useState('');
 
-  // Groq AI Assistant State (Pro Feature)
-  const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
+  // Dashboard Marty AI Assistant State
+  const [aiMessages, setAiMessages] = useState<Array<{
+    id?: string;
+    role: 'user' | 'assistant';
+    content: string;
+    proposedAction?: {
+      type: 'create_promo' | 'update_product_price' | 'toggle_product_stock' | 'update_store_bio';
+      title: string;
+      description: string;
+      payload: Record<string, any>;
+    };
+    options?: string[];
+  }>>([
     {
+      id: 'welcome',
       role: 'assistant',
-      content: 'Привет! Я бизнес-ассистент BioMart. Могу составить продающие тексты для товаров, придумать акции для Stories или помочь с доставкой в Узбекистане. Чем могу помочь?',
+      content: 'Привет! Я бизнес-ассистент Марти. Я могу анализировать ваш каталог, составлять продающие тексты для Stories, придумывать акции и помогать с продажами в Узбекистане. Чем могу помочь?',
+      options: ['Текст для Stories', 'Идеи акций и промокодов', 'Совет по доставке Yandex/BTS'],
     },
   ]);
   const [aiInput, setAiInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [dashboardAiRemaining, setDashboardAiRemaining] = useState<number>(10);
+  const [dashboardAiLimit, setDashboardAiLimit] = useState<number>(10);
+  const [appliedAiActions, setAppliedAiActions] = useState<Record<string, boolean>>({});
+  const [rejectedAiActions, setRejectedAiActions] = useState<Record<string, boolean>>({});
 
   // Zustand Store
   const {
@@ -301,6 +318,16 @@ export default function DashboardPage() {
       setSettingsForm(sanitized);
     }
   }, [settings]);
+
+  useEffect(() => {
+    fetch(`/api/ai/dashboard-marty?shop=${encodeURIComponent(activeSlug)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.dailyLimit !== undefined) setDashboardAiLimit(data.dailyLimit);
+        if (data.remainingToday !== undefined) setDashboardAiRemaining(data.remainingToday);
+      })
+      .catch(() => null);
+  }, [activeSlug]);
 
   useEffect(() => {
     if (categories.length > 0 && !newCategoryId) {
@@ -614,41 +641,113 @@ export default function DashboardPage() {
     }
   };
 
+  const handleApplyAiAction = (action: NonNullable<typeof aiMessages[0]['proposedAction']>, actionKey: string) => {
+    try {
+      if (action.type === 'create_promo') {
+        const cleanCode = String(action.payload.code || 'PROMO10').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+        const percent = Math.min(100, Math.max(1, parseInt(action.payload.discount_percent) || 10));
+        const existingCodes = settingsForm.promo_codes || settings.promo_codes || [];
+        const updated = [
+          ...existingCodes.filter((c) => c.code !== cleanCode),
+          { code: cleanCode, discount_percent: percent, active: true },
+        ];
+        setSettingsForm({ ...settingsForm, promo_codes: updated });
+        updateShopSettings(activeSlug, { promo_codes: updated });
+        if (supabase) {
+          supabase.from('stores').update({ promo_codes: updated }).eq('slug', activeSlug).then();
+        }
+        showToast(`Промокод ${cleanCode} (-${percent}%) успешно создан!`);
+      } else if (action.type === 'update_product_price') {
+        const targetId = action.payload.product_id;
+        const newPrice = Number(action.payload.new_price);
+        const prod = products.find((p) => p.id === targetId);
+        if (prod && !isNaN(newPrice) && newPrice > 0) {
+          updateShopProduct(activeSlug, prod.id, { price: newPrice });
+          showToast(`Цена товара «${prod.title}» обновлена до ${formatPrice(newPrice, settings.currency)}`);
+        }
+      } else if (action.type === 'toggle_product_stock') {
+        const targetId = action.payload.product_id;
+        toggleShopProductStock(activeSlug, targetId);
+        showToast('Статус наличия товара успешно изменён');
+      } else if (action.type === 'update_store_bio') {
+        const newBio = String(action.payload.new_description || '').trim();
+        if (newBio) {
+          setStoreDescInput(newBio);
+          setSettingsForm({ ...settingsForm, description: newBio });
+          updateShopSettings(activeSlug, { description: newBio });
+          showToast('Описание витрины обновлено!');
+        }
+      }
+
+      setAppliedAiActions((prev) => ({ ...prev, [actionKey]: true }));
+    } catch (err) {
+      console.warn('Apply action error:', err);
+      showToast('Ошибка при применении изменений');
+    }
+  };
+
+  const handleRejectAiAction = (actionKey: string) => {
+    setRejectedAiActions((prev) => ({ ...prev, [actionKey]: true }));
+    showToast('Действие отклонено');
+  };
+
   const handleSendAiMessage = async (customPrompt?: string) => {
     const textToSend = (customPrompt || aiInput).trim();
     if (!textToSend || isAiLoading) return;
 
-    if (currentPlan !== 'pro') {
-      showToast('AI-Ассистент доступен только на тарифе Pro');
-      setActiveTab('tariff');
+    if (dashboardAiRemaining <= 0) {
+      showToast('Дневной лимит сообщений к AI (10/10) исчерпан на сегодня. Лимит обновится в полночь.');
       return;
     }
 
-    const newMessages = [...aiMessages, { role: 'user' as const, content: textToSend }];
+    const userMsg = {
+      id: `usr_${Date.now()}`,
+      role: 'user' as const,
+      content: textToSend,
+    };
+    const newMessages = [...aiMessages, userMsg];
     setAiMessages(newMessages);
     setAiInput('');
     setIsAiLoading(true);
 
     try {
-      const res = await fetch('/api/ai/groq-assistant', {
+      const res = await fetch('/api/ai/dashboard-marty', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages,
-          plan: currentPlan,
-          storeName: settings.store_name,
-          category: categories.find((c) => c.slug !== 'all')?.name || categories[0]?.name || '',
+          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+          shopSlug: activeSlug,
+          storeSettings: settings,
+          products: products.map((p) => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            sizes: p.sizes,
+            in_stock: p.in_stock,
+          })),
+          ordersCount: orders.length,
+          promoCodes: settingsForm.promo_codes || settings.promo_codes || [],
         }),
       });
 
       const data = await res.json();
+      if (data.dailyLimit !== undefined) setDashboardAiLimit(data.dailyLimit);
+      if (data.remainingToday !== undefined) setDashboardAiRemaining(data.remainingToday);
+
       if (data.success && data.reply) {
-        setAiMessages([...newMessages, { role: 'assistant', content: data.reply }]);
+        const botMsg = {
+          id: `bot_${Date.now()}`,
+          role: 'assistant' as const,
+          content: data.reply,
+          proposedAction: data.proposedAction || undefined,
+          options: data.options || undefined,
+        };
+        setAiMessages([...newMessages, botMsg]);
       } else {
         showToast(data.error || 'Ошибка вызова AI-Ассистента');
       }
     } catch (err: any) {
-      console.error('Groq AI error:', err);
+      console.error('Dashboard Marty error:', err);
       showToast('Не удалось связаться с AI-Ассистентом');
     } finally {
       setIsAiLoading(false);
@@ -3958,36 +4057,47 @@ export default function DashboardPage() {
 
               {/* Active AI Chat Screen */}
               <div className="bg-surface rounded-[14px] border border-border flex flex-col h-[520px] overflow-hidden shadow-xs">
-                {/* Quick Prompts Bar */}
-                <div className="p-3 border-b border-border flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  <button
-                    type="button"
-                    onClick={() => handleSendAiMessage('Составь продающее описание для товара в Instagram Stories с ценой и размерами')}
-                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                  >
-                    Текст для Stories
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSendAiMessage('Придумай 3 идеи промокодов и механику акции на выходные для магазина в Ташкенте')}
-                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                  >
-                    Идеи акций
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSendAiMessage('Как организовать доставку через Yandex Delivery и BTS по Узбекистану? Дай пошаговую инструкцию')}
-                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                  >
-                    Совет по доставке
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSendAiMessage('Напиши вежливый скрипт ответа клиенту в Telegram, который спросил «Сколько стоит?»')}
-                    className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
-                  >
-                    Скрипт ответа в Direct
-                  </button>
+                {/* Quick Prompts Bar & Remaining Limits Counter */}
+                <div className="p-3 border-b border-border flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSendAiMessage('Составь продающее описание для товара в Instagram Stories с ценой и размерами')}
+                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
+                    >
+                      Текст для Stories
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSendAiMessage('Придумай 3 идеи промокодов и механику акции на выходные для магазина в Ташкенте')}
+                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
+                    >
+                      Идеи акций
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSendAiMessage('Как организовать доставку через Yandex Delivery и BTS по Узбекистану? Дай пошаговую инструкцию')}
+                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
+                    >
+                      Совет по доставке
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSendAiMessage('Напиши вежливый скрипт ответа клиенту в Telegram, который спросил «Сколько стоит?»')}
+                      className="px-2.5 py-1 rounded-[8px] bg-page hover:bg-surface-soft text-[11px] font-medium text-content-primary whitespace-nowrap transition-colors border border-border"
+                    >
+                      Скрипт ответа в Direct
+                    </button>
+                  </div>
+
+                  {/* Limit Counter Badge */}
+                  <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap border ${
+                    dashboardAiRemaining > 2
+                      ? 'bg-accent-soft text-accent border-accent/20'
+                      : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 border-rose-200 dark:border-rose-800'
+                  }`}>
+                    ⚡ {dashboardAiRemaining}/{dashboardAiLimit} сегодня
+                  </span>
                 </div>
 
                 {/* Messages Feed */}
@@ -4009,7 +4119,72 @@ export default function DashboardPage() {
                             : 'bg-surface border border-border text-content-primary'
                         }`}
                       >
-                        {cleanDisplayAiText(msg.content)}
+                        <p>{cleanDisplayAiText(msg.content)}</p>
+
+                        {/* Interactive Options Choice Chips (A, B, C or 1, 2, 3) */}
+                        {msg.options && msg.options.length > 0 && (
+                          <div className="mt-2.5 flex flex-wrap gap-1.5 pt-2 border-t border-border/40">
+                            {msg.options.map((opt, optIdx) => (
+                              <button
+                                key={optIdx}
+                                type="button"
+                                disabled={isAiLoading || dashboardAiRemaining <= 0}
+                                onClick={() => handleSendAiMessage(opt)}
+                                className="px-2.5 py-1.5 rounded-[8px] bg-page hover:bg-accent-soft text-content-primary hover:text-accent border border-border hover:border-accent/40 text-[11px] font-medium transition-all shadow-2xs active:scale-95 text-left cursor-pointer flex items-center gap-1.5"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                                <span>{opt}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Interactive Proposed Action Card (Mandatory Confirmation) */}
+                        {msg.proposedAction && (
+                          <div className="mt-3 p-3 rounded-[10px] bg-page border border-border/80 text-content-primary space-y-2">
+                            <div className="flex items-center justify-between border-b border-border/50 pb-1.5">
+                              <span className="text-xs font-bold text-accent flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>{msg.proposedAction.title}</span>
+                              </span>
+                              <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-accent/15 text-accent">
+                                Предложение AI
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-content-secondary leading-relaxed">
+                              {msg.proposedAction.description}
+                            </p>
+
+                            {appliedAiActions[`${i}_${msg.proposedAction.title}`] ? (
+                              <div className="pt-1 flex items-center gap-1.5 text-xs font-semibold text-accent">
+                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>Изменения успешно применены в магазине!</span>
+                              </div>
+                            ) : rejectedAiActions[`${i}_${msg.proposedAction.title}`] ? (
+                              <div className="pt-1 text-[11px] font-medium text-content-secondary">
+                                <span>Действие отклонено</span>
+                              </div>
+                            ) : (
+                              <div className="pt-1.5 flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleApplyAiAction(msg.proposedAction!, `${i}_${msg.proposedAction!.title}`)}
+                                  className="px-3 py-1.5 rounded-[8px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Применить</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectAiAction(`${i}_${msg.proposedAction!.title}`)}
+                                  className="px-3 py-1.5 rounded-[8px] bg-surface hover:bg-page border border-border text-content-secondary text-xs font-medium transition-colors cursor-pointer"
+                                >
+                                  <span>Отклонить</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -4026,6 +4201,7 @@ export default function DashboardPage() {
                   <input
                     type="text"
                     value={aiInput}
+                    disabled={isAiLoading || dashboardAiRemaining <= 0}
                     onChange={(e) => setAiInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -4033,12 +4209,16 @@ export default function DashboardPage() {
                         handleSendAiMessage();
                       }
                     }}
-                    placeholder="Задайте вопрос AI-ассистенту..."
-                    className="flex-1 min-w-0 px-3.5 py-2 bg-surface border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-accent"
+                    placeholder={
+                      dashboardAiRemaining <= 0
+                        ? 'Дневной лимит сообщений (10/10) исчерпан на сегодня. Лимит обновится в полночь.'
+                        : 'Задайте вопрос AI-ассистенту Марти...'
+                    }
+                    className="flex-1 min-w-0 px-3.5 py-2 bg-surface border border-border rounded-[10px] text-xs text-content-primary focus:outline-none focus:border-accent disabled:opacity-60"
                   />
                   <button
                     type="button"
-                    disabled={!aiInput.trim() || isAiLoading}
+                    disabled={!aiInput.trim() || isAiLoading || dashboardAiRemaining <= 0}
                     onClick={() => handleSendAiMessage()}
                     className="px-3.5 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-accent-text rounded-[10px] text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer shadow-xs"
                   >
