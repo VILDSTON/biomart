@@ -55,6 +55,7 @@ import {
   CheckCircle2,
   User,
   Save,
+  Sparkles,
 } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { ACCENT_COLOR_PRESETS } from '@/lib/mock-data';
@@ -1481,19 +1482,17 @@ export default function DashboardPage() {
             </button>
           )}
 
-          {false && (
-            <button
-              onClick={() => setActiveTab('ai')}
-              className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
-                activeTab === 'ai'
-                  ? 'bg-[#1F7A5A] text-white shadow-xs'
-                  : 'text-[#1F7A5A] hover:bg-[#E4F1EB]'
-              }`}
-            >
-              <Bot className="w-3.5 h-3.5" />
-              <span>AI (Pro)</span>
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab('ai')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'ai'
+                ? 'bg-accent text-white shadow-xs'
+                : 'text-content-secondary hover:bg-page hover:text-content-primary'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5 text-accent" />
+            <span>AI Марти</span>
+          </button>
 
           <button
             type="button"
@@ -3563,18 +3562,76 @@ export default function DashboardPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 6: AI-ASSISTANT (GROQ AI - PRO FEATURE) */}
+          {/* TAB 6: AI-ASSISTANT (MARTY & BUSINESS ASSISTANT) */}
           {/* ========================================================================= */}
           {activeTab === 'ai' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base sm:text-lg font-semibold text-content-primary flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-[#1F7A5A]" />
-                    <span>AI-Ассистент</span>
+                    <Bot className="w-5 h-5 text-accent" />
+                    <span>AI-Ассистент Марти & Бизнес-помощник</span>
                   </h2>
                   <p className="text-xs text-content-secondary">
-                    Генерация описаний товаров, идей для Stories и текстов акций
+                    Умный консультант витрины, прием заказов и генерация текстов для Stories
+                  </p>
+                </div>
+              </div>
+
+              {/* CARD 1: Marty AI Assistant for Storefront */}
+              <div className="p-5 bg-surface rounded-[16px] border border-border shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accent to-emerald-400 text-white flex items-center justify-center shadow-xs">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-content-primary">Марти (Marty) — AI Консультант</h3>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Активен на витрине
+                        </span>
+                      </div>
+                      <p className="text-xs text-content-secondary mt-0.5">
+                        Google Studio Flash-Lite AI • Автоматический прием заказов и консультирование
+                      </p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`/${activeSlug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-btn bg-accent text-white text-xs font-semibold shadow-xs hover:brightness-105 active:scale-95 transition-all shrink-0"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Проверить Марти на витрине</span>
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border">
+                  <div className="p-3 rounded-xl bg-page border border-border/70 space-y-1">
+                    <span className="text-[10px] text-content-secondary font-medium">Модель AI</span>
+                    <p className="text-xs font-bold text-content-primary">Google Flash-Lite</p>
+                    <p className="text-[10px] text-content-secondary">Быстрый отклик за 0.8 сек</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-page border border-border/70 space-y-1">
+                    <span className="text-[10px] text-content-secondary font-medium">Дневной лимит</span>
+                    <p className="text-xs font-bold text-accent">50 запросов / день</p>
+                    <p className="text-[10px] text-content-secondary">Защита от перерасхода</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-page border border-border/70 space-y-1">
+                    <span className="text-[10px] text-content-secondary font-medium">Прием заказов</span>
+                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">В диалоге + Telegram</p>
+                    <p className="text-[10px] text-content-secondary">Имя, тел, адрес, размер</p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-accent-soft/50 border border-accent/20 text-xs text-content-primary flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    Марти видит все товары из вкладки «Товары», знает актуальные цены и размеры, консультирует на узбекском и русском языках. Когда клиент готов купить, Марти сам формирует заказ, который мгновенно появляется во вкладке «Заказы» и в вашем Telegram!
                   </p>
                 </div>
               </div>

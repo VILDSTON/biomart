@@ -18,6 +18,7 @@ import { translations } from '@/lib/i18n';
 import { computeStoreTokens, getEffectiveThemeSettings } from '@/lib/theme';
 import { StoreTrustBadges } from '@/components/StoreTrustBadges';
 import { StoreReviews } from '@/components/StoreReviews';
+import { MartyAssistant } from '@/components/MartyAssistant';
 
 export function StorefrontSkeleton() {
   return (
@@ -521,6 +522,16 @@ export function StorefrontClient({
           totalPrice={cartTotal}
           storeSettings={effectiveSettings}
           onClickCheckout={() => setCartDrawerOpen(true)}
+        />
+
+        {/* 5.1 Marty AI Sales & Order Assistant (Google Studio Flash-Lite) */}
+        <MartyAssistant
+          storeSettings={effectiveSettings}
+          products={currentProducts}
+          categories={currentCategories}
+          cartCount={cartCount}
+          onAddToCart={(p, s, q) => addToCart(p, s, q, shopSlug)}
+          onOrderCreated={handleOrderSuccess}
         />
 
         {/* 6. Product Detail Modal / Bottom Sheet */}
