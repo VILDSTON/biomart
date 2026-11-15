@@ -1503,8 +1503,8 @@ export default function DashboardPage() {
                 </h1>
                 {Boolean(settings.is_verified) && (
                   <span
-                    title="Проверенный магазин (Verified ✅)"
-                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#1F7A5A] text-white shrink-0 select-none shadow-xs"
+                    title="Магазин проверен BioMart (Verified ✅)"
+                    className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#0095F6] text-white shrink-0 select-none shadow-xs"
                   >
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </span>

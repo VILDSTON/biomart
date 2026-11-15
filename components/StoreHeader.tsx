@@ -19,6 +19,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
   const [avatarError, setAvatarError] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isComplaintOpen, setIsComplaintOpen] = useState(false);
+  const [showVerifiedTooltip, setShowVerifiedTooltip] = useState(false);
   const { language, setLanguage } = useBioMartStore();
   const t = translations[language];
 
@@ -96,12 +97,39 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                   {settings.store_name}
                 </h1>
                 {Boolean(settings.is_verified) && (
-                  <span
-                    title={language === 'uz' ? 'Tasdiqlangan do‘kon (Verified)' : 'Проверенный магазин (Verified ✅)'}
-                    className="inline-flex items-center justify-center w-4.5 h-4.5 rounded-full bg-[#1F7A5A] text-white shrink-0 select-none shadow-xs"
-                  >
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </span>
+                  <div className="relative inline-flex items-center shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowVerifiedTooltip((prev) => !prev)}
+                      title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan do‘kon (Verified)' : 'Проверенный магазин BioMart (Verified ✅)'}
+                      className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#0095F6] text-white hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer focus:outline-none"
+                      aria-label="Verified by BioMart"
+                    >
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    </button>
+
+                    {showVerifiedTooltip && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowVerifiedTooltip(false)}
+                        />
+                        <div className="absolute left-0 top-full mt-2 z-50 w-64 p-3 rounded-[12px] bg-surface text-content-primary border border-border shadow-xl text-left animate-in fade-in zoom-in-95">
+                          <div className="flex items-center gap-1.5 font-bold text-xs text-content-primary mb-1">
+                            <span className="w-3.5 h-3.5 rounded-full bg-[#0095F6] text-white inline-flex items-center justify-center text-[9px] font-bold shrink-0">
+                              ✓
+                            </span>
+                            <span>Verified by BioMart</span>
+                          </div>
+                          <p className="text-[11px] text-content-secondary leading-snug">
+                            {language === 'uz'
+                              ? 'Ushbu do‘kon va uning to‘g‘ridan-to‘g‘ri aloqa ma‘lumotlari BioMart moderatsiyasi tomonidan tasdiqlangan.'
+                              : 'Этот магазин и его прямые контакты подтверждены модерацией BioMart.'}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 
