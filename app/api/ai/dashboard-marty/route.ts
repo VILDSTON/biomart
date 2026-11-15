@@ -383,18 +383,17 @@ ${promosSummary}
       contents,
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 900,
-        thinkingConfig: {
-          thinkingBudget: 0,
-        },
+        maxOutputTokens: 600, // Compact output saves Google Studio free quota
       },
     };
 
     let generatedRawText = '';
+    // Flash-Lite models consume minimal tokens and have the highest RPM/RPD limits in Google Studio
     const modelsToTry = [
+      'gemini-flash-lite-latest',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
       'gemini-3.8-flash',
-      'gemini-2.5-flash',
-      'gemini-3.1-pro-preview',
     ];
 
     for (const model of modelsToTry) {

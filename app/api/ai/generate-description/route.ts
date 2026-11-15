@@ -42,9 +42,10 @@ export async function POST(request: Request) {
       const userPrompt = `Товар: "${title}". Категория: "${category || 'не указана'}". Заметки: "${notes || 'нет'}". Сгенерируй продающее описание в формате JSON.`;
 
       const candidateModels = [
+        'gemini-flash-lite-latest',
+        'gemini-3.5-flash-lite',
+        'gemini-3.1-flash-lite',
         'gemini-3.8-flash',
-        'gemini-2.5-flash',
-        'gemini-3.1-pro-preview',
       ];
 
       for (const model of candidateModels) {
@@ -61,11 +62,8 @@ export async function POST(request: Request) {
               contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
               generationConfig: {
                 temperature: 0.6,
-                maxOutputTokens: 600,
+                maxOutputTokens: 450, // Compact output saves Google Studio free quota
                 responseMimeType: 'application/json',
-                thinkingConfig: {
-                  thinkingBudget: 0,
-                },
               },
             }),
             signal: controller.signal,

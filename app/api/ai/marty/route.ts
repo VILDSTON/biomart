@@ -8,11 +8,12 @@ const GOOGLE_STUDIO_API_KEY =
   process.env.GEMINI_API_KEY?.trim() ||
   '';
 
-// Flash candidate models in priority order
+// Flash-Lite models in priority order (consumes least quota and tokens in Google Studio)
 const FLASH_LITE_MODELS = [
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
   'gemini-3.8-flash',
-  'gemini-2.5-flash',
-  'gemini-3.1-pro-preview',
 ];
 
 // Daily Limit per visitor / shop (e.g. 50 requests per day)
@@ -365,10 +366,7 @@ ${catalogSummary}
       contents,
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 800,
-        thinkingConfig: {
-          thinkingBudget: 0,
-        },
+        maxOutputTokens: 500, // Compact output saves Google Studio free quota
       },
     };
 
