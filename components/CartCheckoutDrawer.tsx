@@ -47,16 +47,23 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; percent: number } | null>(null);
   const [promoError, setPromoError] = useState('');
 
-  // Lock body scroll while drawer is open
+  // Lock body scroll and close on Escape while drawer is open
   useEffect(() => {
     if (isOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
       return () => {
         document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -184,7 +191,12 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-fade-in">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-surface text-content-primary h-full flex flex-col z-10 shadow-2xl animate-drawer-in">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.cart}
+        className="relative w-full max-w-md bg-surface text-content-primary h-full flex flex-col z-10 shadow-2xl animate-drawer-in"
+      >
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -220,7 +232,7 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
                       {item.product.images?.[0] ? (
                         <Image
                           src={item.product.images[0]}
-                          alt={item.product.title}
+                          alt={item.product.title || (language === 'uz' ? 'Mahsulot rasmi' : 'Изображение товара')}
                           fill
                           className="object-cover"
                           sizes="48px"

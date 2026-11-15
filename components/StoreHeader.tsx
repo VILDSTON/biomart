@@ -12,36 +12,41 @@ import { ComplaintModal } from '@/components/ComplaintModal';
 export const BioMartVerifiedBadge: React.FC<{ size?: number; className?: string }> = ({
   size = 19,
   className = '',
-}) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={`shrink-0 select-none drop-shadow-2xs ${className}`}
-  >
-    <defs>
-      <linearGradient id="bm-verified-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#25936D" />
-        <stop offset="100%" stopColor="#155D44" />
-      </linearGradient>
-    </defs>
-    {/* Scalloped Premium Rosette Seal */}
-    <path
-      d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
-      fill="url(#bm-verified-gradient)"
-    />
-    {/* Crisp White Checkmark */}
-    <path
-      d="m9 12 2.2 2.2 4.3-4.4"
-      stroke="#FFFFFF"
-      strokeWidth="2.3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+}) => {
+  const rawId = React.useId ? React.useId() : 'bm';
+  const gradId = `bm-verified-grad-${rawId.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`shrink-0 select-none drop-shadow-2xs ${className}`}
+    >
+      <defs>
+        <linearGradient id={gradId} x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#25936D" />
+          <stop offset="100%" stopColor="#155D44" />
+        </linearGradient>
+      </defs>
+      {/* Scalloped Premium Rosette Seal */}
+      <path
+        d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
+        fill={`url(#${gradId})`}
+      />
+      {/* Crisp White Checkmark */}
+      <path
+        d="m9 12 2.2 2.2 4.3-4.4"
+        stroke="#FFFFFF"
+        strokeWidth="2.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
 
 interface StoreHeaderProps {
   settings: StoreSettings;
@@ -135,8 +140,18 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                     <button
                       type="button"
                       onClick={() => setShowVerifiedTooltip((prev) => !prev)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setShowVerifiedTooltip((prev) => !prev);
+                        } else if (e.key === 'Escape') {
+                          setShowVerifiedTooltip(false);
+                        }
+                      }}
+                      aria-expanded={showVerifiedTooltip}
+                      aria-haspopup="dialog"
                       title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan do‘kon' : 'Проверенный магазин BioMart'}
-                      className="inline-flex items-center justify-center p-0.5 rounded-full hover:opacity-90 active:scale-95 transition-all cursor-pointer focus:outline-none"
+                      className="inline-flex items-center justify-center p-0.5 rounded-full hover:opacity-90 active:scale-95 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1F7A5A]/50"
                       aria-label={language === 'uz' ? 'BioMart tomonidan tasdiqlangan' : 'Проверено BioMart'}
                     >
                       <BioMartVerifiedBadge size={19} />
@@ -148,7 +163,11 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                           className="fixed inset-0 z-40"
                           onClick={() => setShowVerifiedTooltip(false)}
                         />
-                        <div className="absolute left-0 top-full mt-2 z-50 w-64 p-3 rounded-[12px] bg-surface text-content-primary border border-border shadow-xl text-left animate-in fade-in zoom-in-95">
+                        <div
+                          role="dialog"
+                          aria-label={language === 'uz' ? 'BioMart tomonidan tasdiqlangan' : 'Проверено BioMart'}
+                          className="absolute left-0 top-full mt-2 z-50 w-64 p-3 rounded-[12px] bg-surface text-content-primary border border-border shadow-xl text-left animate-in fade-in zoom-in-95"
+                        >
                           <div className="flex items-center gap-1.5 font-bold text-xs text-content-primary mb-1">
                             <BioMartVerifiedBadge size={16} />
                             <span>

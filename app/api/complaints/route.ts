@@ -3,8 +3,27 @@ import fs from 'fs';
 import path from 'path';
 import { Complaint } from '@/lib/moderation';
 import { escapeTelegramHtml } from '@/lib/security';
+import { FOUNDER_TELEGRAM_ID, ADMIN_TELEGRAM_IDS } from '@/lib/constants';
 
 const COMPLAINTS_FILE = path.join(process.cwd(), 'data', 'complaints.json');
+
+function getComplaintsFilePath(): string {
+  try {
+    const dir = path.dirname(COMPLAINTS_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    return COMPLAINTS_FILE;
+  } catch {
+    const tmpDir = path.join('/tmp', 'biomart_data');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+    } catch {}
+    return path.join(tmpDir, 'complaints.json');
+  }
+}
 
 const REASON_LABELS: Record<string, string> = {
   profanity: 'Нецензурная лексика / оскорбления',
@@ -15,15 +34,26 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 function loadComplaints(): Complaint[] {
+  const globalRef = globalThis as unknown as { __biomart_complaints?: Complaint[] };
+  if (globalRef.__biomart_complaints && globalRef.__biomart_complaints.length > 0) {
+    return globalRef.__biomart_complaints;
+  }
+
   try {
-    if (fs.existsSync(COMPLAINTS_FILE)) {
-      const raw = fs.readFileSync(COMPLAINTS_FILE, 'utf-8');
-      return JSON.parse(raw);
+    const filePath = getComplaintsFilePath();
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        globalRef.__biomart_complaints = parsed;
+        return parsed;
+      }
     }
   } catch (e) {
     console.warn('[Complaints] Failed to read complaints file:', e);
   }
-  return [
+
+  const initial: Complaint[] = [
     {
       id: 'comp-1',
       storeSlug: 'tashkent_drip',
@@ -35,15 +65,17 @@ function loadComplaints(): Complaint[] {
       createdAt: new Date().toISOString(),
     },
   ];
+  globalRef.__biomart_complaints = initial;
+  return initial;
 }
 
 function saveComplaints(complaints: Complaint[]) {
+  const globalRef = globalThis as unknown as { __biomart_complaints?: Complaint[] };
+  globalRef.__biomart_complaints = complaints;
+
   try {
-    const dir = path.dirname(COMPLAINTS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(COMPLAINTS_FILE, JSON.stringify(complaints, null, 2), 'utf-8');
+    const filePath = getComplaintsFilePath();
+    fs.writeFileSync(filePath, JSON.stringify(complaints, null, 2), 'utf-8');
   } catch (e) {
     console.warn('[Complaints] Failed to save complaints file:', e);
   }
@@ -53,26 +85,16 @@ async function sendTelegramComplaintNotification(complaint: Complaint) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || process.env.TG_BOT_TOKEN?.trim();
   if (!botToken) return;
 
-  // Resolve target chat IDs: env TELEGRAM_CHAT_ID + registered users in data/telegram_users.json
+  // Resolve target chat IDs: Strictly Founder & Platform Admins (Never regular store owners!)
   const targetIds = new Set<string>();
+
+  if (FOUNDER_TELEGRAM_ID) {
+    targetIds.add(String(FOUNDER_TELEGRAM_ID));
+  }
+  ADMIN_TELEGRAM_IDS.forEach((id) => targetIds.add(String(id)));
 
   if (process.env.TELEGRAM_CHAT_ID?.trim()) {
     targetIds.add(process.env.TELEGRAM_CHAT_ID.trim());
-  }
-
-  try {
-    const usersFile = path.join(process.cwd(), 'data', 'telegram_users.json');
-    if (fs.existsSync(usersFile)) {
-      const usersData = JSON.parse(fs.readFileSync(usersFile, 'utf-8'));
-      for (const key of Object.keys(usersData)) {
-        // numeric chat ids
-        if (/^-?\d+$/.test(key)) {
-          targetIds.add(key);
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('[Complaints] Failed to read telegram_users for notification:', e);
   }
 
   if (targetIds.size === 0) {

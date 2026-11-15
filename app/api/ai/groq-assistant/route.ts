@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { IS_SUBSCRIPTION_ENABLED } from '@/lib/constants';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY?.trim() || '';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -259,8 +260,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { messages, prompt, plan, storeName, category } = body;
 
-    // Pro plan enforcement
-    if (plan !== 'pro') {
+    // Pro plan enforcement only when subscriptions are enabled
+    if (IS_SUBSCRIPTION_ENABLED && plan !== 'pro') {
       return NextResponse.json(
         {
           success: false,

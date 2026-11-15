@@ -432,7 +432,15 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
               ...shop,
               categories: shop.categories.filter((c) => c.id !== categoryId),
               products: shop.products.map((p) =>
-                p.category_id === categoryId ? { ...p, category_id: shop.categories.find(c => c.id !== categoryId && c.id !== 'cat-all')?.id || 'cat-1' } : p
+                p.category_id === categoryId
+                  ? {
+                      ...p,
+                      category_id:
+                        shop.categories.find(
+                          (c) => c.id !== categoryId && c.id !== 'cat-all'
+                        )?.id || 'cat-all',
+                    }
+                  : p
               ),
             },
           },
@@ -495,7 +503,12 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
 
       // Multi-lingual
       language: 'ru',
-      setLanguage: (lang) => set({ language: lang }),
+      setLanguage: (lang) => {
+        set({ language: lang });
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = lang === 'uz' ? 'uz' : 'ru';
+        }
+      },
 
       // Cart
       cart: [],
@@ -563,18 +576,18 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
       },
       getShopCart: (shopSlug: string) => {
         const clean = shopSlug.toLowerCase();
-        return get().cart.filter((item) => !item.shop_slug || item.shop_slug === clean);
+        return get().cart.filter((item) => item.shop_slug === clean);
       },
       getShopCartTotal: (shopSlug: string) => {
         const clean = shopSlug.toLowerCase();
         return get().cart
-          .filter((item) => !item.shop_slug || item.shop_slug === clean)
+          .filter((item) => item.shop_slug === clean)
           .reduce((sum, item) => sum + item.product.price * item.quantity, 0);
       },
       getShopCartCount: (shopSlug: string) => {
         const clean = shopSlug.toLowerCase();
         return get().cart
-          .filter((item) => !item.shop_slug || item.shop_slug === clean)
+          .filter((item) => item.shop_slug === clean)
           .reduce((count, item) => count + item.quantity, 0);
       },
 

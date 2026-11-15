@@ -2,11 +2,16 @@ interface RateLimitRecord {
   timestamps: number[];
 }
 
-const rateLimitStore = new Map<string, RateLimitRecord>();
+// Preserve across module reloads in the same Node.js / Lambda container
+const globalRef = globalThis as unknown as { __biomart_rate_limit_store?: Map<string, RateLimitRecord> };
+if (!globalRef.__biomart_rate_limit_store) {
+  globalRef.__biomart_rate_limit_store = new Map<string, RateLimitRecord>();
+}
+const rateLimitStore = globalRef.__biomart_rate_limit_store;
 
 // Clean stale entries periodically to prevent memory leaks
 if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
+  const cleaner = setInterval(() => {
     const now = Date.now();
     rateLimitStore.forEach((record, key) => {
       record.timestamps = record.timestamps.filter((ts) => now - ts < 3600000);
@@ -15,6 +20,9 @@ if (typeof setInterval !== 'undefined') {
       }
     });
   }, 300000);
+  if (cleaner && typeof (cleaner as any).unref === 'function') {
+    (cleaner as any).unref();
+  }
 }
 
 /**
@@ -54,13 +62,17 @@ export function checkRateLimit(
  * Extracts client IP safely from request headers
  */
 export function getClientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
+  const cfIp = request.headers.get('cf-connecting-ip');
+  if (cfIp) {
+    return cfIp.trim();
   }
   const realIp = request.headers.get('x-real-ip');
   if (realIp) {
     return realIp.trim();
+  }
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
   }
   return '127.0.0.1';
 }

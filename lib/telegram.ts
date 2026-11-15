@@ -4,13 +4,43 @@ import { FOUNDER_TELEGRAM_ID, SITE_URL } from '@/lib/constants';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
-const VERIFIED_STORES_FILE = path.join(DATA_DIR, 'verified_stores.json');
-const REGISTERED_STORES_FILE = path.join(DATA_DIR, 'registered_stores.json');
-const BANNED_STORES_FILE = path.join(DATA_DIR, 'banned_stores.json');
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+function getSafeFilePath(filename: string): string {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    return path.join(DATA_DIR, filename);
+  } catch {
+    const tmpDir = path.join('/tmp', 'biomart_data');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+    } catch {}
+    return path.join(tmpDir, filename);
+  }
+}
+
+function readJsonFileSafe(filename: string): Record<string, any> {
+  const filePath = getSafeFilePath(filename);
+  try {
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn(`[Telegram Storage] Error reading ${filename}:`, err);
+  }
+  return {};
+}
+
+function writeJsonFileSafe(filename: string, data: Record<string, any>): void {
+  const filePath = getSafeFilePath(filename);
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn(`[Telegram Storage] Error writing ${filename}:`, err);
   }
 }
 
@@ -67,11 +97,13 @@ export async function sendTelegramMessage(
 export function isStoreVerifiedInFile(slug: string): boolean {
   try {
     const clean = slug.toLowerCase().trim();
-    if (clean === 'tashkent_drip' || clean === 'samarkand_sweets' || clean === 'volt_gadgets' || clean === 'aura_perfume') return true;
-    if (!fs.existsSync(VERIFIED_STORES_FILE)) return false;
-    const raw = fs.readFileSync(VERIFIED_STORES_FILE, 'utf-8');
-    const data = JSON.parse(raw);
-    return Boolean(data[clean]?.verified ?? data[clean]);
+    const data = readJsonFileSafe('verified_stores.json');
+    if (data[clean] !== undefined) {
+      return Boolean(data[clean]?.verified ?? data[clean]);
+    }
+    // Default initial seed for demo stores if not explicitly modified
+    const defaultVerified = ['tashkent_drip', 'samarkand_sweets', 'volt_gadgets', 'aura_perfume'];
+    return defaultVerified.includes(clean);
   } catch {
     return false;
   }
@@ -79,22 +111,14 @@ export function isStoreVerifiedInFile(slug: string): boolean {
 
 export function setStoreVerifiedInFile(slug: string, verified: boolean = true): void {
   try {
-    ensureDataDir();
     const clean = slug.toLowerCase().trim();
-    let data: Record<string, any> = {};
-    if (fs.existsSync(VERIFIED_STORES_FILE)) {
-      try {
-        data = JSON.parse(fs.readFileSync(VERIFIED_STORES_FILE, 'utf-8'));
-      } catch {
-        data = {};
-      }
-    }
+    const data = readJsonFileSafe('verified_stores.json');
     data[clean] = {
       slug: clean,
       verified,
       updated_at: new Date().toISOString(),
     };
-    fs.writeFileSync(VERIFIED_STORES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    writeJsonFileSafe('verified_stores.json', data);
   } catch (err) {
     console.warn('[Telegram] Error writing verified store:', err);
   }
@@ -103,9 +127,7 @@ export function setStoreVerifiedInFile(slug: string, verified: boolean = true): 
 export function isStoreBannedInFile(slug: string): boolean {
   try {
     const clean = slug.toLowerCase().trim();
-    if (!fs.existsSync(BANNED_STORES_FILE)) return false;
-    const raw = fs.readFileSync(BANNED_STORES_FILE, 'utf-8');
-    const data = JSON.parse(raw);
+    const data = readJsonFileSafe('banned_stores.json');
     return Boolean(data[clean]?.banned);
   } catch {
     return false;
@@ -114,22 +136,14 @@ export function isStoreBannedInFile(slug: string): boolean {
 
 export function setStoreBannedInFile(slug: string, banned: boolean = true): void {
   try {
-    ensureDataDir();
     const clean = slug.toLowerCase().trim();
-    let data: Record<string, any> = {};
-    if (fs.existsSync(BANNED_STORES_FILE)) {
-      try {
-        data = JSON.parse(fs.readFileSync(BANNED_STORES_FILE, 'utf-8'));
-      } catch {
-        data = {};
-      }
-    }
+    const data = readJsonFileSafe('banned_stores.json');
     data[clean] = {
       slug: clean,
       banned,
       updated_at: new Date().toISOString(),
     };
-    fs.writeFileSync(BANNED_STORES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    writeJsonFileSafe('banned_stores.json', data);
   } catch (err) {
     console.warn('[Telegram] Error writing banned store:', err);
   }
@@ -137,22 +151,14 @@ export function setStoreBannedInFile(slug: string, banned: boolean = true): void
 
 export function recordRegisteredStore(storeData: NewStoreNotificationData): void {
   try {
-    ensureDataDir();
     const clean = storeData.slug.toLowerCase().trim();
-    let data: Record<string, any> = {};
-    if (fs.existsSync(REGISTERED_STORES_FILE)) {
-      try {
-        data = JSON.parse(fs.readFileSync(REGISTERED_STORES_FILE, 'utf-8'));
-      } catch {
-        data = {};
-      }
-    }
+    const data = readJsonFileSafe('registered_stores.json');
     data[clean] = {
       ...storeData,
       slug: clean,
       registered_at: new Date().toISOString(),
     };
-    fs.writeFileSync(REGISTERED_STORES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    writeJsonFileSafe('registered_stores.json', data);
   } catch (err) {
     console.warn('[Telegram] Error recording registered store:', err);
   }
@@ -163,13 +169,7 @@ export function getFoundingSellerStatus(_slug: string): { isFounding: boolean; f
 }
 
 export function getAllRegisteredStores(): Record<string, any> {
-  try {
-    if (!fs.existsSync(REGISTERED_STORES_FILE)) return {};
-    const raw = fs.readFileSync(REGISTERED_STORES_FILE, 'utf-8');
-    return JSON.parse(raw) || {};
-  } catch {
-    return {};
-  }
+  return readJsonFileSafe('registered_stores.json');
 }
 
 /**

@@ -12,6 +12,24 @@ import {
 
 const TELEGRAM_USERS_FILE = path.join(process.cwd(), 'data', 'telegram_users.json');
 
+function getTelegramUsersFilePath(): string {
+  try {
+    const dir = path.dirname(TELEGRAM_USERS_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    return TELEGRAM_USERS_FILE;
+  } catch {
+    const tmpDir = path.join('/tmp', 'biomart_data');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+    } catch {}
+    return path.join(tmpDir, 'telegram_users.json');
+  }
+}
+
 function isFounder(chatId: string | number): boolean {
   const strId = String(chatId);
   return strId === '5504101440' || ADMIN_TELEGRAM_IDS.includes(strId);
@@ -19,15 +37,11 @@ function isFounder(chatId: string | number): boolean {
 
 function registerUserServer(chatId: number | string, username?: string | null, firstName?: string | null, storeSlug?: string | null) {
   try {
-    const dir = path.dirname(TELEGRAM_USERS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
+    const filePath = getTelegramUsersFilePath();
     let data: Record<string, any> = {};
-    if (fs.existsSync(TELEGRAM_USERS_FILE)) {
+    if (fs.existsSync(filePath)) {
       try {
-        data = JSON.parse(fs.readFileSync(TELEGRAM_USERS_FILE, 'utf-8'));
+        data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
       } catch {
         data = {};
       }
@@ -52,7 +66,7 @@ function registerUserServer(chatId: number | string, username?: string | null, f
       data[`store_${storeSlug.toLowerCase()}`] = Number(chatId);
     }
 
-    fs.writeFileSync(TELEGRAM_USERS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.warn('[Telegram Webhook] Failed to register user:', err);
   }
@@ -113,6 +127,16 @@ export async function POST(req: Request) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || process.env.TG_BOT_TOKEN?.trim();
   if (!botToken) {
     return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN not configured' }, { status: 500 });
+  }
+
+  // Verify secret token from Telegram if configured
+  const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || process.env.TG_WEBHOOK_SECRET?.trim();
+  if (expectedSecret) {
+    const receivedSecret = req.headers.get('x-telegram-bot-api-secret-token');
+    if (receivedSecret !== expectedSecret) {
+      console.warn('[Telegram Webhook] Request rejected: invalid secret token');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
   }
 
   try {
@@ -442,7 +466,13 @@ export async function GET(req: Request) {
       : (process.env.NEXT_PUBLIC_BASE_URL || SITE_URL);
 
     const webhookUrl = `${origin}/api/telegram/webhook`;
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
+    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || process.env.TG_WEBHOOK_SECRET?.trim();
+    const setWebhookUrl = new URL(`https://api.telegram.org/bot${botToken}/setWebhook`);
+    setWebhookUrl.searchParams.set('url', webhookUrl);
+    if (expectedSecret) {
+      setWebhookUrl.searchParams.set('secret_token', expectedSecret);
+    }
+    const res = await fetch(setWebhookUrl.toString());
     const data = await res.json();
     return NextResponse.json({ webhookUrl, telegramResponse: data });
   }

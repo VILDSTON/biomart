@@ -87,7 +87,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {hasImage ? (
             <Image
               src={rawImage!}
-              alt={product.title}
+              alt={product.title || (language === 'uz' ? 'Mahsulot rasmi' : 'Изображение товара')}
               fill
               sizes="80px"
               className={`object-cover transition-all duration-300 ${imageLoaded ? 'blur-0 scale-100 opacity-100' : 'blur-xs scale-105 opacity-80'}`}
@@ -184,7 +184,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {hasImage ? (
             <Image
               src={rawImage!}
-              alt={product.title}
+              alt={product.title || (language === 'uz' ? 'Mahsulot rasmi' : 'Изображение товара')}
               fill
               sizes="(max-width: 768px) 100vw, 500px"
               className={`object-cover transition-all duration-300 ${imageLoaded ? 'blur-0 scale-100 opacity-100' : 'blur-xs scale-105 opacity-80'}`}
@@ -277,7 +277,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {hasImage ? (
           <Image
             src={rawImage!}
-            alt={product.title}
+            alt={product.title || (language === 'uz' ? 'Mahsulot rasmi' : 'Изображение товара')}
             fill
             sizes="(max-width: 768px) 50vw, 240px"
             className={`object-cover transition-all duration-300 ${imageLoaded ? 'blur-0 scale-100 opacity-100' : 'blur-xs scale-105 opacity-80'}`}

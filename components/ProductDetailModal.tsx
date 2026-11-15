@@ -191,7 +191,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           >
             <Image
               src={images[activeImageIndex]}
-              alt={product.title}
+              alt={product.title || (language === 'uz' ? 'Mahsulot fotosurati' : 'Фотография товара')}
               fill
               className="object-cover transition-opacity duration-300"
               sizes="(max-width: 768px) 100vw, 448px"

@@ -25,10 +25,11 @@ export function middleware(request: NextRequest) {
       .map((ip) => ip.trim())
       .filter(Boolean);
 
-    // Passkey authentication bypass (?key=admin2026 or cookie biomart_admin_super)
-    const queryKey = searchParams.get('key');
+    // Passkey authentication bypass (?key=... or cookie biomart_admin_super)
+    const expectedKey = (process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY || 'admin2026').trim();
+    const queryKey = searchParams.get('key')?.trim();
     const cookieKey = request.cookies.get('biomart_admin_super')?.value;
-    const hasValidKey = queryKey === 'admin2026' || queryKey === 'admin123' || cookieKey === 'true';
+    const hasValidKey = (queryKey && queryKey === expectedKey) || cookieKey === 'true';
 
     // If client is external, not in allowed list, and has no passkey, block with 403
     if (!isLocalhost && !allowedIps.includes(clientIp) && !hasValidKey) {
@@ -64,12 +65,14 @@ export function middleware(request: NextRequest) {
     }
 
     // If accessed with valid passkey, persist authorization cookie
-    if (queryKey === 'admin2026' || queryKey === 'admin123') {
+    if (queryKey && queryKey === expectedKey) {
       const response = NextResponse.next();
       response.cookies.set('biomart_admin_super', 'true', {
         httpOnly: true,
         path: '/',
         maxAge: 60 * 60 * 24 * 7, // 7 days
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
       });
       return response;
     }

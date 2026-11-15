@@ -10,8 +10,12 @@ export const SITE_URL =
     : 'https://biomart.vercel.app');
 
 // Platform Founder & SuperAdmin Telegram Chat ID
-export const FOUNDER_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID || '5504101440';
-export const ADMIN_TELEGRAM_IDS = ['5504101440', FOUNDER_TELEGRAM_ID];
+export const FOUNDER_TELEGRAM_ID = process.env.ADMIN_TELEGRAM_ID?.trim() || '5504101440';
+const extraAdmins = (process.env.EXTRA_ADMIN_TELEGRAM_IDS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+export const ADMIN_TELEGRAM_IDS = Array.from(new Set([FOUNDER_TELEGRAM_ID, ...extraAdmins]));
 
 export const PLAN_LIMITS = {
   start: {

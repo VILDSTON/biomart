@@ -268,20 +268,37 @@ export async function POST(request: Request) {
     // 5. Save to Supabase if configured
     if (isSupabaseConfigured && supabaseAdmin) {
       try {
+        let storeId: string | null = null;
+        if (shop_slug) {
+          const { data: storeRec } = await supabaseAdmin
+            .from('stores')
+            .select('id')
+            .eq('slug', shop_slug.trim().toLowerCase())
+            .maybeSingle();
+          if (storeRec?.id) {
+            storeId = storeRec.id;
+          }
+        }
+
+        const insertPayload: Record<string, any> = {
+          customer_name: customer_name.trim(),
+          customer_phone: customer_phone.trim(),
+          delivery_type,
+          address: delivery_type === 'delivery' ? address?.trim() : null,
+          comment: comment?.trim() || null,
+          items: validatedItems,
+          total_price: authoritativeTotalPrice,
+          promo_code: verifiedPromoCode,
+          discount_amount: discountAmount,
+          status: 'new',
+        };
+        if (storeId) {
+          insertPayload.store_id = storeId;
+        }
+
         const { data: dbOrder, error: dbError } = await supabaseAdmin
           .from('orders')
-          .insert({
-            customer_name: customer_name.trim(),
-            customer_phone: customer_phone.trim(),
-            delivery_type,
-            address: delivery_type === 'delivery' ? address?.trim() : null,
-            comment: comment?.trim() || null,
-            items: validatedItems,
-            total_price: authoritativeTotalPrice,
-            promo_code: verifiedPromoCode,
-            discount_amount: discountAmount,
-            status: 'new',
-          })
+          .insert(insertPayload)
           .select('id')
           .single();
 

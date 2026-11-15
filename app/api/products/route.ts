@@ -83,9 +83,37 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const store_slug = searchParams.get('store_slug') || searchParams.get('slug');
 
     if (!id) {
       return NextResponse.json({ error: 'Параметр id обязателен' }, { status: 400 });
+    }
+
+    // If store_slug is specified, verify ownership before deletion
+    if (store_slug) {
+      const { data: store, error: storeErr } = await supabaseAdmin
+        .from('stores')
+        .select('id')
+        .eq('slug', store_slug.toLowerCase().trim())
+        .maybeSingle();
+
+      if (storeErr || !store) {
+        return NextResponse.json({ error: 'Магазин не найден' }, { status: 404 });
+      }
+
+      const { data: product, error: prodErr } = await supabaseAdmin
+        .from('products')
+        .select('id, store_id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (prodErr || !product) {
+        return NextResponse.json({ error: 'Товар не найден' }, { status: 404 });
+      }
+
+      if (product.store_id !== store.id) {
+        return NextResponse.json({ error: 'Доступ запрещён: товар принадлежит другому магазину' }, { status: 403 });
+      }
     }
 
     const { error } = await supabaseAdmin

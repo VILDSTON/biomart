@@ -115,6 +115,9 @@ export function StorefrontClient({
 
   useEffect(() => {
     setIsClient(true);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = language === 'uz' ? 'uz' : 'ru';
+    }
     try {
       const stored = localStorage.getItem(`biomart_store_theme_${shopSlug}`) || localStorage.getItem(`biomart_theme_${shopSlug}`);
       if (stored) {
@@ -129,7 +132,7 @@ export function StorefrontClient({
     };
     window.addEventListener('biomart_theme_updated', onUpdate);
     return () => window.removeEventListener('biomart_theme_updated', onUpdate);
-  }, [shopSlug]);
+  }, [shopSlug, language]);
 
   const shopData = useMemo(() => {
     const clean = shopSlug?.toLowerCase();
