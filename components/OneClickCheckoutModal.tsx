@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Zap, Loader2, User, Phone, MapPin, Truck, Store, AlertCircle, Tag, ShoppingBag } from 'lucide-react';
 import { Order, Product, StoreSettings } from '@/types';
-import { formatPrice, getContrastTextColor, UZBEKISTAN_REGIONS } from '@/lib/utils';
+import { formatPrice, getContrastTextColor, UZBEKISTAN_REGIONS, formatUzbekPhone } from '@/lib/utils';
 import { useBioMartStore } from '@/store/useStore';
 import { translations } from '@/lib/i18n';
 
@@ -97,11 +97,8 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
-    if (!val.startsWith('+998')) {
-      val = '+998 ';
-    }
-    setCustomerPhone(val);
+    const formatted = formatUzbekPhone(e.target.value);
+    setCustomerPhone(formatted);
   };
 
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {

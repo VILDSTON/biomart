@@ -69,7 +69,7 @@ import { CatalogLayout, Category, Order, Product, StoreSettings, ThemeMode, Plan
 import { formatPrice, formatDate } from '@/lib/utils';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { SupportModal } from '@/components/SupportModal';
-import { IS_SUBSCRIPTION_ENABLED } from '@/lib/constants';
+import { IS_SUBSCRIPTION_ENABLED, SITE_DOMAIN } from '@/lib/constants';
 import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
 import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 
@@ -1404,7 +1404,7 @@ export default function DashboardPage() {
             Личный кабинет продавца
           </h1>
           <p className="text-xs text-center text-content-secondary mt-1 mb-5 break-all">
-            Введите пароль для управления магазином biomart.vercel.app/{activeSlug}
+            Введите пароль для управления магазином {SITE_DOMAIN}/{activeSlug}
           </p>
 
           <form onSubmit={handleLogin} className="space-y-3">
@@ -1501,6 +1501,13 @@ export default function DashboardPage() {
                 <h1 className="text-xs sm:text-sm font-semibold tracking-tight leading-none text-content-primary truncate min-w-0 flex-1 sm:flex-initial sm:max-w-[260px]">
                   {settings.store_name}
                 </h1>
+                <span
+                  title="Один из первых 100 магазинов на платформе BioMart • Статус закреплён навсегда"
+                  className="text-[9px] sm:text-[10px] bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 px-1.5 sm:px-2 py-0.5 rounded-[5px] sm:rounded-[6px] font-bold flex items-center gap-1 shrink-0 select-none"
+                >
+                  <span>🌟</span>
+                  <span>Founding Seller</span>
+                </span>
                 {IS_SUBSCRIPTION_ENABLED ? (
                   <button
                     type="button"
@@ -1518,7 +1525,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] sm:text-[10px] text-content-secondary font-mono truncate">
-                  biomart.vercel.app/{activeSlug}
+                  {SITE_DOMAIN}/{activeSlug}
                 </span>
                 <button
                   type="button"
@@ -1733,6 +1740,28 @@ export default function DashboardPage() {
 
         {/* Tab Content Area */}
         <div className="p-3 sm:p-6 flex-1 space-y-4 sm:space-y-6">
+          {/* Founding Seller VIP Banner */}
+          <div className="p-3 sm:p-3.5 rounded-[12px] bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🌟</span>
+              <div>
+                <p className="font-bold text-content-primary">
+                  Статус Founding Seller (Первые 100 магазинов BioMart)
+                </p>
+                <p className="text-[11px] text-content-secondary mt-0.5">
+                  Ваш магазин входит в когорту первых 100 витрин. Бесплатный доступ без комиссий навсегда закреплен за вашим магазином.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/${activeSlug}`}
+              target="_blank"
+              className="shrink-0 px-3 py-1.5 rounded-[8px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 font-semibold text-[11px] transition-colors"
+            >
+              Смотреть витрину с бейджем →
+            </Link>
+          </div>
+
           {/* ========================================================================= */}
           {/* TAB 1: PRODUCTS */}
           {/* ========================================================================= */}
@@ -3162,7 +3191,7 @@ export default function DashboardPage() {
                     </label>
                     <div className="flex items-center rounded-[10px] bg-page border border-border overflow-hidden focus-within:border-accent">
                       <span className="pl-3.5 pr-1 py-2.5 text-xs font-semibold text-content-secondary font-mono select-none">
-                        biomart.vercel.app/
+                        {SITE_DOMAIN}/
                       </span>
                       <input
                         type="text"
@@ -3364,7 +3393,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-content-secondary">Привязанная витрина:</span>
-                        <span className="font-mono font-medium">biomart.vercel.app/{activeSlug}</span>
+                        <span className="font-mono font-medium">{SITE_DOMAIN}/{activeSlug}</span>
                       </div>
                       <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed pt-1">
                         🚀 <b>Готово к приёму заказов:</b> при каждом новом заказе на вашей витрине бот моментально пришлёт вам подробный чек с именем клиента, списком товаров, телефоном и кнопками быстрого ответа!
@@ -3524,7 +3553,7 @@ export default function DashboardPage() {
                   <span>Пароль администратора и безопасность</span>
                 </h3>
                 <p className="text-xs text-content-secondary">
-                  Пароль используется для авторизации в кабинете управления магазином biomart.vercel.app/{activeSlug}
+                  Пароль используется для авторизации в кабинете управления магазином {SITE_DOMAIN}/{activeSlug}
                 </p>
               </div>
 

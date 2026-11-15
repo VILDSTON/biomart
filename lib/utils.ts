@@ -110,3 +110,44 @@ export const UZBEKISTAN_REGIONS = [
   { id: 'karakalpakstan', ru: 'Республика Каракалпакстан', uz: 'Qoraqalpog‘iston Resp.' },
 ];
 
+/**
+ * Formats user input into standard Uzbek phone mask: +998 (90) 123-45-67
+ */
+export function formatUzbekPhone(value: string): string {
+  if (!value) return '+998 ';
+  
+  // Extract all digits
+  let digits = value.replace(/\D/g, '');
+  
+  if (digits.startsWith('998')) {
+    digits = digits.slice(3);
+  } else if (digits.startsWith('8')) {
+    digits = digits.slice(1);
+  }
+  
+  // Limit to 9 digits for Uzbek numbers (XX XXX-XX-XX)
+  digits = digits.slice(0, 9);
+  
+  if (digits.length === 0) return '+998 ';
+  
+  let formatted = '+998';
+  if (digits.length > 0) {
+    formatted += ` (${digits.slice(0, 2)}`;
+  }
+  if (digits.length >= 2) {
+    formatted += ')';
+  }
+  if (digits.length > 2) {
+    formatted += ` ${digits.slice(2, 5)}`;
+  }
+  if (digits.length > 5) {
+    formatted += `-${digits.slice(5, 7)}`;
+  }
+  if (digits.length > 7) {
+    formatted += `-${digits.slice(7, 9)}`;
+  }
+  
+  return formatted;
+}
+
+

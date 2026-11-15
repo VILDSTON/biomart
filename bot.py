@@ -2,7 +2,8 @@
 BioMart Official Telegram Bot
 Username: @BioMartAssistant_bot
 
-Provides store lookup, catalog browsing, order notifications, and merchant management.
+Provides store lookup, catalog browsing, order notifications, merchant management,
+and Founder/Moderator supervision tools for ID: 5504101440.
 """
 
 import asyncio
@@ -11,6 +12,8 @@ import logging
 import os
 import sys
 import time
+import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -34,14 +37,26 @@ def load_local_env():
 
 load_local_env()
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or os.environ.get("TG_BOT_TOKEN") or ""
-BASE_WEB_URL = os.environ.get("NEXT_PUBLIC_BASE_URL") or "https://biomart.vercel.app"
+BASE_WEB_URL = os.environ.get("NEXT_PUBLIC_APP_URL") or os.environ.get("NEXT_PUBLIC_BASE_URL") or "https://biomart.vercel.app"
 
-TELEGRAM_USERS_FILE = Path(__file__).resolve().parent / "data" / "telegram_users.json"
+# Founder / SuperAdmin Telegram ID
+FOUNDER_CHAT_ID = int(os.environ.get("ADMIN_TELEGRAM_ID") or os.environ.get("FOUNDER_TELEGRAM_ID") or 5504101440)
+ADMIN_IDS = [5504101440, FOUNDER_CHAT_ID]
+
+DATA_DIR = Path(__file__).resolve().parent / "data"
+TELEGRAM_USERS_FILE = DATA_DIR / "telegram_users.json"
+VERIFIED_STORES_FILE = DATA_DIR / "verified_stores.json"
+REGISTERED_STORES_FILE = DATA_DIR / "registered_stores.json"
+BANNED_STORES_FILE = DATA_DIR / "banned_stores.json"
+
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+def is_founder(user_id: int) -> bool:
+    return user_id in ADMIN_IDS
 
 def register_user(chat_id: int, username: str | None = None, first_name: str | None = None):
     """Save user telegram info so web orders can map username -> numeric chat_id"""
     try:
-        TELEGRAM_USERS_FILE.parent.mkdir(parents=True, exist_ok=True)
         data = {}
         if TELEGRAM_USERS_FILE.exists():
             try:
@@ -66,6 +81,102 @@ def register_user(chat_id: int, username: str | None = None, first_name: str | N
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
         logger.warning(f"Failed to register telegram user: {e}")
+
+def get_verified_stores() -> Dict[str, Any]:
+    if VERIFIED_STORES_FILE.exists():
+        try:
+            with open(VERIFIED_STORES_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def is_store_verified(slug: str) -> bool:
+    slug = slug.lower().strip()
+    if slug in ["tashkent_drip", "samarkand_sweets"]:
+        return True
+    verified = get_verified_stores()
+    return bool(verified.get(slug, {}).get("verified"))
+
+def set_store_verified(slug: str, verified: bool = True):
+    slug = slug.lower().strip()
+    data = get_verified_stores()
+    data[slug] = {
+        "slug": slug,
+        "verified": verified,
+        "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    with open(VERIFIED_STORES_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    if slug in STORES_DB:
+        STORES_DB[slug]["verified"] = verified
+
+    # Attempt Supabase sync if credentials exist
+    supabase_url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+    supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    if supabase_url and supabase_key:
+        try:
+            endpoint = f"{supabase_url.rstrip('/')}/rest/v1/stores?slug=eq.{slug}"
+            payload = json.dumps({"is_verified": verified, "status": "published" if verified else "pending"}).encode("utf-8")
+            req = urllib.request.Request(
+                endpoint,
+                data=payload,
+                headers={
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                method="PATCH"
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                pass
+        except Exception as err:
+            logger.warning(f"Supabase verified sync error for {slug}: {err}")
+
+def get_banned_stores() -> Dict[str, Any]:
+    if BANNED_STORES_FILE.exists():
+        try:
+            with open(BANNED_STORES_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def set_store_banned(slug: str, banned: bool = True):
+    slug = slug.lower().strip()
+    data = get_banned_stores()
+    data[slug] = {
+        "slug": slug,
+        "banned": banned,
+        "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    with open(BANNED_STORES_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def get_all_stores() -> Dict[str, Dict[str, Any]]:
+    stores = dict(STORES_DB)
+    if REGISTERED_STORES_FILE.exists():
+        try:
+            with open(REGISTERED_STORES_FILE, "r", encoding="utf-8") as f:
+                registered = json.load(f)
+                for slug, info in registered.items():
+                    if slug not in stores:
+                        stores[slug] = {
+                            "slug": slug,
+                            "name": info.get("store_name", slug.upper()),
+                            "description": info.get("description", "Онлайн-витрина BioMart"),
+                            "phone": info.get("phone", "—"),
+                            "email": info.get("email", "—"),
+                            "instagram": info.get("instagram_url", "—"),
+                            "telegram": info.get("telegram_username", "—"),
+                            "delivery": "Yandex / BTS доставка",
+                            "verified": is_store_verified(slug),
+                        }
+        except Exception:
+            pass
+    return stores
 
 # Mock stores database synced with Next.js BioMart mock data
 STORES_DB: Dict[str, Dict[str, Any]] = {
@@ -161,7 +272,7 @@ dp.callback_query.outer_middleware(AutoRegisterUserMiddleware())
 def format_sum(amount: int) -> str:
     return f"{amount:,}".replace(",", " ") + " сум"
 
-def get_main_menu_keyboard():
+def get_main_menu_keyboard(is_admin: bool = False):
     builder = ReplyKeyboardBuilder()
     builder.button(text="🛍 Магазин Tashkent Drip")
     builder.button(text="🆔 Мой Chat ID")
@@ -169,8 +280,292 @@ def get_main_menu_keyboard():
     builder.button(text="🔍 Поиск магазина")
     builder.button(text="🚀 Создать витрину")
     builder.button(text="ℹ️ О сервисе BioMart")
-    builder.adjust(2, 2, 2)
+    if is_admin:
+        builder.button(text="👑 Панель Основателя")
+        builder.adjust(2, 2, 2, 1)
+    else:
+        builder.adjust(2, 2, 2)
     return builder.as_markup(resize_keyboard=True)
+
+# ----------------- FOUNDER & ADMIN COMMANDS (ID: 5504101440) -----------------
+
+@dp.message(F.text == "👑 Панель Основателя")
+@dp.message(Command("admin"))
+async def cmd_admin_panel(message: types.Message):
+    if not is_founder(message.from_user.id):
+        await message.answer("❌ Эта команда доступна только основателю платформы BioMart.")
+        return
+
+    stores = get_all_stores()
+    total_stores = len(stores)
+    verified_count = sum(1 for s, data in stores.items() if is_store_verified(s))
+    
+    users_count = 0
+    if TELEGRAM_USERS_FILE.exists():
+        try:
+            with open(TELEGRAM_USERS_FILE, "r", encoding="utf-8") as f:
+                users_data = json.load(f)
+                users_count = len([k for k in users_data.keys() if k.isdigit()])
+        except Exception:
+            pass
+
+    text = (
+        "👑 <b>ПАНЕЛЬ УПРАВЛЕНИЯ ОСНОВАТЕЛЯ BIOMART</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👋 Добро пожаловать, <b>{message.from_user.first_name}</b>!\n"
+        f"Ваш ID подтверждён: <code>{message.from_user.id}</code> (SuperAdmin / Founder)\n\n"
+        "📊 <b>Сводка платформы:</b>\n"
+        f"• Всего витрин: <b>{total_stores}</b>\n"
+        f"• Верифицированных (Verified): <b>{verified_count}</b>\n"
+        f"• Пользователей в Telegram: <b>{users_count}</b>\n\n"
+        "🛠 <b>Быстрые команды:</b>\n"
+        "• <code>/verify &lt;slug&gt;</code> — выдать галочку Verified\n"
+        "• <code>/unverify &lt;slug&gt;</code> — снять галочку Verified\n"
+        "• <code>/ban &lt;slug&gt;</code> — заблокировать витрину\n"
+        "• <code>/stores</code> — список всех зарегистрированных магазинов\n"
+        "• <code>/stats</code> — полная статистика\n\n"
+        "Выберите действие ниже:"
+    )
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🏪 Все магазины", callback_data="admin_stores")
+    kb.button(text="📊 Статистика", callback_data="admin_stats")
+    kb.button(text="🌐 Открыть BioMart", url=BASE_WEB_URL)
+    kb.adjust(2, 1)
+
+    await message.answer(text, reply_markup=kb.as_markup())
+
+@dp.message(Command("verify"))
+async def cmd_verify_store(message: types.Message, command: CommandObject):
+    if not is_founder(message.from_user.id):
+        await message.answer("❌ Доступ разрешён только основателю платформы.")
+        return
+
+    if not command.args:
+        await message.answer(
+            "ℹ️ Укажите адрес (слаг) магазина для верификации.\n"
+            "Пример: <code>/verify tashkent_drip</code>"
+        )
+        return
+
+    slug = command.args.strip().lower()
+    set_store_verified(slug, True)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🌐 Открыть витрину с галочкой", url=f"{BASE_WEB_URL}/{slug}")
+    kb.button(text="⚪ Снять верификацию", callback_data=f"unverify_{slug}")
+    kb.adjust(1)
+
+    await message.answer(
+        f"🎉 <b>МАГАЗИН ВЕРИФИЦИРОВАН!</b>\n\n"
+        f"✅ Магазину <code>{slug}</code> успешно присвоен статус <b>Verified</b>!\n"
+        f"На его витрине теперь отображается официальный значок доверия BioMart.\n\n"
+        f"🔗 <b>Ссылка:</b> {BASE_WEB_URL}/{slug}",
+        reply_markup=kb.as_markup()
+    )
+
+@dp.message(Command("unverify"))
+async def cmd_unverify_store(message: types.Message, command: CommandObject):
+    if not is_founder(message.from_user.id):
+        await message.answer("❌ Доступ разрешён только основателю платформы.")
+        return
+
+    if not command.args:
+        await message.answer("Пример: <code>/unverify tashkent_drip</code>")
+        return
+
+    slug = command.args.strip().lower()
+    set_store_verified(slug, False)
+    await message.answer(f"⚪ Верификация с магазина <code>{slug}</code> успешно снята.")
+
+@dp.message(Command("ban"))
+async def cmd_ban_store(message: types.Message, command: CommandObject):
+    if not is_founder(message.from_user.id):
+        await message.answer("❌ Доступ разрешён только основателю платформы.")
+        return
+
+    if not command.args:
+        await message.answer("Пример: <code>/ban bad_shop</code>")
+        return
+
+    slug = command.args.strip().lower()
+    set_store_banned(slug, True)
+    set_store_verified(slug, False)
+    await message.answer(f"🚫 Магазин <code>{slug}</code> <b>заблокирован</b>. Покупатели увидят плашку о проверке безопасности.")
+
+@dp.message(Command("unban"))
+async def cmd_unban_store(message: types.Message, command: CommandObject):
+    if not is_founder(message.from_user.id):
+        await message.answer("❌ Доступ разрешён только основателю платформы.")
+        return
+
+    if not command.args:
+        await message.answer("Пример: <code>/unban shop_slug</code>")
+        return
+
+    slug = command.args.strip().lower()
+    set_store_banned(slug, False)
+    await message.answer(f"✅ Магазин <code>{slug}</code> разблокирован.")
+
+@dp.message(Command("stores"))
+async def cmd_list_stores(message: types.Message):
+    if not is_founder(message.from_user.id):
+        await message.answer("❌ Доступ разрешён только основателю платформы.")
+        return
+
+    stores = get_all_stores()
+    if not stores:
+        await message.answer("В системе пока нет зарегистрированных магазинов.")
+        return
+
+    lines = ["🏪 <b>СПИСОК ВСЕХ МАГАЗИНОВ BIOMART:</b>\n━━━━━━━━━━━━━━━━━━━━━"]
+    kb = InlineKeyboardBuilder()
+
+    for slug, data in stores.items():
+        v_mark = "✅ Verified" if is_store_verified(slug) else "🟡 На модерации"
+        name = data.get("name") or data.get("store_name") or slug.upper()
+        phone = data.get("phone", "—")
+        lines.append(f"• <b>{name}</b> (<code>{slug}</code>)\n  └ Статус: {v_mark} | Тел: {phone}")
+        
+        # Add quick action button
+        btn_text = f"✅ {slug}" if not is_store_verified(slug) else f"⚙️ {slug}"
+        cb_target = f"verify_{slug}" if not is_store_verified(slug) else f"unverify_{slug}"
+        kb.button(text=btn_text, callback_data=cb_target)
+
+    kb.adjust(2)
+    await message.answer("\n\n".join(lines), reply_markup=kb.as_markup())
+
+@dp.message(Command("stats"))
+async def cmd_platform_stats(message: types.Message):
+    if not is_founder(message.from_user.id):
+        await message.answer("❌ Доступ разрешён только основателю платформы.")
+        return
+
+    stores = get_all_stores()
+    total_stores = len(stores)
+    verified = sum(1 for s in stores.keys() if is_store_verified(s))
+    banned = len(get_banned_stores())
+
+    users_count = 0
+    if TELEGRAM_USERS_FILE.exists():
+        try:
+            with open(TELEGRAM_USERS_FILE, "r", encoding="utf-8") as f:
+                users_count = len([k for k in json.load(f).keys() if k.isdigit()])
+        except Exception:
+            pass
+
+    text = (
+        "📊 <b>СТАТИСТИКА ПЛАТФОРМЫ BIOMART</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🏪 Всего магазинов: <b>{total_stores}</b>\n"
+        f"✅ Верифицировано: <b>{verified}</b>\n"
+        f"🚫 Заблокировано: <b>{banned}</b>\n"
+        f"👥 Пользователей в боте: <b>{users_count}</b>\n"
+        f"🌐 Домен витрин: <b>{BASE_WEB_URL}</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━"
+    )
+    await message.answer(text)
+
+# ----------------- CALLBACK QUERIES FOR ADMIN & USERS -----------------
+
+@dp.callback_query(F.data.startswith("verify_"))
+async def cb_verify_action(callback: types.CallbackQuery):
+    if not is_founder(callback.from_user.id):
+        await callback.answer("❌ Действие доступно только основателю платформы", show_alert=True)
+        return
+
+    slug = callback.data.replace("verify_", "").strip().lower()
+    set_store_verified(slug, True)
+    await callback.answer(f"Магазин {slug} успешно верифицирован! ✅", show_alert=True)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text="🌐 Открыть витрину", url=f"{BASE_WEB_URL}/{slug}")
+    kb.button(text="⚪ Снять верификацию", callback_data=f"unverify_{slug}")
+    kb.button(text="👑 Панель Основателя", callback_data="admin_panel")
+    kb.adjust(1)
+
+    if callback.message:
+        orig = callback.message.text or callback.message.caption or ""
+        updated_text = (
+            orig + f"\n\n🟢 <b>Статус: ВЕРИФИЦИРОВАН (Verified ✅)</b>\n<i>Подтверждено основателем @{callback.from_user.username or callback.from_user.id}</i>"
+        )
+        try:
+            await callback.message.edit_text(updated_text, reply_markup=kb.as_markup())
+        except Exception:
+            pass
+
+@dp.callback_query(F.data.startswith("unverify_"))
+async def cb_unverify_action(callback: types.CallbackQuery):
+    if not is_founder(callback.from_user.id):
+        await callback.answer("❌ Действие доступно только основателю платформы", show_alert=True)
+        return
+
+    slug = callback.data.replace("unverify_", "").strip().lower()
+    set_store_verified(slug, False)
+    await callback.answer(f"Верификация магазина {slug} снята", show_alert=True)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text="✅ Выдать Verified", callback_data=f"verify_{slug}")
+    kb.button(text="🌐 Открыть витрину", url=f"{BASE_WEB_URL}/{slug}")
+    kb.adjust(1)
+
+    if callback.message:
+        try:
+            await callback.message.edit_text(
+                callback.message.text + f"\n\n⚪ <b>Верификация снята основателем.</b>",
+                reply_markup=kb.as_markup()
+            )
+        except Exception:
+            pass
+
+@dp.callback_query(F.data.startswith("ban_"))
+async def cb_ban_action(callback: types.CallbackQuery):
+    if not is_founder(callback.from_user.id):
+        await callback.answer("❌ Действие доступно только основателю платформы", show_alert=True)
+        return
+
+    slug = callback.data.replace("ban_", "").strip().lower()
+    set_store_banned(slug, True)
+    set_store_verified(slug, False)
+    await callback.answer(f"Магазин {slug} заблокирован! 🚫", show_alert=True)
+
+    if callback.message:
+        try:
+            await callback.message.edit_text(
+                callback.message.text + f"\n\n🔴 <b>Статус: ЗАБЛОКИРОВАН АДМИНИСТРАТОРОМ</b>",
+                reply_markup=None
+            )
+        except Exception:
+            pass
+
+@dp.callback_query(F.data == "admin_panel")
+async def cb_admin_panel(callback: types.CallbackQuery):
+    if not is_founder(callback.from_user.id):
+        await callback.answer("❌ Доступ только для основателя", show_alert=True)
+        return
+    await callback.answer()
+    if callback.message:
+        await cmd_admin_panel(callback.message)
+
+@dp.callback_query(F.data == "admin_stores")
+async def cb_admin_stores(callback: types.CallbackQuery):
+    if not is_founder(callback.from_user.id):
+        await callback.answer("❌ Доступ только для основателя", show_alert=True)
+        return
+    await callback.answer()
+    if callback.message:
+        await cmd_list_stores(callback.message)
+
+@dp.callback_query(F.data == "admin_stats")
+async def cb_admin_stats(callback: types.CallbackQuery):
+    if not is_founder(callback.from_user.id):
+        await callback.answer("❌ Доступ только для основателя", show_alert=True)
+        return
+    await callback.answer()
+    if callback.message:
+        await cmd_platform_stats(callback.message)
+
+# ----------------- STANDARD USER HANDLERS -----------------
 
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message, command: CommandObject):
@@ -178,6 +573,7 @@ async def cmd_start(message: types.Message, command: CommandObject):
     user_name = message.from_user.first_name if message.from_user else "друг"
     chat_id = message.chat.id
     username = message.from_user.username if message.from_user else None
+    founder_flag = is_founder(chat_id)
 
     # Deep-link support for retrieving ID: /start getid
     if args and args.strip().lower() == "getid":
@@ -193,7 +589,7 @@ async def cmd_start(message: types.Message, command: CommandObject):
         kb.button(text="⚙️ Открыть кабинет BioMart", url=f"{BASE_WEB_URL}/dashboard?tab=telegram")
         kb.button(text="📦 Получить демо-чек", callback_data="demo_receipt")
         kb.adjust(1)
-        await message.answer(text, reply_markup=get_main_menu_keyboard())
+        await message.answer(text, reply_markup=get_main_menu_keyboard(founder_flag))
         await message.answer("Быстрый переход:", reply_markup=kb.as_markup())
         return
 
@@ -207,7 +603,7 @@ async def cmd_start(message: types.Message, command: CommandObject):
         bind_text = (
             f"👋 <b>Здравствуйте, {user_name}!</b>\n\n"
             f"🏪 <b>Запрос на привязку витрины BioMart:</b>\n"
-            f"Магазин: <b>{store_name}</b> (<code>biomart.vercel.app/{target_slug}</code>)\n"
+            f"Магазин: <b>{store_name}</b> (<code>{BASE_WEB_URL}/{target_slug}</code>)\n"
             f"Юзернейм: <code>@{username or target_user}</code>\n"
             f"Ваш Chat ID: <code>{chat_id}</code>\n\n"
             f"Разрешаете ли вы официальному боту <b>BioMart</b> присылать вам мгновенные чеки заказов от ваших покупателей в этот чат?"
@@ -226,6 +622,8 @@ async def cmd_start(message: types.Message, command: CommandObject):
         return
 
     user_str = f"@{username}" if username else f"ID: {chat_id}"
+    founder_welcome = "\n\n👑 <b>Вы авторизованы как Основатель платформы (SuperAdmin)!</b>\nВам доступно модераторское меню: /admin" if founder_flag else ""
+
     text = (
         f"👋 <b>Ассалому алейкум, {user_name}! Добро пожаловать в официальный бот BioMart!</b>\n\n"
         "⚡ <b>BioMart</b> — платформа быстрых мобильных витрин для продавцов в Instagram и Telegram в Узбекистане.\n\n"
@@ -235,7 +633,8 @@ async def cmd_start(message: types.Message, command: CommandObject):
         "<b>Возможности бота:</b>\n"
         "• Мгновенные уведомления о заказах с товарами, размером, адресом и телефоном\n"
         "• Кнопки быстрого звонка клиенту и адреса в Яндекс Картах\n"
-        "• Просмотр каталогов и демо чеков\n\n"
+        "• Просмотр каталогов и демо чеков\n"
+        f"{founder_welcome}\n"
         "Выберите действие в меню ниже:"
     )
 
@@ -244,9 +643,13 @@ async def cmd_start(message: types.Message, command: CommandObject):
     kb.button(text="📦 Получить демо-чек заказа", callback_data="demo_receipt")
     kb.button(text="⚙️ Панель продавца", url=f"{BASE_WEB_URL}/dashboard?tab=telegram")
     kb.button(text="➕ Создать витрину", url=f"{BASE_WEB_URL}/register")
-    kb.adjust(1)
+    if founder_flag:
+        kb.button(text="👑 Открыть Админ-панель", callback_data="admin_panel")
+        kb.adjust(1, 1, 1, 1, 1)
+    else:
+        kb.adjust(1)
 
-    await message.answer(text, reply_markup=get_main_menu_keyboard())
+    await message.answer(text, reply_markup=get_main_menu_keyboard(founder_flag))
     await message.answer("Быстрые действия:", reply_markup=kb.as_markup())
 
 @dp.message(F.text == "🆔 Мой Chat ID")
@@ -261,7 +664,7 @@ async def cmd_my_id(message: types.Message):
         "💡 <b>Как привязать приём заказов:</b>\n"
         f"Вставьте этот ID или ваш юзернейм <code>@{username or 'username'}</code> в панели управления BioMart (вкладка <b>Telegram</b>). "
         "После этого бот будет присылать все оформленные заказы прямо в этот чат!",
-        reply_markup=get_main_menu_keyboard()
+        reply_markup=get_main_menu_keyboard(is_founder(message.chat.id))
     )
 
 @dp.message(F.text == "🛍 Магазин Tashkent Drip")
@@ -270,7 +673,8 @@ async def cmd_demo_store(message: types.Message):
     await show_store_details(message, "tashkent_drip")
 
 async def show_store_details(message: types.Message, slug: str):
-    store = STORES_DB.get(slug)
+    stores = get_all_stores()
+    store = stores.get(slug)
     if not store:
         await message.answer(
             f"❌ Магазин <code>{slug}</code> не найден.\n\n"
@@ -278,20 +682,23 @@ async def show_store_details(message: types.Message, slug: str):
         )
         return
 
-    verified_badge = "✅ <b>(подтверждено BioMart)</b>\n" if store.get("verified") else ""
+    verified_badge = "✅ <b>(Verified • Подтверждено BioMart)</b>\n" if is_store_verified(slug) else "🟡 <b>(На проверке)</b>\n"
     text = (
         f"🏪 <b>{store['name']}</b>\n"
         f"{verified_badge}\n"
         f"📝 {store['description']}\n\n"
-        f"🚚 <b>Доставка:</b> {store['delivery']}\n"
-        f"📞 <b>Телефон:</b> {store['phone']}\n"
-        f"🔗 <b>Веб-витрина:</b> {BASE_WEB_URL}/{store['slug']}\n"
+        f"🚚 <b>Доставка:</b> {store.get('delivery', 'Yandex / BTS')}\n"
+        f"📞 <b>Телефон:</b> {store.get('phone', '—')}\n"
+        f"🔗 <b>Веб-витрина:</b> {BASE_WEB_URL}/{slug}\n"
     )
 
     kb = InlineKeyboardBuilder()
-    kb.button(text="🌐 Открыть витрину BioMart", url=f"{BASE_WEB_URL}/{store['slug']}")
-    kb.button(text="📋 Каталог товаров в Telegram", callback_data=f"catalog_{slug}")
-    kb.button(text="💬 Написать продавцу", url=f"https://t.me/{store['telegram']}")
+    kb.button(text="🌐 Открыть витрину BioMart", url=f"{BASE_WEB_URL}/{slug}")
+    if store.get("products"):
+        kb.button(text="📋 Каталог товаров в Telegram", callback_data=f"catalog_{slug}")
+    if store.get("telegram") and store["telegram"] != "—":
+        clean_tg = store["telegram"].lstrip("@")
+        kb.button(text="💬 Написать продавцу", url=f"https://t.me/{clean_tg}")
     kb.adjust(1)
 
     await message.answer(text, reply_markup=kb.as_markup())
@@ -303,7 +710,7 @@ async def cmd_search_prompt(message: types.Message):
         "Отправьте юзернейм или ссылку на магазин, например:\n"
         "• <code>tashkent_drip</code>\n"
         "• <code>samarkand_sweets</code>\n"
-        "• <code>biomart.vercel.app/tashkent_drip</code>"
+        f"• <code>{BASE_WEB_URL}/tashkent_drip</code>"
     )
     await message.answer(text)
 
@@ -505,7 +912,8 @@ async def handle_any_text(message: types.Message):
         .replace("biomart.uz/", "")
     )
     clean = clean.split("/")[0].strip()
-    if clean in STORES_DB:
+    stores = get_all_stores()
+    if clean in stores:
         await show_store_details(message, clean)
         return
 
@@ -513,6 +921,7 @@ async def handle_any_text(message: types.Message):
     chat_id = message.chat.id
     username = message.from_user.username if message.from_user else None
     user_str = f" (@{username})" if username else ""
+    founder_flag = is_founder(chat_id)
 
     text = (
         f"👋 Здравствуйте, <b>{user_name}</b>{user_str}!\n\n"
@@ -526,9 +935,13 @@ async def handle_any_text(message: types.Message):
     kb.button(text="🛍 Открыть витрину (Tashkent Drip)", url=f"{BASE_WEB_URL}/tashkent_drip")
     kb.button(text="📦 Демо чека заказа", callback_data="demo_receipt")
     kb.button(text="⚙️ Панель продавца", url=f"{BASE_WEB_URL}/dashboard?tab=telegram")
-    kb.adjust(1)
+    if founder_flag:
+        kb.button(text="👑 Открыть Админ-панель", callback_data="admin_panel")
+        kb.adjust(1, 1, 1, 1)
+    else:
+        kb.adjust(1)
 
-    await message.answer(text, reply_markup=get_main_menu_keyboard())
+    await message.answer(text, reply_markup=get_main_menu_keyboard(founder_flag))
     await message.answer("Быстрые действия:", reply_markup=kb.as_markup())
 
 async def main():

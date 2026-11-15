@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Trash2, ArrowRight, Loader2, Truck, Store, MapPin, Phone, User, MessageSquare, Tag } from 'lucide-react';
 import { CartItem, Order, OrderItem, StoreSettings } from '@/types';
-import { formatPrice, getContrastTextColor, UZBEKISTAN_REGIONS } from '@/lib/utils';
+import { formatPrice, getContrastTextColor, UZBEKISTAN_REGIONS, formatUzbekPhone } from '@/lib/utils';
 import { useBioMartStore } from '@/store/useStore';
 import { translations } from '@/lib/i18n';
 
@@ -72,11 +72,8 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
   const totalSum = Math.max(0, subtotal - discountAmount);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
-    if (!val.startsWith('+998')) {
-      val = '+998 ';
-    }
-    setCustomerPhone(val);
+    const formatted = formatUzbekPhone(e.target.value);
+    setCustomerPhone(formatted);
   };
 
   const handleApplyPromo = () => {

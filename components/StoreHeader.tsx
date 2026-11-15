@@ -95,12 +95,25 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                 <h1 className="text-base sm:text-lg font-bold text-content-primary tracking-tight truncate">
                   {settings.store_name}
                 </h1>
-                {!isDemo && Boolean(settings.is_verified) && (
+                {Boolean(settings.is_verified) && (
                   <span
-                    title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon' : 'Проверенный продавец BioMart'}
-                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-accent text-white shrink-0 select-none shadow-2xs"
+                    title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon (Verified)' : 'Проверенный продавец BioMart (Verified ✅)'}
+                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white shrink-0 select-none shadow-2xs"
                   >
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
+                  </span>
+                )}
+                {Boolean(settings.is_founding_seller) && (
+                  <span
+                    title={
+                      language === 'uz'
+                        ? `BioMart ta'sischi do'koni #${settings.founding_number || 1} • Ilk 100 ta do'kondan biri`
+                        : `Founding Seller #${settings.founding_number || 1} • Один из первых 100 магазинов BioMart`
+                    }
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-400/20 border border-amber-400/40 px-1.5 py-0.5 rounded-full shrink-0 shadow-2xs select-none"
+                  >
+                    <span className="text-[10px]">🌟</span>
+                    <span>#{settings.founding_number || 1}</span>
                   </span>
                 )}
               </div>
@@ -200,14 +213,35 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
               <a
                 href={`tel:${settings.phone.replace(/[^\d+]/g, '')}`}
                 aria-label={`Позвонить по номеру ${settings.phone}`}
-                className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-border bg-surface hover:bg-surface-soft text-content-primary transition-colors truncate active:scale-[0.98] shadow-xs"
+                className="flex-1 min-h-[40px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-btn text-xs font-semibold border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 transition-colors truncate active:scale-[0.98] shadow-xs"
               >
-                <Phone className="w-3.5 h-3.5 text-accent shrink-0" />
+                <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span className="truncate">{language === 'uz' ? 'Qo‘ng‘iroq' : 'Позвонить'}</span>
               </a>
             )}
           </div>
         )}
+
+        {/* Trust & Direct Payment Guarantee Badge */}
+        <div className="mt-3 flex items-center justify-between text-[11px] text-content-secondary py-1.5 px-3 rounded-[10px] bg-page border border-border/80">
+          <div className="flex items-center gap-1.5 font-medium truncate">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">
+              {language === 'uz'
+                ? 'Xavfsiz xarid • To‘lov to‘g‘ridan-to‘g‘ri do‘konga'
+                : 'Безопасный заказ • Оплата продавцу напрямую'}
+            </span>
+          </div>
+          {Boolean(settings.is_verified) ? (
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0 ml-2">
+              Verified ✓
+            </span>
+          ) : (
+            <span className="text-[10px] font-medium text-content-secondary shrink-0 ml-2">
+              {language === 'uz' ? 'BioMart kafolati' : 'Гарантия BioMart'}
+            </span>
+          )}
+        </div>
 
         {/* Custom Quick Links Buttons (configured in Dashboard -> Ссылки) */}
         {settings.custom_links && settings.custom_links.filter((l) => l.is_active).length > 0 && (

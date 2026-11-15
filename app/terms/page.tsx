@@ -45,7 +45,7 @@ export default function TermsPage() {
           <section className="space-y-3 text-xs sm:text-sm text-content-secondary leading-relaxed">
             <h2 className="text-base sm:text-lg font-semibold text-content-primary">1. Общие положения</h2>
             <p>
-              1.1. Платформа <b>BioMart</b> (доступная по адресу <code>biomart.vercel.app</code>) представляет собой программный сервис создания мобильных онлайн-витрин (Link-in-Bio) для продавцов в социальных сетях (Instagram, Telegram).
+              1.1. Платформа <b>BioMart</b> (доступная по адресам <code>biomart.uz</code> и <code>biomart.vercel.app</code>) представляет собой программный сервис создания мобильных онлайн-витрин (Link-in-Bio) для продавцов в социальных сетях (Instagram, Telegram).
             </p>
             <p>
               1.2. BioMart предоставляет технологическую инфраструктуру для каталогизации товаров, оформления заявок и отправки уведомлений в мессенджер Telegram.

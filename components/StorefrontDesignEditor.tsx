@@ -512,6 +512,18 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {TEMPLATE_CARDS.map((tpl) => {
                 const isSelected = form.preset === tpl.id;
+                const nicheTagMap: Record<string, { ru: string; uz: string }> = {
+                  minimal: { ru: 'Универсальный', uz: 'Universal' },
+                  warm: { ru: 'Десерты & Еда', uz: 'Shirinlik & Taom' },
+                  streetwear: { ru: 'Одежда & Обувь', uz: 'Kiyim & Poyabzal' },
+                  boutique: { ru: 'Парфюм & Бутик', uz: 'Atir & Butik' },
+                  cyber: { ru: 'Гаджеты & Техника', uz: 'Gadjet & Texnika' },
+                  vintage: { ru: 'Винтаж & Книги', uz: 'Vintaj & Kitob' },
+                  organic: { ru: 'Эко & Косметика', uz: 'Eko & Kosmetika' },
+                  editorial: { ru: 'Премиум & Люкс', uz: 'Premium & Lyuks' },
+                };
+                const tag = nicheTagMap[tpl.id] || { ru: 'Стиль', uz: 'Uslub' };
+
                 return (
                   <button
                     key={tpl.id}
@@ -519,8 +531,8 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                     onClick={() => handleSelectTemplate(tpl.id)}
                     className={`relative p-2.5 rounded-[12px] text-left transition-all flex flex-col justify-between border ${
                       isSelected
-                        ? 'border-brand ring-2 ring-brand/30 bg-page shadow-sm'
-                        : 'border-border bg-surface hover:border-brand/50'
+                        ? 'border-emerald-600 ring-2 ring-emerald-600/30 bg-page shadow-sm scale-[1.01]'
+                        : 'border-border bg-surface hover:border-emerald-600/40 hover:shadow-2xs'
                     }`}
                   >
                     {/* Visual Miniature Card */}
@@ -530,7 +542,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <span
-                          className="w-3 h-3 rounded-full"
+                          className="w-3 h-3 rounded-full shadow-2xs"
                           style={{ backgroundColor: tpl.accent }}
                         />
                         <span
@@ -548,7 +560,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
                       >
                         <div className="w-4 h-2 rounded bg-black/10" />
                         <div
-                          className="w-3 h-2 rounded text-[7px] flex items-center justify-center font-bold text-white"
+                          className="w-3 h-2 rounded text-[7px] flex items-center justify-center font-bold text-white shadow-2xs"
                           style={{ backgroundColor: tpl.accent }}
                         >
                           +
@@ -558,23 +570,61 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
 
                     {/* Card Title & Desc */}
                     <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-content-primary">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-bold text-content-primary">
                           {isUz ? tpl.nameUz : tpl.name}
                         </span>
                         {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-brand text-white flex items-center justify-center">
+                          <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                         )}
                       </div>
-                      <p className="text-[10px] text-content-secondary line-clamp-2 mt-0.5 leading-tight">
+                      <span className="inline-block text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded mt-1">
+                        {isUz ? tag.uz : tag.ru}
+                      </span>
+                      <p className="text-[10px] text-content-secondary line-clamp-2 mt-1 leading-tight">
                         {isUz ? tpl.descUz : tpl.desc}
                       </p>
                     </div>
                   </button>
                 );
               })}
+            </div>
+
+            {/* Active Style Confirmation & 1-Click Apply */}
+            <div className="mt-4 p-3.5 rounded-[12px] bg-emerald-500/10 border border-emerald-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  ✓
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-bold text-content-primary">
+                      {isUz 
+                        ? `Tanlangan uslub: «${TEMPLATE_CARDS.find((c) => c.id === form.preset)?.nameUz || form.preset}»` 
+                        : `Выбран стиль: «${TEMPLATE_CARDS.find((c) => c.id === form.preset)?.name || form.preset}»`}
+                    </p>
+                    <span className="text-[10px] bg-emerald-600/20 text-emerald-800 dark:text-emerald-300 font-semibold px-1.5 py-0.2 rounded-full">
+                      {isUz ? 'Faol' : 'Активен'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-content-secondary mt-0.5">
+                    {isUz
+                      ? (TEMPLATE_CARDS.find((c) => c.id === form.preset)?.descUz || 'Vitrinangiz yangi uslubda saqlanishga tayyor.')
+                      : (TEMPLATE_CARDS.find((c) => c.id === form.preset)?.desc || 'Цвета, шрифты и кнопки гармонично подобраны под этот стиль.')}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                className="w-full sm:w-auto px-4 py-2 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{isUz ? 'Uslubni saqlash' : 'Применить к моей витрине'}</span>
+              </button>
             </div>
           </div>
 

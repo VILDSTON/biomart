@@ -10,6 +10,8 @@ import { StoreSettings } from '@/types';
 import { StorefrontClient, StorefrontSkeleton } from '@/components/StorefrontClient';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isSlugBanned } from '@/lib/moderation';
+import { isStoreVerifiedInFile, isStoreBannedInFile, getFoundingSellerStatus } from '@/lib/telegram';
+import { SITE_URL } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -80,7 +82,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       openGraph: {
         title: `${resolvedName} | BioMart`,
         description: dbDesc || `Онлайн-витрина ${resolvedName} на платформе BioMart`,
-        url: `https://biomart.vercel.app/${cleanSlug}`,
+        url: `${SITE_URL}/${cleanSlug}`,
         siteName: 'BioMart',
         type: 'website',
       },
@@ -100,7 +102,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `${storeName} | BioMart`,
       description,
-      url: `https://biomart.vercel.app/${cleanSlug}`,
+      url: `${SITE_URL}/${cleanSlug}`,
       siteName: 'BioMart',
       type: 'website',
     },
@@ -178,10 +180,21 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
 
   const fallbackSettings = demoPreset?.settings || MOCK_STORE_SETTINGS;
 
+  const isVerifiedStore = Boolean(
+    dbStore?.is_verified ??
+    (isStoreVerifiedInFile(cleanSlug) ? true : undefined) ??
+    fallbackSettings.is_verified
+  );
+
+  const foundingStatus = getFoundingSellerStatus(cleanSlug);
+
   // 3. Fallback to mock settings for demo store or new stores
   const storeSettings = {
     ...(dbStore || fallbackSettings),
     slug: cleanSlug,
+    is_verified: isVerifiedStore,
+    is_founding_seller: foundingStatus.isFounding,
+    founding_number: foundingStatus.foundingNumber,
     store_name:
       dbStore?.store_name ||
       cookieContacts?.store_name ||
@@ -194,7 +207,7 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
   };
 
   // 4. Check moderation status: if banned or rejected, show polite unavailable screen
-  if (storeSettings.status === 'rejected' || isSlugBanned(cleanSlug)) {
+  if (storeSettings.status === 'rejected' || isSlugBanned(cleanSlug) || isStoreBannedInFile(cleanSlug)) {
     return (
       <div className="min-h-screen bg-[#F7F6F2] dark:bg-[#121212] text-[#1A1A1A] dark:text-[#F7F6F2] flex flex-col items-center justify-center p-4 text-center">
         <div className="max-w-md w-full bg-white dark:bg-[#1E1E1E] border border-[#E7E4DC] dark:border-[#2C2C2C] rounded-[20px] p-6 sm:p-8 space-y-4 shadow-sm">

@@ -3,6 +3,7 @@ import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { isSlugValid } from '@/lib/security';
 import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { notifyFounderNewStore, recordRegisteredStore } from '@/lib/telegram';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -55,13 +56,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!isSupabaseConfigured || !supabaseAdmin) {
-    return NextResponse.json({ error: 'База данных не подключена' }, { status: 503 });
-  }
-
   try {
     const body = await req.json();
-    const { slug, store_name, instagram_url, telegram_username, telegram_chat_id, phone, description } = body;
+    const {
+      slug,
+      store_name,
+      email,
+      instagram_url,
+      telegram_username,
+      telegram_chat_id,
+      phone,
+      description,
+    } = body;
 
     const cleanSlug = slug?.toLowerCase().replace(/[^a-z0-9_-]/g, '');
     if (!cleanSlug || !isSlugValid(cleanSlug)) {
@@ -77,7 +83,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: modCheck.error || 'Обнаружены недопустимые слова' }, { status: 400 });
     }
 
-    // Check if exists
+    const notificationPayload = {
+      slug: cleanSlug,
+      store_name: store_name?.trim() || cleanSlug,
+      email: email?.trim() || null,
+      phone: phone?.trim() || null,
+      instagram_url: instagram_url?.trim() || null,
+      telegram_username: telegram_username?.trim() || null,
+      telegram_chat_id: telegram_chat_id?.trim() || null,
+      description: description?.trim() || null,
+    };
+
+    // If Supabase is not configured, support local storage + notify founder
+    if (!isSupabaseConfigured || !supabaseAdmin) {
+      recordRegisteredStore(notificationPayload);
+      // Fire notification in background (doesn't block response)
+      notifyFounderNewStore(notificationPayload).catch((e) =>
+        console.warn('[Stores API] Telegram notify error:', e)
+      );
+
+      return NextResponse.json({
+        success: true,
+        store: {
+          slug: cleanSlug,
+          store_name: store_name?.trim() || cleanSlug,
+          description: description?.trim() || '',
+        },
+        notice: 'Store registered in local mode',
+      });
+    }
+
+    // Check if exists in Supabase
     const { data: existing } = await supabaseAdmin
       .from('stores')
       .select('id, slug')
@@ -122,11 +158,19 @@ export async function POST(req: NextRequest) {
           theme: 'light',
           catalog_layout: 'grid',
           plan: 'start',
+          status: 'pending',
+          is_verified: false,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Notify Founder Telegram ID on every new store created!
+      notifyFounderNewStore(notificationPayload).catch((e) =>
+        console.warn('[Stores API] Telegram notify error:', e)
+      );
+
       return NextResponse.json({ success: true, store: created });
     }
   } catch (err: any) {

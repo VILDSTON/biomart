@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { CookieConsentBanner } from '@/components/CookieConsentBanner';
 import { ToastAlert } from '@/components/ToastAlert';
+import { PostHogProvider } from '@/components/PostHogProvider';
 
 export const metadata: Metadata = {
   title: 'BioMart — Витрина для Instagram и Telegram',
@@ -62,7 +63,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-[100dvh] bg-page text-content-primary antialiased m-0 p-0 selection:bg-accent/20 overflow-x-clip">
-        {children}
+        <PostHogProvider>
+          {children}
+        </PostHogProvider>
         <CookieConsentBanner />
         <ToastAlert />
       </body>
