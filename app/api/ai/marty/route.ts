@@ -8,11 +8,11 @@ const GOOGLE_STUDIO_API_KEY =
   process.env.GEMINI_API_KEY?.trim() ||
   '';
 
-// Flash-Lite candidate models in priority order
+// Flash candidate models in priority order
 const FLASH_LITE_MODELS = [
-  'gemini-3.5-flash-lite',
-  'gemini-3.1-flash-lite',
-  'gemini-flash-lite-latest',
+  'gemini-3.8-flash',
+  'gemini-2.5-flash',
+  'gemini-3.1-pro-preview',
 ];
 
 // Daily Limit per visitor / shop (e.g. 50 requests per day)
@@ -143,11 +143,12 @@ function sanitizeAndExtractSpecialTags(rawText: string): {
   // 4. Absolute purge of ANY tag pattern (closed, unclosed, or partial)
   // Ensures raw internal syntax NEVER leaks into the chat stream
   text = text
-    .replace(/\[\s*CREATE_ORDER\b[\s\S]*?(?:\]|$)/gi, '')
-    .replace(/\[\s*SUGGEST_PRODUCT\b[\s\S]*?(?:\]|$)/gi, '')
-    .replace(/\[\s*OPTIONS\b[\s\S]*?(?:\]|$)/gi, '')
-    .replace(/\[\s*ORDER\b[\s\S]*?(?:\]|$)/gi, '')
-    .replace(/\[\s*PRODUCT\b[\s\S]*?(?:\]|$)/gi, '');
+    .replace(/\[\s*CREATE_ORDER\b[\s\S]*?\}\s*\]/gi, '')
+    .replace(/\[\s*SUGGEST_PRODUCT\b[\s\S]*?\}\s*\]/gi, '')
+    .replace(/\[\s*OPTIONS\b[\s\S]*?\]\s*\]/gi, '')
+    .replace(/\[\s*(?:CREATE_ORDER|SUGGEST_PRODUCT|OPTIONS|ORDER|PRODUCT)\b[\s\S]*?(?:\]|$)/gi, '')
+    .replace(/^\s*\]\s*$/gm, '')
+    .replace(/\n\s*\]\s*$/g, '');
 
   return {
     cleanText: text.trim(),
@@ -365,6 +366,9 @@ ${catalogSummary}
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 800,
+        thinkingConfig: {
+          thinkingBudget: 0,
+        },
       },
     };
 

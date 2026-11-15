@@ -42,17 +42,16 @@ export async function POST(request: Request) {
       const userPrompt = `Товар: "${title}". Категория: "${category || 'не указана'}". Заметки: "${notes || 'нет'}". Сгенерируй продающее описание в формате JSON.`;
 
       const candidateModels = [
-        'gemini-2.0-flash-lite-preview-02-05',
-        'gemini-2.0-flash-lite',
-        'gemini-1.5-flash',
-        'gemini-2.0-flash',
+        'gemini-3.8-flash',
+        'gemini-2.5-flash',
+        'gemini-3.1-pro-preview',
       ];
 
       for (const model of candidateModels) {
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
 
           const geminiRes = await fetch(url, {
             method: 'POST',
@@ -64,6 +63,9 @@ export async function POST(request: Request) {
                 temperature: 0.6,
                 maxOutputTokens: 600,
                 responseMimeType: 'application/json',
+                thinkingConfig: {
+                  thinkingBudget: 0,
+                },
               },
             }),
             signal: controller.signal,

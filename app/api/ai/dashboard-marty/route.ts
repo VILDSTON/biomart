@@ -120,17 +120,128 @@ function sanitizeAndExtractTags(rawText: string): {
     } catch {}
   }
 
-  // 3. Purge internal syntax tags
+  // 3. Purge internal syntax tags (safely remove outer brackets and any nested brackets)
   text = text
-    .replace(/\[\s*PROPOSE_ACTION\b[\s\S]*?(?:\]|$)/gi, '')
-    .replace(/\[\s*OPTIONS\b[\s\S]*?(?:\]|$)/gi, '')
-    .replace(/\[\s*ACTION\b[\s\S]*?(?:\]|$)/gi, '');
+    .replace(/\[\s*PROPOSE_ACTION\b[\s\S]*?\}\s*\]/gi, '')
+    .replace(/\[\s*OPTIONS\b[\s\S]*?\]\s*\]/gi, '')
+    .replace(/\[\s*(?:PROPOSE_ACTION|OPTIONS|ACTION)[\s\S]*?(?:\]|$)/gi, '');
+
+  // 4. Remove any stray trailing brackets left over
+  text = text
+    .replace(/^\s*\]\s*$/gm, '')
+    .replace(/\n\s*\]\s*$/g, '')
+    .trim();
 
   return {
-    cleanText: text.trim(),
+    cleanText: text,
     proposedAction,
     options,
   };
+}
+
+function generateContextualFallback(
+  lastUserMsg: string,
+  storeName: string,
+  products: any[] = [],
+  currency: string = 'сум'
+): string {
+  const q = (lastUserMsg || '').toLowerCase();
+
+  const isUzbek =
+    q.includes('salom') ||
+    q.includes('assalom') ||
+    q.includes('narx') ||
+    q.includes('sotish') ||
+    q.includes('savdo') ||
+    q.includes('yetkaz') ||
+    q.includes('yordam');
+
+  if (isUzbek) {
+    if (q.includes('sotish') || q.includes('savdo') || q.includes('oshtir') || q.includes('mijoz') || q.includes('qanday')) {
+      return `«${storeName}» do'koningizda sotuvlarni oshirish bo'yicha 3 ta amaliy qadam:
+
+1. 📲 Instagram Stories orqali vitrinaga yo'naltirish: Har kuni top-3 tovaringizni ko'rsatib, «To'liq katalog va narxlar profildagi havolada» stikerini qo'ying.
+2. 🚀 Tezkor yetkazib berish: Toshkent bo'yicha Yandex orqali 1-2 soatda yetkazishingizni va to'lovni Click/Payme yoki naqd qabul qilishingizni e'lon qiling.
+3. 🎁 Maxsus promokod: 24 soatlik 10% chegirma e'lon qilib, xaridorlarni tezroq qaror qabul qilishga undaymiz.
+[PROPOSE_ACTION: {"type": "create_promo", "title": "10% chegirmali promokod", "description": "Instagram Stories obunachilari uchun 10% chegirma", "payload": {"code": "START10", "discount_percent": 10}}]
+[OPTIONS: ["Promokod yaratish", "Stories uchun matn", "Yetkazib berish bo'yicha maslahat"]]`;
+    }
+
+    return `Assalomu alaykum! Men «${storeName}» do'koningiz uchun shaxsiy biznes-maslahatchi Martiman. 🤖✨
+
+Qanday yordam bera olaman:
+• 📈 Savdoni oshirish va yangi mijozlarni jalb qilish
+• ✍️ Instagram Stories va Telegram uchun sotuvchi matnlar
+• 🏷️ Aksiya va promokodlar mexanikasini sozlash
+• 🚚 Toshkent va viloyatlar bo'yicha yetkazib berishni yo'lga qo'yish
+
+Savolingizni yozing yoki quyidagi tugmalardan birini bosing!
+[OPTIONS: ["Savdoni oshirish g'oyalari", "Stories uchun matn", "Aksiya o'ylab topish"]]`;
+  }
+
+  // Russian: Growth & Sales
+  if (q.includes('иде') || q.includes('рос') || q.includes('проросла') || q.includes('приросла') || q.includes('продаж') || q.includes('клиент') || q.includes('масштаб') || q.includes('подня')) {
+    return `Вот 3 проверенные стратегии для роста продаж магазина «${storeName}» в Узбекистане: 🚀
+
+1. 📲 Воронка через Instagram Stories & Reels:
+Выкладывайте короткие обзоры новинок с демонстрацией вживую. В каждой истории ставьте стикер со ссылкой на витрину BioMart. Это конвертирует просмотры в заказы на 35% быстрее директа.
+
+2. 💳 Удобная оплата и доставка день в день:
+Подчеркните в шапке профиля: «Доставка по Ташкенту 2 часа (Yandex Go), по Узбекистану 1-2 дня (BTS). Оплата Click, Payme или наличными». 90% покупателей ценят именно скорость получения.
+
+3. 🔥 Flash-скидка для подписчиков:
+Запустите акцию на 48 часов с промокодом на 10-15%. Это активирует тех подписчиков, которые давно присматривались к товарам, но откладывали покупку.
+[PROPOSE_ACTION: {"type": "create_promo", "title": "Создать промокод SALE10", "description": "Скидка 10% на все товары для анонса в Instagram", "payload": {"code": "SALE10", "discount_percent": 10}}]
+[OPTIONS: ["Создать промокод SALE10", "Текст для Stories к этой акции", "Совет по доставке Yandex/BTS"]]`;
+  }
+
+  if (q.includes('привет') || q.includes('здравствуй') || q.includes('добрый') || q.includes('privet') || q.includes('salam')) {
+    return `Здравствуйте! Я ваш бизнес-ассистент Марти. 🤖✨
+
+Я анализирую каталог магазина «${storeName}», помогаю придумывать продающие тексты для соцсетей, запускать выгодные акции и настраивать быструю доставку в Узбекистане.
+
+Чем займемся сегодня?
+[OPTIONS: ["Идеи для роста продаж", "Текст для Stories", "Придумать акцию"]]`;
+  }
+
+  if (q.includes('доставк') || q.includes('курьер') || q.includes('yandex') || q.includes('bts')) {
+    return `📦 Как выстроить удобную логистику для «${storeName}» по Узбекистану:
+
+1. Ташкент (экспресс 1-3 часа):
+Используйте Yandex Go Delivery (тариф «Доставка» или «Курьер»). Стоимость 18 000 – 30 000 сум. В карточке заказа нажимайте «Открыть в Яндекс Картах», чтобы скопировать адрес курьеру в 1 клик.
+
+2. Регионы Узбекистана (Самарканд, Бухара, Фергана и др.):
+Подключите BTS Почту или Fargo. Срок доставки 1-2 рабочих дня. Стоимость от 25 000 сум за посылку до 1 кг.
+
+💡 Совет: при заказе от 400 000 сум делайте бесплатную доставку по Ташкенту — это поднимает средний чек на 20-30%!
+[OPTIONS: ["Текст для Stories о доставке", "Идеи акций", "Создать промокод"]]`;
+  }
+
+  if (q.includes('текст') || q.includes('stories') || q.includes('сторис') || q.includes('пост') || q.includes('описан')) {
+    const firstProduct = products[0]?.title || 'Хит сезона';
+    const firstPrice = products[0]?.price ? `${products[0].price.toLocaleString('ru-RU')} ${currency}` : 'выгодной цене';
+    return `📝 Готовый шаблон для ваших Instagram Stories:
+
+🔥 СТОРИС 1 (Интрига):
+«Мы получили то, о чем вы так часто спрашивали в Direct... Количество ограничено! 👀👇»
+
+✨ СТОРИС 2 (Товар лицом):
+«${firstProduct} — всего за ${firstPrice}! 
+Идеальное качество, доставка по Ташкенту за 2 часа 🚀»
+
+📲 СТОРИС 3 (Призыв к действию):
+«Оформить заказ в 2 клика без ожидания ответа в Direct можно по ссылке в шапке профиля 👆 Или пишите нам в Telegram!»
+[OPTIONS: ["Придумать промокод для Stories", "Совет по доставке", "Идеи для роста продаж"]]`;
+  }
+
+  return `Я готов помочь с развитием магазина «${storeName}»! 💡
+
+Вы можете спросить меня:
+• Как составить продающий пост или Stories для конкретного товара
+• Какую акцию запустить на выходные
+• Как поднять средний чек и мотивировать на повторные заказы
+• Как настроить курьерскую доставку по Ташкенту и регионам
+[OPTIONS: ["Идеи для роста продаж", "Текст для Stories", "Создать промокод"]]`;
 }
 
 export async function GET(req: NextRequest) {
@@ -273,22 +384,24 @@ ${promosSummary}
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 900,
+        thinkingConfig: {
+          thinkingBudget: 0,
+        },
       },
     };
 
     let generatedRawText = '';
     const modelsToTry = [
-      'gemini-2.0-flash-lite-preview-02-05',
-      'gemini-2.0-flash-lite',
-      'gemini-1.5-flash',
-      'gemini-2.0-flash',
+      'gemini-3.8-flash',
+      'gemini-2.5-flash',
+      'gemini-3.1-pro-preview',
     ];
 
     for (const model of modelsToTry) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 9000);
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
 
         const geminiRes = await fetch(url, {
           method: 'POST',
@@ -306,6 +419,9 @@ ${promosSummary}
             generatedRawText = candidate.trim();
             break;
           }
+        } else {
+          const errJson = await geminiRes.json().catch(() => null);
+          console.warn(`[Dashboard Marty] Model ${model} status ${geminiRes.status}:`, errJson?.error?.message);
         }
       } catch (err: any) {
         console.warn(`[Dashboard Marty] Model ${model} error:`, err.message);
@@ -313,10 +429,8 @@ ${promosSummary}
     }
 
     if (!generatedRawText) {
-      generatedRawText = `Здравствуйте! Я ваш бизнес-ассистент Марти. Я проанализировал ваш магазин «${storeName}». 
-Рекомендую создать промокод на 10% для подписчиков в Instagram Stories, чтобы активировать повторные покупки!
-[PROPOSE_ACTION: {"type": "create_promo", "title": "Создать промокод VESNA10", "description": "Скидка 10% на все товары для анонса в Instagram", "payload": {"code": "VESNA10", "discount_percent": 10}}]
-[OPTIONS: ["Создать промокод", "Написать текст для Stories", "Совет по доставке"]]`;
+      const lastUserMsg = (contents[contents.length - 1]?.parts?.[0]?.text || '').trim();
+      generatedRawText = generateContextualFallback(lastUserMsg, storeName, products, currency);
     }
 
     const { cleanText, proposedAction, options } = sanitizeAndExtractTags(generatedRawText);
