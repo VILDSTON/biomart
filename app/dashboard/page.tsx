@@ -1461,12 +1461,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-[100dvh] bg-page text-content-primary">
-      {/* PC Expanded Container: max-w-3xl */}
-      <main className={`mx-auto min-h-[100dvh] w-full max-w-full bg-page flex flex-col border-x-0 sm:border-x border-border ${activeTab === 'branding' || activeTab === 'design' ? 'sm:max-w-6xl' : 'sm:max-w-3xl'}`}>
+      {/* PC / Laptop Responsive Container: max-w-5xl lg:max-w-6xl */}
+      <main className="mx-auto min-h-[100dvh] w-full max-w-5xl lg:max-w-6xl bg-page flex flex-col border-x-0 sm:border-x border-border">
 
         {/* Top Header: Clean Light Style */}
-        <header className="bg-surface text-content-primary border-b border-border px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+        <header className="bg-surface text-content-primary border-b border-border px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Link
               href={`/${activeSlug}`}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-[8px] sm:rounded-[10px] bg-page hover:bg-[#E7E4DC] flex items-center justify-center text-content-primary border border-border transition-colors shrink-0"
@@ -1497,18 +1497,19 @@ export default function DashboardPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <h1 className="text-xs sm:text-sm font-semibold tracking-tight leading-none text-content-primary truncate min-w-0 flex-1 sm:flex-initial sm:max-w-[260px]">
                   {settings.store_name}
                 </h1>
-                <span
-                  title="Один из первых 100 магазинов на платформе BioMart • Статус закреплён навсегда"
-                  className="text-[9px] sm:text-[10px] bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 px-1.5 sm:px-2 py-0.5 rounded-[5px] sm:rounded-[6px] font-bold flex items-center gap-1 shrink-0 select-none"
-                >
-                  <span>🌟</span>
-                  <span>Founding Seller</span>
-                </span>
-                {IS_SUBSCRIPTION_ENABLED ? (
+                {Boolean(settings.is_verified) && (
+                  <span
+                    title="Проверенный магазин (Verified ✅)"
+                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#1F7A5A] text-white shrink-0 select-none shadow-xs"
+                  >
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                  </span>
+                )}
+                {IS_SUBSCRIPTION_ENABLED && (
                   <button
                     type="button"
                     onClick={() => setActiveTab('tariff')}
@@ -1517,10 +1518,6 @@ export default function DashboardPage() {
                   >
                     {settings.plan || 'Start'}
                   </button>
-                ) : (
-                  <span className="text-[9px] sm:text-[10px] bg-accent-soft text-accent border border-accent/20 px-1.5 sm:px-2 py-0.5 rounded-[5px] sm:rounded-[6px] font-semibold shrink-0">
-                    Бесплатно
-                  </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5">
@@ -1594,7 +1591,11 @@ export default function DashboardPage() {
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Заказы</span>
             {newOrdersCount > 0 && (
-              <span className="bg-surface text-[#1F7A5A] text-[10px] px-1.5 py-0.2 rounded-full font-semibold ml-0.5">
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 transition-colors ${
+                activeTab === 'orders'
+                  ? 'bg-white text-[#1F7A5A] shadow-2xs'
+                  : 'bg-emerald-500/20 text-[#1F7A5A] dark:text-emerald-300 border border-emerald-500/30'
+              }`}>
                 {newOrdersCount}
               </span>
             )}
@@ -1623,7 +1624,11 @@ export default function DashboardPage() {
             <Percent className="w-3.5 h-3.5" />
             <span>Промокоды</span>
             {((settingsForm.promo_codes || settings.promo_codes)?.length || 0) > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-page text-content-primary font-mono font-semibold">
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 transition-colors ${
+                activeTab === 'promos'
+                  ? 'bg-white text-[#1F7A5A] shadow-2xs'
+                  : 'bg-page text-content-primary border border-border shadow-2xs'
+              }`}>
                 {(settingsForm.promo_codes || settings.promo_codes)?.filter((p) => p.active !== false).length}
               </span>
             )}
@@ -1640,7 +1645,11 @@ export default function DashboardPage() {
             <Link2 className="w-3.5 h-3.5" />
             <span>Ссылки</span>
             {(settings.custom_links?.length || 0) > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-page text-content-primary font-mono font-semibold">
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 transition-colors ${
+                activeTab === 'links'
+                  ? 'bg-white text-[#1F7A5A] shadow-2xs'
+                  : 'bg-page text-content-primary border border-border shadow-2xs'
+              }`}>
                 {settings.custom_links?.filter((l) => l.is_active).length}
               </span>
             )}
@@ -1693,7 +1702,11 @@ export default function DashboardPage() {
             <Users className="w-3.5 h-3.5" />
             <span>Команда</span>
             {(settings.team_members?.filter((m) => m.role !== 'owner')?.length || 0) > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-page text-content-primary font-mono font-semibold">
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5 transition-colors ${
+                activeTab === 'team'
+                  ? 'bg-white text-[#1F7A5A] shadow-2xs'
+                  : 'bg-page text-content-primary border border-border shadow-2xs'
+              }`}>
                 {settings.team_members?.filter((m) => m.role !== 'owner')?.length}
               </span>
             )}
@@ -1721,34 +1734,13 @@ export default function DashboardPage() {
                 : 'text-content-secondary hover:bg-page hover:text-content-primary'
             }`}
           >
-            <Bot className="w-3.5 h-3.5 text-accent" />
+            <Bot className={`w-3.5 h-3.5 ${activeTab === 'ai' ? 'text-white' : 'text-accent'}`} />
             <span>AI Марти</span>
           </button>
         </div>
 
         {/* Tab Content Area */}
         <div className="p-3 sm:p-6 flex-1 space-y-4 sm:space-y-6">
-          {/* Founding Seller VIP Banner */}
-          <div className="p-3 sm:p-3.5 rounded-[12px] bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl">🌟</span>
-              <div>
-                <p className="font-bold text-content-primary">
-                  Статус Founding Seller (Первые 100 магазинов BioMart)
-                </p>
-                <p className="text-[11px] text-content-secondary mt-0.5">
-                  Ваш магазин входит в когорту первых 100 витрин. Постоянный VIP-доступ ко всем возможностям платформы закреплен за вами.
-                </p>
-              </div>
-            </div>
-            <Link
-              href={`/${activeSlug}`}
-              target="_blank"
-              className="shrink-0 px-3 py-1.5 rounded-[8px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 font-semibold text-[11px] transition-colors"
-            >
-              Смотреть витрину с бейджем →
-            </Link>
-          </div>
 
           {/* ========================================================================= */}
           {/* TAB 1: PRODUCTS */}
@@ -2058,7 +2050,7 @@ export default function DashboardPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
                   {products.map((prod) => {
                   const img =
                     prod.images?.[0] ||
@@ -4103,9 +4095,9 @@ export default function DashboardPage() {
               <div className="p-5 bg-surface rounded-[16px] border border-border shadow-xs space-y-5">
                 {/* Header Row with Toggle */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-accent text-accent-text flex items-center justify-center shadow-xs">
-                      <Bot className="w-5 h-5" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 min-w-[44px] min-h-[44px] aspect-square rounded-full shrink-0 bg-[#1F7A5A] text-white flex items-center justify-center shadow-xs">
+                      <Bot className="w-5 h-5 shrink-0" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">

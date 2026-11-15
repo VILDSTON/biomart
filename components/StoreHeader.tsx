@@ -103,19 +103,6 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                     <Check className="w-3 h-3 stroke-[3]" />
                   </span>
                 )}
-                {Boolean(settings.is_founding_seller) && (
-                  <span
-                    title={
-                      language === 'uz'
-                        ? `BioMart ta'sischi do'koni #${settings.founding_number || 1} • Ilk 100 ta do'kondan biri`
-                        : `Founding Seller #${settings.founding_number || 1} • Один из первых 100 магазинов BioMart`
-                    }
-                    className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-400/20 border border-amber-400/40 px-1.5 py-0.5 rounded-full shrink-0 shadow-2xs select-none"
-                  >
-                    <span className="text-[10px]">🌟</span>
-                    <span>#{settings.founding_number || 1}</span>
-                  </span>
-                )}
               </div>
 
               {/* Header Right: Language Switcher (RU | UZ) & Complaint */}

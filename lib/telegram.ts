@@ -147,15 +147,9 @@ export function recordRegisteredStore(storeData: NewStoreNotificationData): void
         data = {};
       }
     }
-    const currentCount = Object.keys(data).length;
-    const isFounding = currentCount < 100;
-    const foundingNumber = currentCount + 1;
-
     data[clean] = {
       ...storeData,
       slug: clean,
-      is_founding_seller: isFounding,
-      founding_number: isFounding ? foundingNumber : undefined,
       registered_at: new Date().toISOString(),
     };
     fs.writeFileSync(REGISTERED_STORES_FILE, JSON.stringify(data, null, 2), 'utf-8');
@@ -164,31 +158,8 @@ export function recordRegisteredStore(storeData: NewStoreNotificationData): void
   }
 }
 
-export function getFoundingSellerStatus(slug: string): { isFounding: boolean; foundingNumber?: number } {
-  try {
-    const clean = slug.toLowerCase().trim();
-    if (clean === 'tashkent_drip') return { isFounding: true, foundingNumber: 1 };
-    if (clean === 'samarkand_sweets') return { isFounding: true, foundingNumber: 2 };
-    if (clean === 'volt_gadgets') return { isFounding: true, foundingNumber: 3 };
-    if (clean === 'aura_perfume') return { isFounding: true, foundingNumber: 4 };
-
-    if (!fs.existsSync(REGISTERED_STORES_FILE)) return { isFounding: true, foundingNumber: 5 };
-    const raw = fs.readFileSync(REGISTERED_STORES_FILE, 'utf-8');
-    const data = JSON.parse(raw);
-    if (data[clean]) {
-      return {
-        isFounding: Boolean(data[clean].is_founding_seller ?? true),
-        foundingNumber: data[clean].founding_number || 5,
-      };
-    }
-    const totalCount = Object.keys(data).length;
-    if (totalCount < 100) {
-      return { isFounding: true, foundingNumber: totalCount + 5 };
-    }
-    return { isFounding: false };
-  } catch {
-    return { isFounding: true, foundingNumber: 1 };
-  }
+export function getFoundingSellerStatus(_slug: string): { isFounding: boolean; foundingNumber?: number } {
+  return { isFounding: false };
 }
 
 export function getAllRegisteredStores(): Record<string, any> {

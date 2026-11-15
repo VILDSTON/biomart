@@ -10,7 +10,7 @@ import { StoreSettings } from '@/types';
 import { StorefrontClient, StorefrontSkeleton } from '@/components/StorefrontClient';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isSlugBanned } from '@/lib/moderation';
-import { isStoreVerifiedInFile, isStoreBannedInFile, getFoundingSellerStatus } from '@/lib/telegram';
+import { isStoreVerifiedInFile, isStoreBannedInFile } from '@/lib/telegram';
 import { SITE_URL } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
@@ -186,15 +186,11 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     fallbackSettings.is_verified
   );
 
-  const foundingStatus = getFoundingSellerStatus(cleanSlug);
-
   // 3. Fallback to mock settings for demo store or new stores
   const storeSettings = {
     ...(dbStore || fallbackSettings),
     slug: cleanSlug,
     is_verified: isVerifiedStore,
-    is_founding_seller: foundingStatus.isFounding,
-    founding_number: foundingStatus.foundingNumber,
     store_name:
       dbStore?.store_name ||
       cookieContacts?.store_name ||
