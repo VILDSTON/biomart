@@ -199,6 +199,8 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     telegram_username: cookieContacts?.telegram_username ?? dbStore?.telegram_username ?? (isDemoSlug && demoPreset ? demoPreset.settings.telegram_username : (cleanSlug === 'tashkent_drip' ? fallbackSettings.telegram_username : '')),
     telegram_chat_id: (cookieContacts as any)?.telegram_chat_id ?? dbStore?.telegram_chat_id ?? (isDemoSlug && demoPreset ? (demoPreset.settings as any).telegram_chat_id : (cleanSlug === 'tashkent_drip' ? (fallbackSettings as any).telegram_chat_id : undefined)),
     phone: cookieContacts?.phone ?? dbStore?.phone ?? (isDemoSlug && demoPreset ? demoPreset.settings.phone : (cleanSlug === 'tashkent_drip' ? fallbackSettings.phone : '')),
+    card_number: (cookieContacts as any)?.card_number ?? dbStore?.theme_settings?.card_number ?? (dbStore as any)?.card_number ?? (isDemoSlug && demoPreset ? (demoPreset.settings as any).card_number : (fallbackSettings as any)?.card_number),
+    card_holder: (cookieContacts as any)?.card_holder ?? dbStore?.theme_settings?.card_holder ?? (dbStore as any)?.card_holder ?? (isDemoSlug && demoPreset ? (demoPreset.settings as any).card_holder : (fallbackSettings as any)?.card_holder),
     custom_links: cookieContacts?.custom_links !== undefined ? cookieContacts.custom_links : (dbStore?.custom_links ?? (isDemoSlug ? fallbackSettings.custom_links ?? [] : [])),
   };
 
@@ -276,6 +278,8 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
     show_reviews: themeSettings.show_reviews !== undefined ? themeSettings.show_reviews : (storeSettings.show_reviews ?? true),
     reviews: storeSettings.reviews,
     custom_links: storeSettings.custom_links || [],
+    card_number: themeSettings.card_number || storeSettings.card_number || '',
+    card_holder: themeSettings.card_holder || storeSettings.card_holder || '',
     ai_assistant_enabled: storeSettings.ai_assistant_enabled !== false,
     theme_settings: themeSettings,
   };

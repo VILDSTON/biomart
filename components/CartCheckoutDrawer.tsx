@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { X, Trash2, ArrowRight, Loader2, Truck, Store, MapPin, Phone, User, MessageSquare, Tag } from 'lucide-react';
+import { X, Trash2, ArrowRight, Loader2, Truck, Store, MapPin, Phone, User, MessageSquare, Tag, Banknote, CreditCard, Send } from 'lucide-react';
 import { CartItem, Order, OrderItem, StoreSettings } from '@/types';
 import { formatPrice, getContrastTextColor, UZBEKISTAN_REGIONS, formatUzbekPhone } from '@/lib/utils';
 import { useBioMartStore } from '@/store/useStore';
@@ -34,7 +34,9 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('+998 ');
+  const [customerTelegram, setCustomerTelegram] = useState('');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [address, setAddress] = useState('');
   const [comment, setComment] = useState('');
@@ -147,11 +149,16 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
       ? `${selectedDistrict}, ${address.trim()}`
       : address.trim();
 
+    const cleanTg = customerTelegram.trim();
+    const formattedTg = cleanTg ? (cleanTg.startsWith('@') ? cleanTg : `@${cleanTg}`) : undefined;
+
     const newOrder: Order = {
       id: Math.floor(1000 + Math.random() * 9000),
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
+      customer_telegram: formattedTg,
       delivery_type: deliveryType,
+      payment_method: paymentMethod,
       address: deliveryType === 'delivery' ? fullAddress : undefined,
       comment: comment.trim() || undefined,
       items: orderItems,
@@ -322,6 +329,45 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
                 </div>
               </div>
 
+              {/* Payment Method */}
+              <div className="pt-1">
+                <label className="block text-xs font-semibold text-content-primary mb-1.5">
+                  {language === 'uz' ? "To'lov usuli:" : 'Способ оплаты:'}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`min-h-[40px] py-2 px-3 rounded-btn border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                      paymentMethod === 'cash'
+                        ? 'border-accent bg-accent-soft text-accent shadow-xs'
+                        : 'bg-page border-border text-content-primary hover:bg-surface-soft'
+                    }`}
+                  >
+                    <Banknote className="w-3.5 h-3.5" />
+                    <span>{language === 'uz' ? 'Naqd pulda' : 'Наличными'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('card')}
+                    className={`min-h-[40px] py-2 px-3 rounded-btn border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                      paymentMethod === 'card'
+                        ? 'border-accent bg-accent-soft text-accent shadow-xs'
+                        : 'bg-page border-border text-content-primary hover:bg-surface-soft'
+                    }`}
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>Click / Payme</span>
+                  </button>
+                </div>
+                {paymentMethod === 'card' && (
+                  <p className="text-[10px] text-accent mt-1.5 font-medium flex items-center gap-1">
+                    <span>💳 Реквизиты карты Uzcard/Humo будут показаны после оформления</span>
+                  </p>
+                )}
+              </div>
+
               {/* Customer Name */}
               <div>
                 <label className="block text-xs font-medium text-content-secondary mb-1">
@@ -356,6 +402,27 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
                     onFocus={handleInputFocus}
                     placeholder="+998 90 123 45 67"
                     className="w-full pl-9 pr-3 py-2.5 rounded-btn text-xs font-mono border border-border bg-page text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              {/* Customer Telegram (Optional) */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-content-secondary">
+                    {language === 'uz' ? 'Sizning Telegram (ixtiyoriy)' : 'Ваш Telegram (необязательно)'}
+                  </label>
+                  <span className="text-[10px] text-content-secondary">для быстрой связи</span>
+                </div>
+                <div className="relative">
+                  <Send className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary" />
+                  <input
+                    type="text"
+                    value={customerTelegram}
+                    onChange={(e) => setCustomerTelegram(e.target.value)}
+                    onFocus={handleInputFocus}
+                    placeholder="@username"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-btn text-xs border border-border bg-page text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
                   />
                 </div>
               </div>

@@ -241,12 +241,21 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
     }, 600);
   };
 
-  // Save changes (Writes to database callback, sets SSR cookie, syncs localStorage across tabs, and calls on-demand revalidation)
+  // Save changes (Writes to database callback, sets SSR cookie safely without base64 bloat, syncs localStorage across tabs, and calls on-demand revalidation)
   const handleSave = () => {
     try {
       const slug = settings.slug || 'tashkent_drip';
       const serialized = JSON.stringify(form);
-      document.cookie = `biomart_theme_${slug}=${encodeURIComponent(serialized)}; path=/; max-age=31536000; SameSite=Lax`;
+
+      // Safe cookie payload: Strip heavy base64 Data URLs to prevent HTTP 431 Header Overflow
+      const cookiePayload = { ...form };
+      if (cookiePayload.avatar_url?.startsWith('data:')) delete cookiePayload.avatar_url;
+      if (cookiePayload.banner_url?.startsWith('data:')) delete cookiePayload.banner_url;
+      const serializedCookie = JSON.stringify(cookiePayload);
+      if (serializedCookie.length < 3800) {
+        document.cookie = `biomart_theme_${slug}=${encodeURIComponent(serializedCookie)}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem(`biomart_store_theme_${slug}`, serialized);
         localStorage.setItem('biomart_store_theme_tashkent_drip', serialized);
@@ -270,7 +279,7 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
     setAiTooltip(null);
   };
 
-  // Local image upload handler with client-side compression
+  // Image upload handler: tries server upload to /api/upload first to avoid base64 bloat
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     field: 'avatar_url' | 'banner_url'
@@ -280,6 +289,31 @@ export const StorefrontDesignEditor: React.FC<StorefrontDesignEditorProps> = ({
 
     try {
       const compressedFile = await compressImage(file, 1200, 1200, 0.82);
+
+      // 1. Try uploading to server endpoint
+      const formData = new FormData();
+      formData.append('file', compressedFile);
+      formData.append('folder', 'branding');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          setForm((prev) => ({ ...prev, [field]: data.url }));
+          return;
+        }
+      }
+    } catch (uploadErr) {
+      console.warn('[DesignEditor] Image upload API fallback:', uploadErr);
+    }
+
+    // 2. Fallback to local DataURL for offline/demo preview
+    try {
+      const compressedFile = await compressImage(file, 800, 800, 0.7);
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;

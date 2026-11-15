@@ -48,6 +48,8 @@ export interface ThemeSettings {
   show_trust_badges?: boolean;
   custom_badges?: TrustBadgeItem[];
   show_reviews?: boolean;
+  card_number?: string;
+  card_holder?: string;
 }
 
 export type StoreStatus = 'pending' | 'published' | 'rejected' | 'needs_changes';
@@ -95,6 +97,10 @@ export interface StoreSettings {
   hide_branding?: boolean;
   plan?: PlanType;
   promo_codes?: PromoCode[];
+
+  // Payment Requisites (Uzcard / Humo for Click & Payme direct transfer)
+  card_number?: string;
+  card_holder?: string;
 
   // Custom Action / Social Links
   custom_links?: StoreCustomLink[];
@@ -173,7 +179,9 @@ export interface Order {
   shop_slug?: string;
   customer_name: string;
   customer_phone: string;
+  customer_telegram?: string;
   delivery_type: 'delivery' | 'pickup';
+  payment_method?: 'cash' | 'card';
   address?: string;
   comment?: string;
   items: OrderItem[];
@@ -187,7 +195,9 @@ export interface Order {
 export interface CheckoutFormData {
   customer_name: string;
   customer_phone: string;
+  customer_telegram?: string;
   delivery_type: 'delivery' | 'pickup';
+  payment_method?: 'cash' | 'card';
   address?: string;
   comment?: string;
 }

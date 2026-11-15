@@ -17,6 +17,8 @@ export interface ThemeSettings {
   show_trust_badges?: boolean;
   custom_badges?: TrustBadgeItem[];
   show_reviews?: boolean;
+  card_number?: string;
+  card_holder?: string;
 }
 
 export interface StoreAccentTokens {
@@ -381,5 +383,7 @@ export function getEffectiveThemeSettings(raw?: Partial<ThemeSettings> | null, l
     show_trust_badges: raw?.show_trust_badges !== undefined ? raw.show_trust_badges : (legacySettings?.show_trust_badges ?? true),
     custom_badges: raw?.custom_badges || legacySettings?.custom_badges || undefined,
     show_reviews: raw?.show_reviews !== undefined ? raw.show_reviews : (legacySettings?.show_reviews ?? true),
+    card_number: raw?.card_number || legacySettings?.card_number || '',
+    card_holder: raw?.card_holder || legacySettings?.card_holder || '',
   };
 }

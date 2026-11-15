@@ -70,6 +70,8 @@ export const createOrderSchema = z.object({
     .max(20, 'Номер телефона слишком длинный')
     .regex(/^[\d+\s()-]+$/, 'Некорректный формат телефона'),
   delivery_type: z.enum(['delivery', 'pickup']),
+  customer_telegram: z.string().max(60).optional().nullable(),
+  payment_method: z.enum(['cash', 'card']).default('cash'),
   address: z.string().max(200, 'Адрес слишком длинный').optional().nullable(),
   comment: z.string().max(300, 'Комментарий слишком длинный').optional().nullable(),
   promo_code: z.string().max(30).optional().nullable(),
@@ -98,6 +100,8 @@ export const storeSettingsSchema = z.object({
   theme: z.enum(['light', 'dark']).default('light'),
   catalog_layout: z.enum(['grid', 'list']).default('grid'),
   hide_branding: z.boolean().default(false),
+  card_number: z.string().max(30).optional().nullable(),
+  card_holder: z.string().max(80).optional().nullable(),
   avatar_url: z.string().url().or(z.string().length(0)).optional(),
   banner_url: z.string().url().or(z.string().length(0)).optional(),
 });

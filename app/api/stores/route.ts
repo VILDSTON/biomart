@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     // Check if exists in Supabase
     const { data: existing } = await supabaseAdmin
       .from('stores')
-      .select('id, slug')
+      .select('id, slug, theme_settings')
       .eq('slug', cleanSlug)
       .maybeSingle();
 
@@ -131,7 +131,16 @@ export async function POST(req: NextRequest) {
       if (telegram_username !== undefined) updatePayload.telegram_username = telegram_username?.trim() || null;
       if (telegram_chat_id !== undefined) updatePayload.telegram_chat_id = telegram_chat_id?.trim() || null;
       if (phone !== undefined) updatePayload.phone = phone?.trim() || null;
-      if (body.theme_settings !== undefined) updatePayload.theme_settings = body.theme_settings;
+      if (body.card_number !== undefined || body.card_holder !== undefined) {
+        const currentThemeSettings = body.theme_settings || existing.theme_settings || {};
+        updatePayload.theme_settings = {
+          ...currentThemeSettings,
+          ...(body.card_number !== undefined ? { card_number: body.card_number?.trim() || '' } : {}),
+          ...(body.card_holder !== undefined ? { card_holder: body.card_holder?.trim() || '' } : {}),
+        };
+      } else if (body.theme_settings !== undefined) {
+        updatePayload.theme_settings = body.theme_settings;
+      }
 
       const { data: updated, error } = await supabaseAdmin
         .from('stores')

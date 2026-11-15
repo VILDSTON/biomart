@@ -155,7 +155,9 @@ export async function POST(request: Request) {
       seller_username,
       customer_name,
       customer_phone,
+      customer_telegram,
       delivery_type,
+      payment_method,
       address,
       comment,
       promo_code,
@@ -280,12 +282,18 @@ export async function POST(request: Request) {
           }
         }
 
+        const fullComment = [
+          comment?.trim() || null,
+          customer_telegram ? `TG клиента: ${customer_telegram.startsWith('@') ? customer_telegram : `@${customer_telegram}`}` : null,
+          payment_method === 'card' ? 'Оплата: Перевод на карту (Click/Payme)' : 'Оплата: Наличными при получении',
+        ].filter(Boolean).join('\n');
+
         const insertPayload: Record<string, any> = {
           customer_name: customer_name.trim(),
           customer_phone: customer_phone.trim(),
           delivery_type,
           address: delivery_type === 'delivery' ? address?.trim() : null,
-          comment: comment?.trim() || null,
+          comment: fullComment || null,
           items: validatedItems,
           total_price: authoritativeTotalPrice,
           promo_code: verifiedPromoCode,
@@ -345,13 +353,17 @@ export async function POST(request: Request) {
       .join('\n\n');
 
     const cleanPhone = customer_phone.replace(/[^\d+]/g, '');
+    const cleanTg = customer_telegram?.trim().replace(/^@/, '');
     const shopBadge = shop_slug ? `\n<b>Магазин:</b> biomart.vercel.app/${escapeTelegramHtml(shop_slug)}` : '';
+    const paymentTitle = payment_method === 'card' ? '💳 Перевод на карту (Click / Payme)' : '💵 Наличными при получении';
+    const tgLine = cleanTg ? `<b>Telegram клиента:</b> <a href="https://t.me/${cleanTg}">@${escapeTelegramHtml(cleanTg)}</a>\n` : '';
 
     const tgMessage = `<b>НОВЫЙ ЗАКАЗ #${orderId}</b>${shopBadge}
 
 <b>Клиент:</b> ${escapeTelegramHtml(customer_name.trim())}
 <b>Телефон:</b> <a href="tel:${cleanPhone}">${escapeTelegramHtml(customer_phone.trim())}</a>
-<b>Способ получения:</b> ${deliveryTitle}
+${tgLine}<b>Способ получения:</b> ${deliveryTitle}
+<b>Способ оплаты:</b> ${paymentTitle}
 ${addressLine}${commentLine}${promoLine}
 <b>Состав заказа:</b>
 ${itemsFormatted}
@@ -368,19 +380,28 @@ ${itemsFormatted}
 
     if (botToken && targetChatId) {
       console.log(`[Orders API] Dispatching order #${orderId} to Telegram chat ${targetChatId}`);
-      const inlineButtons: Array<Array<{ text: string; url: string }>> = [
-        [
+      const inlineButtons: Array<Array<{ text: string; url: string }>> = [];
+
+      if (cleanTg) {
+        inlineButtons.push([
           {
-            text: '💬 Чат в Telegram с клиентом',
-            url: `https://t.me/${cleanPhone.replace('+', '')}`,
+            text: `💬 Telegram клиента (@${cleanTg})`,
+            url: `https://t.me/${cleanTg}`,
           },
-        ],
-      ];
+        ]);
+      }
+
+      inlineButtons.push([
+        {
+          text: '💬 WhatsApp клиента',
+          url: `https://wa.me/${cleanPhone.replace('+', '')}`,
+        },
+      ]);
 
       if (delivery_type === 'delivery' && yandexMapsUrl) {
         inlineButtons.push([
           {
-            text: 'Открыть в Яндекс Картах',
+            text: '📍 Открыть в Яндекс Картах',
             url: yandexMapsUrl,
           },
         ]);
@@ -424,7 +445,9 @@ ${itemsFormatted}
       shop_slug: shop_slug || 'tashkent_drip',
       customer_name: customer_name.trim(),
       customer_phone: customer_phone.trim(),
+      customer_telegram: cleanTg ? `@${cleanTg}` : undefined,
       delivery_type,
+      payment_method: payment_method || 'cash',
       address: delivery_type === 'delivery' ? (address?.trim() || '') : '',
       comment: comment?.trim() || '',
       items: validatedItems,

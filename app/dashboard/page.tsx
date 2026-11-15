@@ -53,6 +53,7 @@ import {
   UserPlus,
   Shield,
   CheckCircle2,
+  CreditCard,
   User,
   Save,
   Sparkles,
@@ -442,9 +443,9 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
-  // Plan Limits
+  // Plan Limits (Generous free tier for Uzbek merchants)
   const currentPlan = (settings.plan || 'start') as string;
-  const maxProducts = 10;
+  const maxProducts = 50;
   const isLimitReached = products.length >= maxProducts;
   const isProPlan = false;
 
@@ -985,11 +986,15 @@ export default function DashboardPage() {
     const cleanIg = rawIg ? (rawIg.startsWith('http') ? rawIg : `https://instagram.com/${rawIg.replace('@', '')}`) : '';
     const cleanTgUser = settingsForm.telegram_username?.replace('@', '').trim() || '';
     const cleanPhone = settingsForm.phone?.trim() || '';
+    const cleanCardNumber = settingsForm.card_number?.trim() || '';
+    const cleanCardHolder = settingsForm.card_holder?.trim() || '';
 
     updateShopSettings(activeSlug, {
       instagram_url: cleanIg,
       telegram_username: cleanTgUser,
       phone: cleanPhone,
+      card_number: cleanCardNumber,
+      card_holder: cleanCardHolder,
     });
 
     try {
@@ -998,6 +1003,8 @@ export default function DashboardPage() {
         instagram_url: cleanIg,
         telegram_username: cleanTgUser,
         phone: cleanPhone,
+        card_number: cleanCardNumber,
+        card_holder: cleanCardHolder,
       };
       document.cookie = `biomart_contacts_${activeSlug}=${encodeURIComponent(JSON.stringify(contactsPayload))}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {}
@@ -1012,6 +1019,8 @@ export default function DashboardPage() {
           instagram_url: cleanIg,
           telegram_username: cleanTgUser,
           phone: cleanPhone,
+          card_number: cleanCardNumber,
+          card_holder: cleanCardHolder,
         }),
       });
     } catch (e) {
@@ -2086,15 +2095,25 @@ export default function DashboardPage() {
                               {formatPrice(prod.old_price, settings.currency)}
                             </span>
                           )}
-                          <span
-                            className={`text-[9px] font-medium px-1.5 py-0.2 rounded-[4px] ${
+                          <button
+                            type="button"
+                            onClick={() => {
+                              toggleShopProductStock(activeSlug, prod.id);
+                              showToast(
+                                prod.in_stock
+                                  ? `Товар «${prod.title}» отмечен как распродан`
+                                  : `Товар «${prod.title}» снова в наличии`
+                              );
+                            }}
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-[6px] transition-all border active:scale-95 ${
                               prod.in_stock
-                                ? 'text-[#1F7A5A] bg-[#E4F1EB]'
-                                : 'text-content-secondary bg-page'
+                                ? 'text-[#1F7A5A] bg-[#E4F1EB] border-[#1F7A5A]/30 hover:bg-[#D4EADE]'
+                                : 'text-content-secondary bg-page border-border hover:bg-surface-soft hover:text-content-primary'
                             }`}
+                            title="Быстрое переключение наличия в 1 клик"
                           >
-                            {prod.in_stock ? 'В наличии' : 'Распродано'}
-                          </span>
+                            {prod.in_stock ? '✓ В наличии' : '✕ Распродано'}
+                          </button>
                         </div>
 
                         {prod.sizes && prod.sizes.length > 0 && (
@@ -2134,6 +2153,23 @@ export default function DashboardPage() {
 
                           {openActionMenuId === prod.id && (
                             <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-[10px] shadow-md py-1 z-30 text-xs">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenActionMenuId(null);
+                                  toggleShopProductStock(activeSlug, prod.id);
+                                  showToast(
+                                    prod.in_stock
+                                      ? `Товар «${prod.title}» отмечен как распродан`
+                                      : `Товар «${prod.title}» снова в наличии`
+                                  );
+                                }}
+                                className="w-full text-left px-3 py-1.5 text-content-primary hover:bg-page flex items-center gap-2 font-medium"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#1F7A5A]" />
+                                <span>{prod.in_stock ? 'Отметить как распродан' : 'Вернуть в наличие'}</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -2673,19 +2709,32 @@ export default function DashboardPage() {
                             <span className="font-semibold text-content-primary">
                               {order.customer_name}
                             </span>
-                            <span className="text-content-secondary font-medium inline-flex items-center gap-1">
-                              {order.delivery_type === 'delivery' ? (
-                                <>
-                                  <Truck className="w-3.5 h-3.5 text-emerald-500" />
-                                  <span>Доставка</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Store className="w-3.5 h-3.5 text-blue-500" />
-                                  <span>Самовывоз</span>
-                                </>
-                              )}
-                            </span>
+                            <div className="flex items-center gap-1.5 text-content-secondary font-medium text-[11px]">
+                              <span className="inline-flex items-center gap-1">
+                                {order.delivery_type === 'delivery' ? (
+                                  <>
+                                    <Truck className="w-3.5 h-3.5 text-emerald-500" />
+                                    <span>Доставка</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Store className="w-3.5 h-3.5 text-blue-500" />
+                                    <span>Самовывоз</span>
+                                  </>
+                                )}
+                              </span>
+                              <span className="text-border">•</span>
+                              <span className="inline-flex items-center gap-1 text-content-primary font-semibold">
+                                {order.payment_method === 'card' ? (
+                                  <>
+                                    <CreditCard className="w-3.5 h-3.5 text-accent" />
+                                    <span>Click / Payme</span>
+                                  </>
+                                ) : (
+                                  <span>💵 Наличными</span>
+                                )}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -2697,8 +2746,27 @@ export default function DashboardPage() {
                               <span>{order.customer_phone}</span>
                             </a>
 
+                            {order.customer_telegram && (
+                              <a
+                                href={`https://t.me/${order.customer_telegram.replace('@', '')}?text=${encodeURIComponent(
+                                  order.status === 'completed'
+                                    ? `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» успешно выполнен. Спасибо за покупку!`
+                                    : order.status === 'cancelled'
+                                    ? `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» был отменен.`
+                                    : `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» принят в обработку и передан курьеру. Ожидайте доставку!`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[11px] font-medium bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 px-2 py-1 rounded-[6px] border border-sky-200 dark:border-sky-800 hover:brightness-95"
+                                title="Написать клиенту напрямую в Telegram"
+                              >
+                                <Send className="w-3 h-3 text-sky-600" />
+                                <span>{order.customer_telegram.startsWith('@') ? order.customer_telegram : `@${order.customer_telegram}`}</span>
+                              </a>
+                            )}
+
                             <a
-                              href={`https://t.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(
+                              href={`https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(
                                 order.status === 'completed'
                                   ? `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» успешно выполнен. Спасибо за покупку!`
                                   : order.status === 'cancelled'
@@ -2707,11 +2775,10 @@ export default function DashboardPage() {
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-[11px] font-medium bg-page text-content-primary px-2 py-1 rounded-[6px] border border-border hover:bg-[#E7E4DC]"
-                              title="Отправить статус заказа клиенту в Telegram"
+                              className="flex items-center gap-1 text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2 py-1 rounded-[6px] border border-emerald-200 dark:border-emerald-800 hover:brightness-95"
+                              title="Написать клиенту в WhatsApp"
                             >
-                              <Send className="w-3 h-3 text-[#1F7A5A]" />
-                              <span>Уведомить в TG</span>
+                              <span>WhatsApp</span>
                             </a>
 
                             {order.address && (
@@ -3313,6 +3380,53 @@ export default function DashboardPage() {
                     <p className="text-[10px] text-content-secondary mt-1">
                       Если поле пустое, кнопка звонка на витрине скрыта
                     </p>
+                  </div>
+
+                  {/* Payment Requisites: Uzcard / Humo for Click & Payme direct transfer */}
+                  <div className="pt-3 border-t border-border space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-content-primary mb-1 flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-[#1F7A5A]" />
+                        <span>Номер карты для оплаты (Uzcard / Humo):</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.card_number || ''}
+                        onChange={(e) =>
+                          setSettingsForm({
+                            ...settingsForm,
+                            card_number: e.target.value,
+                          })
+                        }
+                        placeholder="8600 1234 5678 9012"
+                        className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs font-mono text-content-primary focus:outline-none focus:border-[#1F7A5A]"
+                      />
+                      <p className="text-[10px] text-content-secondary mt-1">
+                        Покупатель сможет скопировать номер карты в 1 клик для перевода через Click или Payme
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-content-primary mb-1 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-content-secondary" />
+                        <span>Имя держателя карты (необязательно):</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.card_holder || ''}
+                        onChange={(e) =>
+                          setSettingsForm({
+                            ...settingsForm,
+                            card_holder: e.target.value.toUpperCase(),
+                          })
+                        }
+                        placeholder="AZIZOV A."
+                        className="w-full px-3.5 py-2.5 bg-page border border-border rounded-[10px] text-xs uppercase text-content-primary focus:outline-none focus:border-[#1F7A5A]"
+                      />
+                      <p className="text-[10px] text-content-secondary mt-1">
+                        Помогает покупателю убедиться, что он переводит деньги правильному адресату
+                      </p>
+                    </div>
                   </div>
 
                   {contactsSavedToast && (
@@ -3944,7 +4058,7 @@ export default function DashboardPage() {
                   <ul className="text-xs text-content-primary mt-3 space-y-1.5 border-t border-border pt-2.5">
                     <li className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-[#1F7A5A] shrink-0" />
-                      <span>До 15 товаров</span>
+                      <span>До 50 товаров в каталоге</span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-[#1F7A5A] shrink-0" />
