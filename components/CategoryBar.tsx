@@ -19,7 +19,7 @@ interface CategoryBarProps {
   storeSettings: StoreSettings;
 }
 
-export const CategoryBar: React.FC<CategoryBarProps> = ({
+const CategoryBarComponent: React.FC<CategoryBarProps> = ({
   categories,
   activeSlug,
   onSelectCategory,
@@ -30,7 +30,7 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
   onToggleLayout,
   storeSettings,
 }) => {
-  const { language } = useBioMartStore();
+  const language = useBioMartStore((state) => state.language);
   const t = translations[language];
   const customAccent = storeSettings.accent_color || '#1F7A5A';
   const accentTextColor = getContrastTextColor(customAccent);
@@ -106,7 +106,11 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
             <button
               key={category.id}
               type="button"
-              onClick={() => onSelectCategory(category.slug)}
+              onClick={() => {
+                React.startTransition(() => {
+                  onSelectCategory(category.slug);
+                });
+              }}
               className={`min-h-[36px] px-3.5 py-1.5 rounded-btn text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 active:scale-95 ${
                 isActive
                   ? 'bg-accent text-accent-text border border-accent shadow-xs'
@@ -130,3 +134,5 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
     </div>
   );
 };
+
+export const CategoryBar = React.memo(CategoryBarComponent);

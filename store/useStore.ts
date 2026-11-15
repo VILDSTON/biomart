@@ -84,6 +84,43 @@ const DEFAULT_DEMO_SHOP: ShopData = {
   orders: MOCK_ORDERS,
 };
 
+const nonBlockingLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window === 'undefined') return;
+    // Defer synchronous disk write to idle time so interactions and UI paints are never blocked
+    if (typeof (window as any).requestIdleCallback === 'function') {
+      (window as any).requestIdleCallback(
+        () => {
+          try {
+            localStorage.setItem(key, value);
+          } catch {}
+        },
+        { timeout: 100 }
+      );
+    } else {
+      setTimeout(() => {
+        try {
+          localStorage.setItem(key, value);
+        } catch {}
+      }, 0);
+    }
+  },
+  removeItem: (key: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  },
+};
+
 export const useBioMartStore = create<BioMartMultiStoreState>()(
   persist(
     (set, get) => ({
@@ -631,7 +668,7 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
     }),
     {
       name: 'biomart_multi_store_v3',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => nonBlockingLocalStorage),
       partialize: (state) => ({
         activeSlug: state.activeSlug,
         shops: state.shops,

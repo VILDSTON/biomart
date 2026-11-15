@@ -371,15 +371,39 @@ export function StorefrontClient({
     return counts;
   }, [currentProducts, currentCategories]);
 
-  const handleQuickAdd = (product: Product) => {
-    addToCart(product, null, 1, shopSlug);
-    setFlyAnimation({ x: 0, y: 0 });
-    setTimeout(() => setFlyAnimation(null), 500);
-  };
+  const handleQuickAdd = React.useCallback(
+    (product: Product) => {
+      React.startTransition(() => {
+        addToCart(product, null, 1, shopSlug);
+        setFlyAnimation({ x: 0, y: 0 });
+      });
+      setTimeout(() => setFlyAnimation(null), 500);
+    },
+    [addToCart, shopSlug]
+  );
 
-  const handleOneClickBuy = (product: Product) => {
-    setOneClickProduct(product);
-  };
+  const handleOneClickBuy = React.useCallback(
+    (product: Product) => {
+      setOneClickProduct(product);
+    },
+    [setOneClickProduct]
+  );
+
+  const handleOpenDetail = React.useCallback(
+    (product: Product) => {
+      setActiveProductModal(product);
+    },
+    [setActiveProductModal]
+  );
+
+  const handleCategorySelect = React.useCallback(
+    (slug: string) => {
+      React.startTransition(() => {
+        setActiveCategorySlug(slug);
+      });
+    },
+    [setActiveCategorySlug]
+  );
 
   const handleOrderSuccess = (order: Order) => {
     addShopOrder(shopSlug, order);
@@ -399,6 +423,12 @@ export function StorefrontClient({
   const currentCart = useMemo(() => {
     return cart.filter((item) => !item.shop_slug || item.shop_slug === shopSlug);
   }, [cart, shopSlug]);
+
+  const cartProductIds = useMemo(() => {
+    const ids = new Set<string>();
+    currentCart.forEach((item) => ids.add(item.product.id));
+    return ids;
+  }, [currentCart]);
 
   const cartTotal = useMemo(() => {
     return currentCart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
@@ -485,7 +515,7 @@ export function StorefrontClient({
         <CategoryBar
           categories={currentCategories}
           activeSlug={activeCategorySlug}
-          onSelectCategory={setActiveCategorySlug}
+          onSelectCategory={handleCategorySelect}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           productCountByCategory={productCountByCategory}
@@ -535,14 +565,14 @@ export function StorefrontClient({
           ) : (
             <div className={catalogLayout === 'grid' && effectiveSettings.card_style !== 'single' ? 'grid grid-cols-2 gap-2 xs:gap-2.5' : 'flex flex-col gap-2.5'}>
               {filteredProducts.map((product) => {
-                const isInCart = currentCart.some((c) => c.product.id === product.id);
+                const isInCart = cartProductIds.has(product.id);
                 return (
                   <ProductCard
                     key={product.id}
                     product={product}
                     storeSettings={effectiveSettings}
                     layout={catalogLayout}
-                    onOpenDetail={(p) => setActiveProductModal(p)}
+                    onOpenDetail={handleOpenDetail}
                     onQuickAdd={handleQuickAdd}
                     onOneClickBuy={handleOneClickBuy}
                     isInCart={isInCart}

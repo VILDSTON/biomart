@@ -32,8 +32,8 @@ const ICON_MAP: Record<string, { icon: LucideIcon }> = {
   heart: { icon: Heart },
 };
 
-export const StoreTrustBadges: React.FC<StoreTrustBadgesProps> = ({ className = '', settings }) => {
-  const { language } = useBioMartStore();
+const StoreTrustBadgesComponent: React.FC<StoreTrustBadgesProps> = ({ className = '', settings }) => {
+  const language = useBioMartStore((state) => state.language);
   const isUz = language === 'uz';
 
   // Check if badges are hidden
@@ -103,3 +103,5 @@ export const StoreTrustBadges: React.FC<StoreTrustBadgesProps> = ({ className = 
     </div>
   );
 };
+
+export const StoreTrustBadges = React.memo(StoreTrustBadgesComponent);

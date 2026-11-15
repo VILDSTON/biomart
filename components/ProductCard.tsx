@@ -32,7 +32,7 @@ function formatSizesLabel(sizes?: string[]): string | null {
   return `${count} размеров`;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCardComponent: React.FC<ProductCardProps> = ({
   product,
   storeSettings,
   layout = 'grid',
@@ -42,7 +42,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const { language } = useBioMartStore();
+  const language = useBioMartStore((state) => state.language);
   const t = translations[language];
 
   const discount = calculateDiscount(product.price, product.old_price);
@@ -367,3 +367,5 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     </div>
   );
 };
+
+export const ProductCard = React.memo(ProductCardComponent);

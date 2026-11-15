@@ -54,12 +54,13 @@ interface StoreHeaderProps {
   totalProducts?: number;
 }
 
-export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = false, totalProducts }) => {
+const StoreHeaderComponent: React.FC<StoreHeaderProps> = ({ settings, isDemo = false, totalProducts }) => {
   const [avatarError, setAvatarError] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isComplaintOpen, setIsComplaintOpen] = useState(false);
   const [showVerifiedTooltip, setShowVerifiedTooltip] = useState(false);
-  const { language, setLanguage } = useBioMartStore();
+  const language = useBioMartStore((state) => state.language);
+  const setLanguage = useBioMartStore((state) => state.setLanguage);
   const t = translations[language];
 
   const [bannerError, setBannerError] = useState(false);
@@ -352,3 +353,5 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
     </header>
   );
 };
+
+export const StoreHeader = React.memo(StoreHeaderComponent);

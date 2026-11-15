@@ -14,13 +14,13 @@ interface FloatingCartBarProps {
   onClickCheckout: () => void;
 }
 
-export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({
+const FloatingCartBarComponent: React.FC<FloatingCartBarProps> = ({
   itemCount,
   totalPrice,
   storeSettings,
   onClickCheckout,
 }) => {
-  const { language } = useBioMartStore();
+  const language = useBioMartStore((state) => state.language);
   if (itemCount <= 0) return null;
 
   const currency = storeSettings.currency || 'сум';
@@ -74,3 +74,5 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({
     </div>
   );
 };
+
+export const FloatingCartBar = React.memo(FloatingCartBarComponent);

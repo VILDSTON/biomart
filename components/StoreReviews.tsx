@@ -10,8 +10,9 @@ interface StoreReviewsProps {
   className?: string;
 }
 
-export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className = '' }) => {
-  const { language, addShopReview } = useBioMartStore();
+const StoreReviewsComponent: React.FC<StoreReviewsProps> = ({ settings, className = '' }) => {
+  const language = useBioMartStore((state) => state.language);
+  const addShopReview = useBioMartStore((state) => state.addShopReview);
   const isUz = language === 'uz';
 
   const isVisible = settings.show_reviews !== false && settings.theme_settings?.show_reviews !== false;
@@ -305,3 +306,5 @@ export const StoreReviews: React.FC<StoreReviewsProps> = ({ settings, className 
     </section>
   );
 };
+
+export const StoreReviews = React.memo(StoreReviewsComponent);
