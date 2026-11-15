@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Instagram, Send, Phone, ShieldCheck, Check, Zap, ChevronDown, Bell, Flag, Youtube, Globe, Link2, ArrowUpRight } from 'lucide-react';
+import { Instagram, Send, Phone, Check, Zap, ChevronDown, Bell, Flag, Youtube, Globe, Link2, ArrowUpRight } from 'lucide-react';
 import { StoreSettings } from '@/types';
 import { useBioMartStore } from '@/store/useStore';
 import { translations } from '@/lib/i18n';
@@ -97,10 +97,10 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                 </h1>
                 {Boolean(settings.is_verified) && (
                   <span
-                    title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan ishonchli do‘kon (Verified)' : 'Проверенный продавец BioMart (Verified ✅)'}
-                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white shrink-0 select-none shadow-2xs"
+                    title={language === 'uz' ? 'Tasdiqlangan do‘kon (Verified)' : 'Проверенный магазин (Verified ✅)'}
+                    className="inline-flex items-center justify-center w-4.5 h-4.5 rounded-full bg-[#1F7A5A] text-white shrink-0 select-none shadow-xs"
                   >
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    <Check className="w-3 h-3 stroke-[3]" />
                   </span>
                 )}
                 {Boolean(settings.is_founding_seller) && (
@@ -222,26 +222,6 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
           </div>
         )}
 
-        {/* Trust & Direct Payment Guarantee Badge */}
-        <div className="mt-3 flex items-center justify-between text-[11px] text-content-secondary py-1.5 px-3 rounded-[10px] bg-page border border-border/80">
-          <div className="flex items-center gap-1.5 font-medium truncate">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="truncate">
-              {language === 'uz'
-                ? 'Xavfsiz xarid • To‘lov to‘g‘ridan-to‘g‘ri do‘konga'
-                : 'Безопасный заказ • Оплата продавцу напрямую'}
-            </span>
-          </div>
-          {Boolean(settings.is_verified) ? (
-            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0 ml-2">
-              Verified ✓
-            </span>
-          ) : (
-            <span className="text-[10px] font-medium text-content-secondary shrink-0 ml-2">
-              {language === 'uz' ? 'BioMart kafolati' : 'Гарантия BioMart'}
-            </span>
-          )}
-        </div>
 
         {/* Custom Quick Links Buttons (configured in Dashboard -> Ссылки) */}
         {settings.custom_links && settings.custom_links.filter((l) => l.is_active).length > 0 && (

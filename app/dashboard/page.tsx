@@ -1692,9 +1692,9 @@ export default function DashboardPage() {
           >
             <Users className="w-3.5 h-3.5" />
             <span>Команда</span>
-            {(settings.team_members?.length || 0) > 0 && (
+            {(settings.team_members?.filter((m) => m.role !== 'owner')?.length || 0) > 0 && (
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-page text-content-primary font-mono font-semibold">
-                {settings.team_members?.length}
+                {settings.team_members?.filter((m) => m.role !== 'owner')?.length}
               </span>
             )}
           </button>
@@ -1724,18 +1724,6 @@ export default function DashboardPage() {
             <Bot className="w-3.5 h-3.5 text-accent" />
             <span>AI Марти</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSupportCategory('bug');
-              setIsSupportOpen(true);
-            }}
-            className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium text-content-secondary hover:bg-page hover:text-content-primary transition-colors whitespace-nowrap shrink-0"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-[#1F7A5A]" />
-            <span>Поддержка</span>
-          </button>
         </div>
 
         {/* Tab Content Area */}
@@ -1749,7 +1737,7 @@ export default function DashboardPage() {
                   Статус Founding Seller (Первые 100 магазинов BioMart)
                 </p>
                 <p className="text-[11px] text-content-secondary mt-0.5">
-                  Ваш магазин входит в когорту первых 100 витрин. Бесплатный доступ без комиссий навсегда закреплен за вашим магазином.
+                  Ваш магазин входит в когорту первых 100 витрин. Постоянный VIP-доступ ко всем возможностям платформы закреплен за вами.
                 </p>
               </div>
             </div>
@@ -3763,8 +3751,13 @@ export default function DashboardPage() {
                   <h3 className="text-xs font-bold text-content-primary flex items-center gap-2">
                     <span>Участники команды</span>
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-page text-content-secondary font-mono">
-                      {(settings.team_members?.length || 0) + 1}
+                      {((settings.team_members || []).filter((m) => m.role !== 'owner').length) + 1}
                     </span>
+                    {activeSlug === 'tashkent_drip' && (
+                      <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300 bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                        Демо-витрина
+                      </span>
+                    )}
                   </h3>
                   <span className="text-[11px] text-content-secondary">
                     Роли и уровни доступа
@@ -3800,8 +3793,10 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Registered Team Members */}
-                  {(settings.team_members || []).map((member) => (
+                  {/* Registered Team Members (Real or demo, excluding duplicate owner) */}
+                  {(settings.team_members || [])
+                    .filter((member) => member.role !== 'owner')
+                    .map((member) => (
                     <div
                       key={member.id}
                       className="p-4 flex items-center justify-between gap-3 hover:bg-page/40 transition-colors"
@@ -3851,6 +3846,18 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))}
+
+                  {/* Empty state when no extra team members */}
+                  {(!settings.team_members || settings.team_members.filter((m) => m.role !== 'owner').length === 0) && (
+                    <div className="p-6 text-center text-content-secondary space-y-1.5">
+                      <p className="text-xs font-semibold text-content-primary">
+                        В команде пока нет сотрудников
+                      </p>
+                      <p className="text-[11px] text-content-secondary max-w-sm mx-auto">
+                        Нажмите кнопку «Пригласить сотрудника» выше, чтобы создать персональную ссылку для вашего менеджера или курьера.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

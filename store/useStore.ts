@@ -134,6 +134,7 @@ export const useBioMartStore = create<BioMartMultiStoreState>()(
             email: email.trim(),
             admin_password: adminPassword?.trim() || 'admin123',
             custom_links: [],
+            team_members: [],
             reviews: [],
             currency: 'сум',
             delivery_info: 'Доставка по Ташкенту и всему Узбекистану.',
