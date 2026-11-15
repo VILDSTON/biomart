@@ -67,11 +67,11 @@ export async function sendTelegramMessage(
 export function isStoreVerifiedInFile(slug: string): boolean {
   try {
     const clean = slug.toLowerCase().trim();
-    if (clean === 'tashkent_drip' || clean === 'samarkand_sweets') return true;
+    if (clean === 'tashkent_drip' || clean === 'samarkand_sweets' || clean === 'volt_gadgets' || clean === 'aura_perfume') return true;
     if (!fs.existsSync(VERIFIED_STORES_FILE)) return false;
     const raw = fs.readFileSync(VERIFIED_STORES_FILE, 'utf-8');
     const data = JSON.parse(raw);
-    return Boolean(data[clean]?.verified);
+    return Boolean(data[clean]?.verified ?? data[clean]);
   } catch {
     return false;
   }

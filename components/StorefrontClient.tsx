@@ -149,6 +149,7 @@ export function StorefrontClient({
     const isDemoStore = isDemo || shopSlug === 'tashkent_drip' || shopSlug === 'volt_gadgets' || shopSlug === 'aura_perfume';
     return {
       ...rawBaseSettings,
+      is_verified: rawBaseSettings.is_verified !== undefined ? Boolean(rawBaseSettings.is_verified) : Boolean(initialSettings?.is_verified),
       ai_assistant_enabled:
         shopData?.settings?.ai_assistant_enabled !== undefined
           ? shopData.settings.ai_assistant_enabled
@@ -446,6 +447,7 @@ export function StorefrontClient({
     announcement_active: themeSettings.announcement_active,
     announcement_text: themeSettings.announcement_text,
     hide_branding: themeSettings.hide_branding,
+    is_verified: base?.is_verified !== undefined ? Boolean(base.is_verified) : Boolean(initialSettings?.is_verified),
     ai_assistant_enabled: base?.ai_assistant_enabled !== undefined ? base.ai_assistant_enabled : true,
     theme_settings: themeSettings,
   };

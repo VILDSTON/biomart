@@ -181,9 +181,9 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
   const fallbackSettings = demoPreset?.settings || MOCK_STORE_SETTINGS;
 
   const isVerifiedStore = Boolean(
-    dbStore?.is_verified ??
-    (isStoreVerifiedInFile(cleanSlug) ? true : undefined) ??
-    fallbackSettings.is_verified
+    isStoreVerifiedInFile(cleanSlug) ||
+    dbStore?.is_verified ||
+    fallbackSettings?.is_verified
   );
 
   // 3. Fallback to mock settings for demo store or new stores
@@ -258,6 +258,7 @@ export default async function StorefrontSlugPage({ params, searchParams }: PageP
   // Create unified effective store settings for client
   const effectiveStoreSettings = {
     ...storeSettings,
+    is_verified: isVerifiedStore,
     accent_color: themeSettings.accent_color,
     theme: themeSettings.theme,
     catalog_layout: themeSettings.catalog_layout,
