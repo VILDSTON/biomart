@@ -9,6 +9,40 @@ import { useBioMartStore } from '@/store/useStore';
 import { translations } from '@/lib/i18n';
 import { ComplaintModal } from '@/components/ComplaintModal';
 
+export const BioMartVerifiedBadge: React.FC<{ size?: number; className?: string }> = ({
+  size = 19,
+  className = '',
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`shrink-0 select-none drop-shadow-2xs ${className}`}
+  >
+    <defs>
+      <linearGradient id="bm-verified-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#25936D" />
+        <stop offset="100%" stopColor="#155D44" />
+      </linearGradient>
+    </defs>
+    {/* Scalloped Premium Rosette Seal */}
+    <path
+      d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
+      fill="url(#bm-verified-gradient)"
+    />
+    {/* Crisp White Checkmark */}
+    <path
+      d="m9 12 2.2 2.2 4.3-4.4"
+      stroke="#FFFFFF"
+      strokeWidth="2.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 interface StoreHeaderProps {
   settings: StoreSettings;
   isDemo?: boolean;
@@ -101,11 +135,11 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                     <button
                       type="button"
                       onClick={() => setShowVerifiedTooltip((prev) => !prev)}
-                      title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan do‘kon (Verified)' : 'Проверенный магазин BioMart (Verified ✅)'}
-                      className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#0095F6] text-white hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer focus:outline-none"
-                      aria-label="Verified by BioMart"
+                      title={language === 'uz' ? 'BioMart tomonidan tasdiqlangan do‘kon' : 'Проверенный магазин BioMart'}
+                      className="inline-flex items-center justify-center p-0.5 rounded-full hover:opacity-90 active:scale-95 transition-all cursor-pointer focus:outline-none"
+                      aria-label={language === 'uz' ? 'BioMart tomonidan tasdiqlangan' : 'Проверено BioMart'}
                     >
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      <BioMartVerifiedBadge size={19} />
                     </button>
 
                     {showVerifiedTooltip && (
@@ -116,15 +150,15 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ settings, isDemo = fal
                         />
                         <div className="absolute left-0 top-full mt-2 z-50 w-64 p-3 rounded-[12px] bg-surface text-content-primary border border-border shadow-xl text-left animate-in fade-in zoom-in-95">
                           <div className="flex items-center gap-1.5 font-bold text-xs text-content-primary mb-1">
-                            <span className="w-3.5 h-3.5 rounded-full bg-[#0095F6] text-white inline-flex items-center justify-center text-[9px] font-bold shrink-0">
-                              ✓
+                            <BioMartVerifiedBadge size={16} />
+                            <span>
+                              {language === 'uz' ? 'BioMart tomonidan tasdiqlangan' : 'Проверено BioMart'}
                             </span>
-                            <span>Verified by BioMart</span>
                           </div>
                           <p className="text-[11px] text-content-secondary leading-snug">
                             {language === 'uz'
-                              ? 'Ushbu do‘kon va uning to‘g‘ridan-to‘g‘ri aloqa ma‘lumotlari BioMart moderatsiyasi tomonidan tasdiqlangan.'
-                              : 'Этот магазин и его прямые контакты подтверждены модерацией BioMart.'}
+                              ? 'Rasmiy tasdiqlangan do‘kon. Do‘kon va uning to‘g‘ridan-to‘g‘ri aloqa ma‘lumotlari BioMart moderatsiyasi tomonidan tekshirilgan.'
+                              : 'Официально подтвержденный магазин. Прямые контакты и витрина проверены модерацией платформы BioMart.'}
                           </p>
                         </div>
                       </>

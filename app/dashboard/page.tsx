@@ -72,6 +72,7 @@ import { SupportModal } from '@/components/SupportModal';
 import { IS_SUBSCRIPTION_ENABLED, SITE_DOMAIN } from '@/lib/constants';
 import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
 import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
+import { BioMartVerifiedBadge } from '@/components/StoreHeader';
 
 const AVATAR_PRESETS = [
   { name: 'Streetwear & Стиль', url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=400&q=80', label: 'Одежда' },
@@ -1503,10 +1504,10 @@ export default function DashboardPage() {
                 </h1>
                 {Boolean(settings.is_verified) && (
                   <span
-                    title="Магазин проверен BioMart (Verified ✅)"
-                    className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#0095F6] text-white shrink-0 select-none shadow-xs"
+                    title="Проверено BioMart (Официально подтвержденный магазин)"
+                    className="inline-flex items-center shrink-0 select-none cursor-default"
                   >
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    <BioMartVerifiedBadge size={18} />
                   </span>
                 )}
                 {IS_SUBSCRIPTION_ENABLED && (
