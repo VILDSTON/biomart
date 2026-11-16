@@ -1,13 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
+// Whitelisted folders for assets to prevent directory traversal
+const ALLOWED_FOLDERS = ['products', 'stores', 'avatars', 'banners', 'catalog'] as const;
+
 export async function POST(req: NextRequest) {
   try {
+    // 1. IP Rate Limiting: Max 20 image uploads per minute per IP
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`upload_${clientIp}`, 20, 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Слишком много загрузок. Пожалуйста, подождите минуту перед следующей загрузкой.' },
+        { status: 429 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'products';
+    const rawFolder = (formData.get('folder') as string) || 'products';
+
+    // Sanitize folder to prevent path traversal
+    const folder = ALLOWED_FOLDERS.includes(rawFolder as any) ? rawFolder : 'products';
 
     if (!file) {
       return NextResponse.json({ error: 'Файл не передан' }, { status: 400 });
@@ -24,16 +41,17 @@ export async function POST(req: NextRequest) {
     // Validate mime type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Разрешены только изображения (JPEG, PNG, WEBP)' }, { status: 400 });
+      return NextResponse.json({ error: 'Разрешены только изображения (JPEG, PNG, WEBP, AVIF)' }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // If Supabase is configured, upload to store-assets bucket
+    // If Supabase is configured, upload to store-assets bucket with immutable cache header
     if (isSupabaseConfigured && supabaseAdmin) {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const cleanFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'webp';
+      const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'].includes(ext) ? ext : 'webp';
+      const cleanFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${safeExt}`;
       const filePath = `${folder}/${cleanFileName}`;
 
       const { data, error } = await supabaseAdmin.storage
@@ -41,6 +59,9 @@ export async function POST(req: NextRequest) {
         .upload(filePath, buffer, {
           contentType: file.type,
           upsert: false,
+          // Cache-Control 1 year immutable: instructs CDNs & browsers to cache permanently,
+          // saving Supabase network egress and keeping user bills zero-waste.
+          cacheControl: '31536000, public, immutable',
         });
 
       if (error) {

@@ -162,7 +162,7 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
     };
 
     try {
-      await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -171,9 +171,14 @@ export const OneClickCheckoutModal: React.FC<OneClickCheckoutModalProps> = ({
           seller_username: storeSettings.telegram_username,
           ...newOrder,
         }),
-      }).catch(() => null);
+      });
 
-      onOrderSuccess(newOrder);
+      const data = await res.json().catch(() => null);
+      if (data?.order) {
+        onOrderSuccess(data.order);
+      } else {
+        onOrderSuccess(newOrder);
+      }
       onClose();
     } catch {
       onOrderSuccess(newOrder);

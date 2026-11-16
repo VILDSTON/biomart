@@ -8,10 +8,18 @@ import { createOrderSchema, escapeTelegramHtml } from '@/lib/security';
 import { MOCK_PRODUCTS, MOCK_STORE_SETTINGS } from '@/lib/mock-data';
 import { OrderItem } from '@/types';
 
+interface StoreMetaCache {
+  id?: string;
+  telegram_chat_id?: string;
+  telegram_username?: string;
+  promo_codes?: any[];
+}
+
 async function resolveSellerChatId(
   sellerChatId?: string,
   sellerUsername?: string,
-  shopSlug?: string
+  shopSlug?: string,
+  cachedStore?: StoreMetaCache | null
 ): Promise<string | null> {
   // 1. If explicitly provided numeric chat id (or negative group chat id like -100...)
   if (sellerChatId && /^-?\d+$/.test(sellerChatId.trim())) {
@@ -67,36 +75,37 @@ async function resolveSellerChatId(
     }
   }
 
-  // 4. Check Supabase stores table if shop_slug is provided
-  if (shopSlug && isSupabaseConfigured && supabaseAdmin) {
+  // 4. Use cached Store record or query Supabase stores table if shop_slug is provided
+  let storeRecord = cachedStore;
+  if (!storeRecord && shopSlug && isSupabaseConfigured && supabaseAdmin) {
     try {
       const cleanSlug = shopSlug.trim().toLowerCase();
-      const { data: storeRecord } = await supabaseAdmin
+      const { data } = await supabaseAdmin
         .from('stores')
         .select('telegram_chat_id, telegram_username')
         .eq('slug', cleanSlug)
         .maybeSingle();
-
-      if (storeRecord) {
-        if (storeRecord.telegram_chat_id && /^-?\d+$/.test(String(storeRecord.telegram_chat_id).trim())) {
-          return String(storeRecord.telegram_chat_id).trim();
-        }
-        if (storeRecord.telegram_username) {
-          const cleanUser = storeRecord.telegram_username.trim().toLowerCase().replace(/^@/, '');
-          // Re-check mapping for this username
-          try {
-            const mappingPath = path.join(process.cwd(), 'data', 'telegram_users.json');
-            if (fs.existsSync(mappingPath)) {
-              const mapping = JSON.parse(fs.readFileSync(mappingPath, 'utf-8'));
-              const val = mapping[cleanUser] || mapping[`@${cleanUser}`];
-              const resolved = typeof val === 'object' ? val.chat_id : val;
-              if (resolved) return String(resolved);
-            }
-          } catch {}
-        }
-      }
+      if (data) storeRecord = data;
     } catch (err) {
       console.warn('[Orders API] Supabase store lookup failed:', err);
+    }
+  }
+
+  if (storeRecord) {
+    if (storeRecord.telegram_chat_id && /^-?\d+$/.test(String(storeRecord.telegram_chat_id).trim())) {
+      return String(storeRecord.telegram_chat_id).trim();
+    }
+    if (storeRecord.telegram_username) {
+      const cleanUser = storeRecord.telegram_username.trim().toLowerCase().replace(/^@/, '');
+      try {
+        const mappingPath = path.join(process.cwd(), 'data', 'telegram_users.json');
+        if (fs.existsSync(mappingPath)) {
+          const mapping = JSON.parse(fs.readFileSync(mappingPath, 'utf-8'));
+          const val = mapping[cleanUser] || mapping[`@${cleanUser}`];
+          const resolved = typeof val === 'object' ? val.chat_id : val;
+          if (resolved) return String(resolved);
+        }
+      } catch {}
     }
   }
 
@@ -171,18 +180,39 @@ export async function POST(request: Request) {
       );
     }
 
+    // Single unified store query to avoid multiple round-trips to Supabase
+    let storeRecord: StoreMetaCache | null = null;
+    if (shop_slug && isSupabaseConfigured && supabaseAdmin) {
+      try {
+        const { data } = await supabaseAdmin
+          .from('stores')
+          .select('id, telegram_chat_id, telegram_username, promo_codes')
+          .eq('slug', shop_slug.trim().toLowerCase())
+          .maybeSingle();
+        if (data) {
+          storeRecord = data;
+        }
+      } catch (err) {
+        console.warn('[Orders API] Store lookup error:', err);
+      }
+    }
+
     // 4. Server-Side Price Lookup & Recalculation (Authoritative)
     // Never trust client cart item prices to prevent malicious client price alterations!
     let validatedItems: OrderItem[] = [];
     let authoritativeSubtotal = 0;
 
-    // Fetch products from Supabase if configured, or use MOCK_PRODUCTS catalog
+    // Only query specific products ordered rather than select('*') from whole catalog!
+    // Saves massive DB bandwidth and memory on Supabase free tier.
+    const productIds = incomingItems.map((i) => i.product_id);
     let serverCatalog = MOCK_PRODUCTS;
-    if (isSupabaseConfigured && supabaseAdmin) {
+
+    if (isSupabaseConfigured && supabaseAdmin && productIds.length > 0) {
       try {
         const { data: dbProducts } = await supabaseAdmin
           .from('products')
-          .select('*')
+          .select('id, title, price, in_stock, images')
+          .in('id', productIds)
           .eq('is_active', true);
         if (dbProducts && dbProducts.length > 0) {
           serverCatalog = dbProducts as any;
@@ -238,17 +268,8 @@ export async function POST(request: Request) {
       const cleanPromo = promo_code.trim().toUpperCase();
       let availablePromos = [...(MOCK_STORE_SETTINGS.promo_codes || [])];
 
-      if (isSupabaseConfigured && supabaseAdmin && shop_slug) {
-        try {
-          const { data: storeData } = await supabaseAdmin
-            .from('stores')
-            .select('promo_codes')
-            .eq('slug', shop_slug.toLowerCase())
-            .maybeSingle();
-          if (storeData?.promo_codes && Array.isArray(storeData.promo_codes)) {
-            availablePromos = [...storeData.promo_codes, ...availablePromos];
-          }
-        } catch {}
+      if (storeRecord?.promo_codes && Array.isArray(storeRecord.promo_codes)) {
+        availablePromos = [...storeRecord.promo_codes, ...availablePromos];
       }
 
       const validPromo = availablePromos.find(
@@ -270,17 +291,7 @@ export async function POST(request: Request) {
     // 5. Save to Supabase if configured
     if (isSupabaseConfigured && supabaseAdmin) {
       try {
-        let storeId: string | null = null;
-        if (shop_slug) {
-          const { data: storeRec } = await supabaseAdmin
-            .from('stores')
-            .select('id')
-            .eq('slug', shop_slug.trim().toLowerCase())
-            .maybeSingle();
-          if (storeRec?.id) {
-            storeId = storeRec.id;
-          }
-        }
+        const storeId = storeRecord?.id || null;
 
         const fullComment = [
           comment?.trim() || null,
@@ -374,7 +385,7 @@ ${itemsFormatted}
     const botToken =
       process.env.TELEGRAM_BOT_TOKEN?.trim() ||
       process.env.TG_BOT_TOKEN?.trim();
-    const targetChatId = await resolveSellerChatId(seller_chat_id, seller_username, shop_slug);
+    const targetChatId = await resolveSellerChatId(seller_chat_id, seller_username, shop_slug, storeRecord);
     let telegramSent = false;
     let telegramError = null;
 

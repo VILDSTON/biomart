@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 function escapeTelegramHtml(text: string): string {
   if (!text) return '';
@@ -11,6 +12,15 @@ function escapeTelegramHtml(text: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit(`support_${clientIp}`, 5, 10 * 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Слишком много обращений. Пожалуйста, подождите 10 минут перед следующим сообщением.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { name, shop_slug, contact, category, message } = body;
 
@@ -77,7 +87,7 @@ export async function POST(req: NextRequest) {
       const digits = cleanContact.replace(/[^\d+]/g, '');
       inlineKeyboard.push([
         { text: `📞 Позвонить ${cleanContact}`, url: `tel:${digits}` },
-        { text: `💬 Чат в TG по номеру`, url: `https://t.me/${digits.replace('+', '')}` },
+        { text: `💬 Написать в WhatsApp`, url: `https://wa.me/${digits.replace('+', '')}` },
       ]);
     }
 
@@ -130,6 +140,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error('Support route exception:', err);
-    return NextResponse.json({ error: err.message || 'Ошибка отправки обращения' }, { status: 500 });
+    return NextResponse.json({ error: err?.message || 'Ошибка отправки обращения' }, { status: 500 });
   }
 }

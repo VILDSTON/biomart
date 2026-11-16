@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -58,6 +58,7 @@ import {
   Save,
   Sparkles,
   Percent,
+  Search,
 } from 'lucide-react';
 import { compressImage } from '@/lib/image-compress';
 import { useBioMartStore } from '@/store/useStore';
@@ -234,6 +235,19 @@ export default function DashboardPage() {
   const [newDescription, setNewDescription] = useState('');
   const [formError, setFormError] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  // Dashboard Product Search & Filter State
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('all');
+
+  const filteredDashboardProducts = useMemo(() => {
+    return products.filter((prod) => {
+      const matchesSearch = !productSearchQuery.trim() ||
+        prod.title.toLowerCase().includes(productSearchQuery.trim().toLowerCase());
+      const matchesCategory = productCategoryFilter === 'all' || prod.category_id === productCategoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, productSearchQuery, productCategoryFilter]);
 
   // Settings State
   const [settingsForm, setSettingsForm] = useState<StoreSettings>(settings);
@@ -1853,7 +1867,7 @@ export default function DashboardPage() {
 
                 {isLimitReached && (
                   <span className="text-[11px] font-semibold text-accent bg-accent-soft border border-accent/20 px-2.5 py-0.5 rounded-[6px]">
-                    Лимит 10 товаров достигнут
+                    Лимит {maxProducts} товаров достигнут
                   </span>
                 )}
               </div>
@@ -2060,8 +2074,83 @@ export default function DashboardPage() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
-                  {products.map((prod) => {
+                <div className="space-y-3">
+                  {/* Search and Category Filter for Fast Merchant Navigation */}
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary pointer-events-none" />
+                      <input
+                        type="text"
+                        value={productSearchQuery}
+                        onChange={(e) => setProductSearchQuery(e.target.value)}
+                        placeholder="Поиск по названию товара..."
+                        className="w-full pl-9 pr-8 py-2 bg-surface border border-border rounded-[10px] text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-[#1F7A5A]"
+                      />
+                      {productSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setProductSearchQuery('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-content-secondary hover:text-content-primary p-0.5"
+                          title="Очистить поиск"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {categories.length > 1 && (
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                        <button
+                          type="button"
+                          onClick={() => setProductCategoryFilter('all')}
+                          className={`text-xs px-2.5 py-1 rounded-[8px] border transition-colors whitespace-nowrap ${
+                            productCategoryFilter === 'all'
+                              ? 'bg-[#1F7A5A] text-white border-[#1F7A5A]'
+                              : 'bg-surface text-content-secondary border-border hover:text-content-primary'
+                          }`}
+                        >
+                          Все ({products.length})
+                        </button>
+                        {categories.map((cat) => {
+                          const count = products.filter((p) => p.category_id === cat.id).length;
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => setProductCategoryFilter(cat.id)}
+                              className={`text-xs px-2.5 py-1 rounded-[8px] border transition-colors whitespace-nowrap ${
+                                productCategoryFilter === cat.id
+                                  ? 'bg-[#1F7A5A] text-white border-[#1F7A5A]'
+                                  : 'bg-surface text-content-secondary border-border hover:text-content-primary'
+                              }`}
+                            >
+                              {cat.name} ({count})
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {filteredDashboardProducts.length === 0 ? (
+                    <div className="text-center py-8 px-4 rounded-[14px] bg-surface border border-border space-y-2">
+                      <p className="text-xs text-content-secondary">
+                        Ничего не найдено по вашему запросу.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProductSearchQuery('');
+                          setProductCategoryFilter('all');
+                        }}
+                        className="text-xs font-semibold text-[#1F7A5A] hover:underline"
+                      >
+                        Сбросить фильтры
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
+                      {filteredDashboardProducts.map((prod: any) => {
                   const img =
                     prod.images?.[0] ||
                     'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80';
@@ -2231,6 +2320,8 @@ export default function DashboardPage() {
                     </div>
                   );
                 })}
+                    </div>
+                  )}
                 </div>
               )}
 

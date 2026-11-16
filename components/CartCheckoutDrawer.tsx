@@ -170,8 +170,7 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
     };
 
     try {
-      // Simulate / send to orders API
-      await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -180,9 +179,14 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
           seller_username: storeSettings.telegram_username,
           ...newOrder,
         }),
-      }).catch(() => null);
+      });
 
-      onOrderSuccess(newOrder);
+      const data = await res.json().catch(() => null);
+      if (data?.order) {
+        onOrderSuccess(data.order);
+      } else {
+        onOrderSuccess(newOrder);
+      }
       onClearCart();
       onClose();
     } catch {
