@@ -305,7 +305,9 @@ export default function FaqPage() {
                   <button
                     type="button"
                     onClick={() => toggleItem(item.id)}
-                    className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 font-semibold text-sm text-content-primary hover:bg-surface-soft/50 transition-colors"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${item.id}`}
+                    className="w-full text-left px-4 py-3.5 sm:px-5 sm:py-4 min-h-12 flex items-center justify-between gap-4 font-medium text-sm text-content-primary hover:bg-surface-soft/50 transition-colors cursor-pointer select-none"
                   >
                     <span className="leading-snug">{item.question}</span>
                     <ChevronDown
@@ -315,7 +317,11 @@ export default function FaqPage() {
                     />
                   </button>
                   {isOpen && (
-                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-0 text-xs sm:text-sm text-content-secondary leading-relaxed border-t border-border/50 animate-smooth-in">
+                    <div
+                      id={`faq-answer-${item.id}`}
+                      role="region"
+                      className="px-4 pb-4 sm:px-5 sm:pb-5 pt-0 text-xs sm:text-sm text-content-secondary leading-relaxed border-t border-border/50 animate-smooth-in"
+                    >
                       <div className="pt-3">{item.answer}</div>
                     </div>
                   )}

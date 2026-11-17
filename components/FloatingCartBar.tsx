@@ -65,7 +65,7 @@ const FloatingCartBarComponent: React.FC<FloatingCartBarProps> = ({
         <button
           type="button"
           onClick={onClickCheckout}
-          className="min-h-[40px] flex items-center gap-1.5 font-semibold text-xs py-2 px-4 rounded-btn transition-all shrink-0 active:scale-95 shadow-xs bg-accent text-accent-text hover:bg-accent-hover"
+          className="min-h-[44px] min-w-[44px] flex items-center gap-1.5 font-semibold text-xs py-2 px-4 rounded-btn transition-all shrink-0 active:scale-95 shadow-xs bg-accent text-accent-text hover:bg-accent-hover"
         >
           <span>{buttonLabel}</span>
           <ArrowRight className="w-3.5 h-3.5" />

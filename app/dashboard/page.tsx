@@ -239,6 +239,7 @@ export default function DashboardPage() {
   // Dashboard Product Search & Filter State
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState('all');
+  const [productToDelete, setProductToDelete] = useState<{ id: string; title: string } | null>(null);
 
   const filteredDashboardProducts = useMemo(() => {
     return products.filter((prod) => {
@@ -393,11 +394,22 @@ export default function DashboardPage() {
     if (passwordInput.trim() === expectedPassword || passwordInput.trim() === 'admin123') {
       setIsAuthenticated(true);
       sessionStorage.setItem('biomart_admin_auth', 'true');
+      try {
+        document.cookie = `biomart_seller_auth_${activeSlug}=true; path=/; max-age=2592000; SameSite=Lax`;
+      } catch {}
       setAuthError('');
     } else {
       setAuthError('Неверный пароль администратора');
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated && activeSlug) {
+      try {
+        document.cookie = `biomart_seller_auth_${activeSlug}=true; path=/; max-age=2592000; SameSite=Lax`;
+      } catch {}
+    }
+  }, [isAuthenticated, activeSlug]);
 
   // Admin Password Change State
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
@@ -2176,11 +2188,11 @@ export default function DashboardPage() {
                           {prod.title}
                         </h4>
                         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5">
-                          <span className="text-xs font-semibold text-[#1F7A5A]">
+                          <span className="text-xs font-semibold text-[#1F7A5A] tabular-nums">
                             {formatPrice(prod.price, settings.currency)}
                           </span>
                           {prod.old_price && (
-                            <span className="text-[10px] text-content-secondary line-through">
+                            <span className="text-[10px] text-content-secondary line-through tabular-nums">
                               {formatPrice(prod.old_price, settings.currency)}
                             </span>
                           )}
@@ -2304,11 +2316,9 @@ export default function DashboardPage() {
                                 type="button"
                                 onClick={() => {
                                   setOpenActionMenuId(null);
-                                  if (confirm(`Удалить товар «${prod.title}»?`)) {
-                                    deleteShopProduct(activeSlug, prod.id);
-                                  }
+                                  setProductToDelete({ id: prod.id, title: prod.title });
                                 }}
-                                className="w-full text-left px-3 py-1.5 text-[#C2410C] hover:bg-[#FFF5F5] flex items-center gap-2 font-medium border-t border-border"
+                                className="w-full text-left px-3 py-2 text-[#C2410C] hover:bg-[#FFF5F5] flex items-center gap-2 font-medium border-t border-border min-h-[44px]"
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-[#C2410C]" />
                                 <span>Удалить</span>
@@ -2543,6 +2553,46 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+
+              {/* Delete Product Confirmation Modal */}
+              {productToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in min-h-[100dvh]">
+                  <div className="absolute inset-0" onClick={() => setProductToDelete(null)} />
+                  <div className="relative w-full max-w-sm bg-surface rounded-[16px] border border-border p-5 shadow-2xl z-10 space-y-4 text-content-primary">
+                    <div className="w-12 h-12 rounded-full bg-[#FFF5F5] text-[#C2410C] flex items-center justify-center mx-auto border border-[#FCA5A5]/40">
+                      <Trash2 className="w-6 h-6" />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <h3 className="text-sm font-bold text-content-primary">
+                        Удалить товар из каталога?
+                      </h3>
+                      <p className="text-xs text-content-secondary leading-relaxed">
+                        Товар «<span className="font-semibold text-content-primary">{productToDelete.title}</span>» будет удалён с вашей витрины. Покупатели больше не смогут его заказать.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setProductToDelete(null)}
+                        className="w-full min-h-[44px] py-2 px-3 rounded-[10px] bg-page hover:bg-surface-soft text-content-primary border border-border text-xs font-semibold transition-colors"
+                      >
+                        Отмена
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          deleteShopProduct(activeSlug, productToDelete.id);
+                          showToast(`Товар «${productToDelete.title}» удалён`);
+                          setProductToDelete(null);
+                        }}
+                        className="w-full min-h-[44px] py-2 px-3 rounded-[10px] bg-[#C2410C] hover:bg-[#9A3412] text-white text-xs font-semibold transition-colors shadow-xs active:scale-95"
+                      >
+                        Да, удалить
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -2555,13 +2605,13 @@ export default function DashboardPage() {
               <div className="bg-surface border border-border rounded-[10px] p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-content-primary">
                   <span className="text-content-secondary">Заказов:</span>
-                  <span className="font-semibold">{uniqueOrders.length}</span>
+                  <span className="font-semibold tabular-nums">{uniqueOrders.length}</span>
                   <span className="text-content-secondary/40">•</span>
                   <span className="text-content-secondary">Выручка:</span>
-                  <span className="font-semibold text-[#1F7A5A]">{formatPrice(totalRevenue, settings.currency)}</span>
+                  <span className="font-semibold text-[#1F7A5A] tabular-nums">{formatPrice(totalRevenue, settings.currency)}</span>
                   <span className="text-content-secondary/40">•</span>
                   <span className="text-content-secondary">Конверсия:</span>
-                  <span className="font-semibold">{conversionRate}%</span>
+                  <span className="font-semibold tabular-nums">{conversionRate}%</span>
                 </div>
 
                 <button
@@ -2611,10 +2661,10 @@ export default function DashboardPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-3 shrink-0 text-right font-mono">
-                          <span className="text-[11px] text-content-secondary">
+                          <span className="text-[11px] text-content-secondary tabular-nums">
                             <b>{p.count}</b> шт.
                           </span>
-                          <span className="font-semibold text-[#1F7A5A] text-[11px]">
+                          <span className="font-semibold text-[#1F7A5A] text-[11px] tabular-nums">
                             {formatPrice(p.revenue, settings.currency)}
                           </span>
                         </div>
@@ -2907,7 +2957,7 @@ export default function DashboardPage() {
                               <span className="text-content-primary truncate pr-2">
                                 • {item.title} {item.size && <b>({item.size})</b>}
                               </span>
-                              <span className="text-content-secondary font-mono shrink-0">
+                              <span className="text-content-secondary font-mono shrink-0 tabular-nums">
                                 {item.quantity} × {formatPrice(item.price, settings.currency)}
                               </span>
                             </div>
@@ -2915,7 +2965,7 @@ export default function DashboardPage() {
 
                           <div className="flex items-center justify-between text-xs font-semibold border-t border-border pt-1.5 mt-1.5 text-content-primary">
                             <span>Итого:</span>
-                            <span className="text-[#1F7A5A] font-semibold">{formatPrice(order.total_price, settings.currency)}</span>
+                            <span className="text-[#1F7A5A] font-semibold tabular-nums">{formatPrice(order.total_price, settings.currency)}</span>
                           </div>
                         </div>
                       </div>

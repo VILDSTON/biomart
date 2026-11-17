@@ -217,7 +217,7 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full border border-border bg-page hover:bg-surface-soft text-content-primary flex items-center justify-center transition-colors"
+            className="min-w-[44px] min-h-[44px] rounded-full border border-border bg-page hover:bg-surface-soft text-content-primary flex items-center justify-center transition-colors shrink-0"
             aria-label="Закрыть корзину"
           >
             <X className="w-4 h-4 stroke-[2.5]" />
@@ -267,21 +267,23 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
                     </div>
 
                     {/* Quantity controls */}
-                    <div className="flex items-center gap-1.5 border border-border bg-surface rounded-[8px] p-0.5 shrink-0">
+                    <div className="flex items-center border border-border bg-surface rounded-[8px] p-0.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => onUpdateQuantity(item.cart_item_id, -1)}
-                        className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold hover:bg-surface-soft"
+                        className="min-w-[36px] min-h-[36px] rounded flex items-center justify-center text-sm font-bold hover:bg-surface-soft active:scale-95"
+                        aria-label="Уменьшить количество"
                       >
                         -
                       </button>
-                      <span className="text-xs font-semibold px-1.5 tabular-nums">
+                      <span className="text-xs font-semibold px-2 tabular-nums min-w-[20px] text-center">
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => onUpdateQuantity(item.cart_item_id, 1)}
-                        className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold hover:bg-surface-soft"
+                        className="min-w-[36px] min-h-[36px] rounded flex items-center justify-center text-sm font-bold hover:bg-surface-soft active:scale-95"
+                        aria-label="Увеличить количество"
                       >
                         +
                       </button>
@@ -290,10 +292,10 @@ export const CartCheckoutDrawer: React.FC<CartCheckoutDrawerProps> = ({
                     <button
                       type="button"
                       onClick={() => onRemoveItem(item.cart_item_id)}
-                      className="p-1 text-content-secondary hover:text-danger"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center text-content-secondary hover:text-danger shrink-0"
                       aria-label="Удалить товар"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}

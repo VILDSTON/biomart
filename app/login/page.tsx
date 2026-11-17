@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Lock, Store, AlertCircle, Info } from 'lucide-react';
+import { ArrowRight, Lock, Store, AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
 import { useBioMartStore } from '@/store/useStore';
 import { BioMartLogo } from '@/components/BioMartLogo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   React.useEffect(() => {
     try {
@@ -56,6 +57,9 @@ export default function LoginPage() {
     setActiveSlug(clean);
     sessionStorage.setItem('biomart_admin_auth', 'true');
     sessionStorage.setItem('biomart_current_slug', clean);
+    try {
+      document.cookie = `biomart_seller_auth_${clean}=true; path=/; max-age=2592000; SameSite=Lax`;
+    } catch {}
 
     router.push('/dashboard');
   };
@@ -110,7 +114,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-page text-content-primary flex flex-col justify-between px-3 sm:px-4 py-3 sm:py-4">
+    <div className="min-h-[100dvh] min-h-[-webkit-fill-available] bg-page text-content-primary flex flex-col justify-between px-3 sm:px-4 py-3 sm:py-4 pb-[env(safe-area-inset-bottom,16px)]">
       {/* Top Header */}
       <div className="w-full max-w-md mx-auto pt-2 pb-5 sm:pb-6 flex items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-[1px] font-bold text-lg sm:text-xl text-content-primary">
@@ -190,10 +194,12 @@ export default function LoginPage() {
               <input
                 type="text"
                 required
+                autoComplete="username"
+                inputMode="text"
                 value={shopSlug}
                 onChange={(e) => setShopSlug(e.target.value)}
                 placeholder="vash_magazin"
-                className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-xs text-content-primary font-mono focus:outline-none placeholder:text-content-secondary"
+                className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-base sm:text-xs text-content-primary font-mono focus:outline-none placeholder:text-content-secondary"
               />
             </div>
           </div>
@@ -202,15 +208,25 @@ export default function LoginPage() {
             <label className="block text-xs font-semibold text-content-primary mb-1">
               Пароль администратора
             </label>
-            <input
-              type="password"
-              name="store_admin_password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-btn bg-page border border-border text-xs text-content-primary focus:outline-none focus:border-accent font-mono"
-            />
+            <div className="relative flex items-center">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="store_admin_password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-3 pr-11 py-2.5 rounded-btn bg-page border border-border text-base sm:text-xs text-content-primary focus:outline-none focus:border-accent font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-0 top-0 bottom-0 min-w-[44px] min-h-[44px] flex items-center justify-center text-content-secondary hover:text-content-primary transition-colors"
+                aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {errorMsg && (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { verifySellerOwnership } from '@/lib/seller-auth';
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseConfigured || !supabaseAdmin) {
@@ -19,6 +20,15 @@ export async function POST(req: NextRequest) {
 
     if (!title || typeof price !== 'number' || !store_slug) {
       return NextResponse.json({ error: 'Название, цена и идентификатор магазина обязательны' }, { status: 400 });
+    }
+
+    // Verify authenticated seller ownership before allowing product mutation
+    const authCheck = await verifySellerOwnership(req, store_slug);
+    if (!authCheck.authorized) {
+      return NextResponse.json(
+        { error: authCheck.reason || 'Доступ запрещён: требуется авторизация владельца магазина' },
+        { status: 403 }
+      );
     }
 
     // Find store
@@ -113,6 +123,15 @@ export async function DELETE(req: NextRequest) {
 
     if (!id || !store_slug) {
       return NextResponse.json({ error: 'Параметры id и store_slug обязательны' }, { status: 400 });
+    }
+
+    // Verify authenticated seller ownership before allowing product deletion
+    const authCheck = await verifySellerOwnership(req, store_slug);
+    if (!authCheck.authorized) {
+      return NextResponse.json(
+        { error: authCheck.reason || 'Доступ запрещён: требуется авторизация владельца магазина' },
+        { status: 403 }
+      );
     }
 
     // Verify ownership before deletion to prevent unauthorized product removal

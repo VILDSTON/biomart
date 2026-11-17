@@ -548,12 +548,13 @@ export default function LandingPage() {
                   <button
                     type="button"
                     onClick={() => setActiveFaq(isOpen ? null : idx)}
-                    className="w-full p-4 text-left flex items-center justify-between gap-4 text-sm font-semibold text-content-primary hover:bg-surface-soft transition-colors"
+                    aria-expanded={isOpen}
+                    className="w-full px-4 py-3.5 min-h-12 text-left flex items-center justify-between gap-4 text-sm font-medium text-content-primary hover:bg-surface-soft transition-colors cursor-pointer select-none"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
-                      className={`w-4 h-4 text-content-secondary shrink-0 transition-transform ${
-                        isOpen ? 'rotate-180' : ''
+                      className={`w-4 h-4 text-content-secondary shrink-0 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-accent' : ''
                       }`}
                     />
                   </button>

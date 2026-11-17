@@ -341,6 +341,7 @@ export default function RegisterPage() {
           custom_links: [],
         };
         document.cookie = `biomart_contacts_${trimmedSlug}=${encodeURIComponent(JSON.stringify(contactsPayload))}; path=/; max-age=31536000; SameSite=Lax`;
+        document.cookie = `biomart_seller_auth_${trimmedSlug}=true; path=/; max-age=2592000; SameSite=Lax`;
       } catch {}
 
       // 2. Persist to Supabase if configured
@@ -370,7 +371,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-page text-content-primary flex flex-col justify-between px-3 sm:px-4 py-3 sm:py-4">
+    <div className="min-h-[100dvh] min-h-[-webkit-fill-available] bg-page text-content-primary flex flex-col justify-between px-3 sm:px-4 py-3 sm:py-4 pb-[env(safe-area-inset-bottom,16px)]">
       {/* Top Header */}
       <div className="w-full max-w-md mx-auto pt-2 pb-5 sm:pb-6 flex items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-[1px] font-bold text-lg sm:text-xl text-content-primary">
@@ -465,6 +466,8 @@ export default function RegisterPage() {
                   type="text"
                   required
                   autoFocus
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
                   maxLength={4}
                   value={otpCode}
                   onChange={(e) => {
@@ -608,10 +611,11 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   required
+                  autoComplete="organization"
                   value={storeName}
                   onChange={(e) => handleStoreNameChange(e.target.value)}
                   placeholder="Например: Samarkand Sweets или Tashkent Drip"
-                  className="w-full px-3 py-2.5 rounded-btn bg-page border border-border text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
+                  className="w-full px-3 py-2.5 rounded-btn bg-page border border-border text-base sm:text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
                 />
               </div>
 
@@ -629,15 +633,17 @@ export default function RegisterPage() {
 
                 <div className="flex items-center rounded-btn bg-page border border-border overflow-hidden focus-within:border-accent">
                   <span className="pl-3.5 pr-1 py-2.5 text-xs font-semibold text-content-secondary font-mono select-none">
-                    biomart.uz/
+                    biomart.vercel.app/
                   </span>
                   <input
                     type="text"
                     required
+                    autoComplete="username"
+                    inputMode="text"
                     value={slug}
                     onChange={(e) => handleSlugChange(e.target.value)}
                     placeholder="vash_magazin"
-                    className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-xs text-content-primary font-mono focus:outline-none placeholder:text-content-secondary"
+                    className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-base sm:text-xs text-content-primary font-mono focus:outline-none placeholder:text-content-secondary"
                   />
                 </div>
 
@@ -659,13 +665,15 @@ export default function RegisterPage() {
                   <input
                     type="email"
                     required
+                    autoComplete="email"
+                    inputMode="email"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
                       setEmailError('');
                     }}
                     placeholder="seller@gmail.com"
-                    className="w-full px-3 py-2.5 rounded-btn bg-page border border-border text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
+                    className="w-full px-3 py-2.5 rounded-btn bg-page border border-border text-base sm:text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
                   />
                   {emailError ? (
                     <p className="text-[11px] text-danger mt-1 font-medium">{emailError}</p>
@@ -690,21 +698,22 @@ export default function RegisterPage() {
                   <input
                     type={showAdminPassword ? 'text' : 'password'}
                     required
+                    autoComplete="new-password"
                     value={adminPassword}
                     onChange={(e) => {
                       setAdminPassword(e.target.value);
                       setPasswordError('');
                     }}
                     placeholder="Минимум 6 символов"
-                    className={`w-full pl-10 pr-10 py-2.5 rounded-btn bg-page border text-xs text-content-primary font-mono focus:outline-none transition-colors ${
+                    className={`w-full pl-10 pr-11 py-2.5 rounded-btn bg-page border text-base sm:text-xs text-content-primary font-mono focus:outline-none transition-colors ${
                       passwordError ? 'border-danger focus:border-danger' : 'border-border focus:border-accent'
                     }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowAdminPassword(!showAdminPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-content-secondary hover:text-content-primary"
-                    tabIndex={-1}
+                    aria-label={showAdminPassword ? "Скрыть пароль" : "Показать пароль"}
+                    className="absolute inset-y-0 right-0 w-11 min-h-[44px] flex items-center justify-center text-content-secondary hover:text-content-primary transition-colors"
                   >
                     {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -764,7 +773,7 @@ export default function RegisterPage() {
                     value={instagram}
                     onChange={(e) => setInstagram(e.target.value)}
                     placeholder="@vash_instagram"
-                    className="w-full px-3 py-2.5 rounded-btn bg-page border border-border text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
+                    className="w-full px-3 py-2.5 rounded-btn bg-page border border-border text-base sm:text-xs text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent"
                   />
                 </div>
               )}

@@ -218,7 +218,11 @@ html.dark [data-theme-preset="boutique"],
     height: 0 !important;
   }
 
-  html,
+  html {
+    min-height: 100%;
+    min-height: -webkit-fill-available;
+  }
+
   body {
     background-color: var(--bg-page);
     color: var(--text-primary);
@@ -228,9 +232,20 @@ html.dark [data-theme-preset="boutique"],
     -webkit-tap-highlight-color: transparent;
     margin: 0;
     padding: 0;
+    min-height: 100%;
+    min-height: -webkit-fill-available;
     min-height: 100dvh;
     /* BUG 1 & BUG 3: overflow-x: clip eliminates horizontal scroll without breaking position: sticky */
     overflow-x: clip;
+  }
+
+  /* Prevent iOS Safari auto-zoom on input focus */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {

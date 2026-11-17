@@ -4,6 +4,7 @@ import { isSlugValid } from '@/lib/security';
 import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { notifyFounderNewStore, recordRegisteredStore } from '@/lib/telegram';
+import { verifySellerOwnership } from '@/lib/seller-auth';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -121,6 +122,15 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existing) {
+      // Verify authenticated seller ownership before updating existing store settings
+      const authCheck = await verifySellerOwnership(req, cleanSlug);
+      if (!authCheck.authorized) {
+        return NextResponse.json(
+          { error: authCheck.reason || 'Доступ запрещён: требуется авторизация владельца магазина' },
+          { status: 403 }
+        );
+      }
+
       // Build dynamic update payload without overwriting unset fields
       const updatePayload: Record<string, any> = {
         updated_at: new Date().toISOString(),

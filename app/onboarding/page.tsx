@@ -173,7 +173,7 @@ export default function OnboardingPage() {
   const currentNichePreset = STORE_NICHE_PRESETS.find((p) => p.id === selectedNiche) || STORE_NICHE_PRESETS[0];
 
   return (
-    <div className="min-h-[100dvh] bg-page text-content-primary flex flex-col justify-between p-3 sm:p-6">
+    <div className="min-h-[100dvh] min-h-[-webkit-fill-available] bg-page text-content-primary flex flex-col justify-between p-3 sm:p-6 pb-[env(safe-area-inset-bottom,16px)]">
       {/* Top Header */}
       <header className="w-full max-w-4xl mx-auto pt-2 pb-4 sm:pb-6 flex items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-1.5 font-bold text-lg sm:text-xl text-content-primary">
@@ -242,7 +242,7 @@ export default function OnboardingPage() {
                       value={storeName}
                       onChange={(e) => handleStoreNameChange(e.target.value)}
                       placeholder="Например: Sakura Studio, Tashkent Drip"
-                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-page border border-border text-xs sm:text-sm text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-page border border-border text-base sm:text-sm text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent transition-colors"
                     />
                   </div>
 
@@ -261,7 +261,7 @@ export default function OnboardingPage() {
 
                     <div className="flex items-center rounded-[10px] bg-page border border-border overflow-hidden focus-within:border-accent transition-colors">
                       <span className="pl-3.5 pr-1 py-2.5 text-xs font-medium text-content-secondary font-mono select-none">
-                        biomart.uz/
+                        biomart.vercel.app/
                       </span>
                       <input
                         type="text"
@@ -269,7 +269,7 @@ export default function OnboardingPage() {
                         value={slug}
                         onChange={(e) => handleSlugChange(e.target.value)}
                         placeholder="vash_magazin"
-                        className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-xs sm:text-sm text-content-primary font-mono focus:outline-none placeholder:text-content-secondary"
+                        className="flex-1 min-w-0 pr-3.5 py-2.5 bg-transparent text-base sm:text-sm text-content-primary font-mono focus:outline-none placeholder:text-content-secondary"
                       />
                     </div>
                     {isSlugAvailable === false && slugError && (
@@ -291,7 +291,7 @@ export default function OnboardingPage() {
                       value={instagram}
                       onChange={(e) => setInstagram(e.target.value)}
                       placeholder="@vash_brand"
-                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-page border border-border text-xs sm:text-sm text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-[10px] bg-page border border-border text-base sm:text-sm text-content-primary placeholder:text-content-secondary focus:outline-none focus:border-accent transition-colors"
                     />
                   </div>
 
@@ -305,7 +305,7 @@ export default function OnboardingPage() {
                   <button
                     type="submit"
                     disabled={isSlugAvailable === false || !storeName.trim() || !slug.trim()}
-                    className="w-full py-3 rounded-[10px] bg-accent hover:bg-accent-hover text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50 active:scale-[0.99] cursor-pointer"
+                    className="w-full min-h-[44px] py-3 rounded-[10px] bg-accent hover:bg-accent-hover text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50 active:scale-[0.99] cursor-pointer"
                   >
                     <span>Далее: Выбрать нишу магазина</span>
                     <ArrowRight className="w-4 h-4" />
@@ -381,7 +381,7 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="w-full py-3 rounded-[10px] bg-accent hover:bg-accent-hover text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50 active:scale-[0.99] cursor-pointer"
+                    className="w-full min-h-[44px] py-3 rounded-[10px] bg-accent hover:bg-accent-hover text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50 active:scale-[0.99] cursor-pointer"
                   >
                     {isSubmitting ? (
                       <span>Запускаем витрину...</span>
@@ -405,7 +405,7 @@ export default function OnboardingPage() {
                 <span>Живой предпросмотр витрины</span>
               </span>
               <span className="text-[10px] font-mono text-content-secondary bg-surface-soft px-2 py-0.5 rounded-full">
-                biomart.uz/{slug || '...'}
+                biomart.vercel.app/{slug || '...'}
               </span>
             </div>
 
