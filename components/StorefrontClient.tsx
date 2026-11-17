@@ -19,6 +19,7 @@ import { computeStoreTokens, getEffectiveThemeSettings } from '@/lib/theme';
 import { StoreTrustBadges } from '@/components/StoreTrustBadges';
 import { StoreReviews } from '@/components/StoreReviews';
 import { MartyAssistant } from '@/components/MartyAssistant';
+import { sendTrackEvent, checkUniqueStoreVisit } from '@/lib/tracker';
 
 export function StorefrontSkeleton() {
   return (
@@ -313,6 +314,20 @@ export function StorefrontClient({
     };
   }, [isClient, tokens]);
 
+  // 0ms Non-blocking Storefront Page View Tracking (with 30-min unique deduplication)
+  useEffect(() => {
+    if (!shopSlug) return;
+    const isUnique = checkUniqueStoreVisit(shopSlug);
+    const utmSource = searchParams?.get('utm_source') || searchParams?.get('source') || undefined;
+    sendTrackEvent({
+      store_slug: shopSlug,
+      store_id: currentSettings?.id,
+      event_type: 'page_view',
+      is_unique: isUnique,
+      source: utmSource,
+    });
+  }, [shopSlug, searchParams, currentSettings?.id]);
+
   // Auto-open product modal & scroll to product if directed (?product=ID or ?item=ID)
   useEffect(() => {
     if (isClient && itemIdParam && currentProducts.length > 0) {
@@ -324,6 +339,12 @@ export function StorefrontClient({
       );
       if (target) {
         setActiveProductModal(target);
+        sendTrackEvent({
+          store_slug: shopSlug,
+          store_id: currentSettings?.id,
+          event_type: 'product_view',
+          product_id: String(target.id),
+        });
         setTimeout(() => {
           const el = document.getElementById(`product-${target.id}`);
           if (el) {
@@ -332,7 +353,7 @@ export function StorefrontClient({
         }, 300);
       }
     }
-  }, [isClient, itemIdParam, currentProducts, setActiveProductModal]);
+  }, [isClient, itemIdParam, currentProducts, setActiveProductModal, shopSlug, currentSettings?.id]);
 
   // Filter products by category and search query
   const filteredProducts = useMemo(() => {
@@ -392,8 +413,16 @@ export function StorefrontClient({
   const handleOpenDetail = React.useCallback(
     (product: Product) => {
       setActiveProductModal(product);
+      const utmSource = searchParams?.get('utm_source') || searchParams?.get('source') || undefined;
+      sendTrackEvent({
+        store_slug: shopSlug,
+        store_id: currentSettings?.id,
+        event_type: 'product_view',
+        product_id: String(product.id),
+        source: utmSource,
+      });
     },
-    [setActiveProductModal]
+    [setActiveProductModal, shopSlug, searchParams, currentSettings?.id]
   );
 
   const handleCategorySelect = React.useCallback(

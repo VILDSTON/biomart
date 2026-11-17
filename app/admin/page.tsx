@@ -17,15 +17,17 @@ import {
   ArrowRight,
   ExternalLink,
   Store,
-  RefreshCw
+  RefreshCw,
+  TrendingUp,
 } from 'lucide-react';
 import { BioMartLogo } from '@/components/BioMartLogo';
 import { useBioMartStore } from '@/store/useStore';
 import { Complaint, BannedEntity, INITIAL_BANS } from '@/lib/moderation';
 import { SubscriptionPaymentOrder } from '@/app/api/subscription-payments/route';
+import { PlatformAnalytics } from './PlatformAnalytics';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'moderation' | 'complaints' | 'bans' | 'payments'>('moderation');
+  const [activeTab, setActiveTab] = useState<'moderation' | 'analytics' | 'complaints' | 'bans' | 'payments'>('moderation');
 
   // Stores from Zustand + local persistence
   const { shops, updateShopSettings } = useBioMartStore();
@@ -189,6 +191,19 @@ export default function AdminPage() {
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
               {storesList.length}
             </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('analytics')}
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
+              activeTab === 'analytics'
+                ? 'bg-accent text-white shadow-xs'
+                : 'text-content-secondary hover:bg-surface hover:text-content-primary'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Аналитика и метрики</span>
           </button>
 
           <button
@@ -364,6 +379,11 @@ export default function AdminPage() {
               })}
             </div>
           </div>
+        )}
+
+        {/* TAB: PLATFORM ANALYTICS & METRICS */}
+        {activeTab === 'analytics' && (
+          <PlatformAnalytics />
         )}
 
         {/* TAB 2: COMPLAINTS */}

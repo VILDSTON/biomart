@@ -325,6 +325,22 @@ export async function POST(request: Request) {
         if (!dbError && dbOrder) {
           orderId = dbOrder.id;
           savedToSupabase = true;
+
+          // Atomically update store daily aggregated analytics
+          if (storeId) {
+            try {
+              await supabaseAdmin.rpc('record_store_event', {
+                p_store_id: storeId,
+                p_event_type: 'order',
+                p_source: 'direct',
+                p_is_unique: false,
+                p_product_id: null,
+                p_order_amount: authoritativeTotalPrice,
+              });
+            } catch (rpcErr) {
+              console.warn('[Orders Analytics] Failed to record order stats:', rpcErr);
+            }
+          }
         } else {
           console.warn('Supabase insert warning:', dbError?.message);
         }

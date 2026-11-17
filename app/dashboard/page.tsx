@@ -75,6 +75,7 @@ import { IS_SUBSCRIPTION_ENABLED, SITE_DOMAIN } from '@/lib/constants';
 import { isSlugValid, RESERVED_SLUGS } from '@/lib/security';
 import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 import { BioMartVerifiedBadge } from '@/components/StoreHeader';
+import { SellerAnalytics } from './SellerAnalytics';
 
 const AVATAR_PRESETS = [
   { name: 'Streetwear & Стиль', url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=400&q=80', label: 'Одежда' },
@@ -99,7 +100,7 @@ function cleanDisplayAiText(text: string): string {
     .trim();
 }
 
-type DashboardTab = 'orders' | 'products' | 'promos' | 'links' | 'share' | 'telegram' | 'branding' | 'design' | 'team' | 'tariff' | 'ai';
+type DashboardTab = 'orders' | 'products' | 'analytics' | 'promos' | 'links' | 'share' | 'telegram' | 'branding' | 'design' | 'team' | 'tariff' | 'ai';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -116,7 +117,7 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
       const tab = sp.get('tab') as DashboardTab;
-      const allowedTabs = ['orders', 'products', 'promos', 'links', 'share', 'telegram', 'branding', 'design', 'team', 'ai', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
+      const allowedTabs = ['orders', 'products', 'analytics', 'promos', 'links', 'share', 'telegram', 'branding', 'design', 'team', 'ai', ...(IS_SUBSCRIPTION_ENABLED ? ['tariff'] : [])];
       if (allowedTabs.includes(tab)) return tab;
     }
     return 'orders';
@@ -1661,6 +1662,18 @@ export default function DashboardPage() {
           </button>
 
           <button
+            onClick={() => setActiveTab('analytics')}
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'analytics'
+                ? 'bg-[#1F7A5A] text-white shadow-xs'
+                : 'text-content-secondary hover:bg-page hover:text-content-primary'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Статистика</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('promos')}
             className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[10px] text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'promos'
@@ -2980,6 +2993,13 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: ANALYTICS & STATS (ZERO-WASTE DAILY AGGREGATIONS) */}
+          {/* ========================================================================= */}
+          {activeTab === 'analytics' && (
+            <SellerAnalytics storeSlug={activeSlug} />
           )}
 
           {/* ========================================================================= */}
