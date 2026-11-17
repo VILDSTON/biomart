@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { setAdminSessionCookie } from '@/lib/seller-auth';
 
 export async function POST(request: Request) {
   try {
@@ -22,13 +23,7 @@ export async function POST(request: Request) {
 
     if (password === correctPassword) {
       const response = NextResponse.json({ success: true, authorized: true });
-      response.cookies.set('biomart_admin_super', 'true', {
-        httpOnly: true,
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-      });
+      setAdminSessionCookie(response);
       return response;
     }
 

@@ -4,7 +4,7 @@ import { isSlugValid } from '@/lib/security';
 import { validateStoreContent, isSlugBanned } from '@/lib/moderation';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { notifyFounderNewStore, recordRegisteredStore } from '@/lib/telegram';
-import { verifySellerOwnership } from '@/lib/seller-auth';
+import { verifySellerOwnership, setSellerSessionCookie } from '@/lib/seller-auth';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         console.warn('[Stores API] Telegram notify error:', e)
       );
 
-      return NextResponse.json({
+      const localResponse = NextResponse.json({
         success: true,
         store: {
           slug: cleanSlug,
@@ -112,6 +112,8 @@ export async function POST(req: NextRequest) {
         },
         notice: 'Store registered in local mode',
       });
+      setSellerSessionCookie(localResponse, cleanSlug);
+      return localResponse;
     }
 
     // Check if exists in Supabase
@@ -127,7 +129,7 @@ export async function POST(req: NextRequest) {
       if (!authCheck.authorized) {
         return NextResponse.json(
           { error: authCheck.reason || 'Доступ запрещён: требуется авторизация владельца магазина' },
-          { status: 403 }
+          { status: 401 }
         );
       }
 
@@ -160,7 +162,9 @@ export async function POST(req: NextRequest) {
         .single();
 
       if (error) throw error;
-      return NextResponse.json({ success: true, store: updated });
+      const updateResponse = NextResponse.json({ success: true, store: updated });
+      setSellerSessionCookie(updateResponse, cleanSlug);
+      return updateResponse;
     } else {
       // Insert new store
       const { data: created, error } = await supabaseAdmin
@@ -190,7 +194,9 @@ export async function POST(req: NextRequest) {
         console.warn('[Stores API] Telegram notify error:', e)
       );
 
-      return NextResponse.json({ success: true, store: created });
+      const createResponse = NextResponse.json({ success: true, store: created });
+      setSellerSessionCookie(createResponse, cleanSlug);
+      return createResponse;
     }
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

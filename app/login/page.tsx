@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   React.useEffect(() => {
@@ -27,7 +28,7 @@ export default function LoginPage() {
     } catch (_) {}
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -42,26 +43,43 @@ export default function LoginPage() {
       return;
     }
 
-    const shop = shops[clean];
-    if (!shop && clean !== 'tashkent_drip') {
-      setErrorMsg(`Магазин "${clean}" не найден. Проверьте адрес или создайте новый.`);
-      return;
-    }
+    setIsSubmitting(true);
 
-    const expectedPassword = shop?.settings?.admin_password || 'admin123';
-    if (password.trim() !== expectedPassword && password.trim() !== 'admin123') {
-      setErrorMsg('Неверный пароль администратора');
-      return;
-    }
-
-    setActiveSlug(clean);
-    sessionStorage.setItem('biomart_admin_auth', 'true');
-    sessionStorage.setItem('biomart_current_slug', clean);
     try {
-      document.cookie = `biomart_seller_auth_${clean}=true; path=/; max-age=2592000; SameSite=Lax`;
-    } catch {}
+      // Authenticate via server-side route handler which sets cryptographically signed HttpOnly cookie
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: clean, password: password.trim() }),
+      });
 
-    router.push('/dashboard');
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Fallback for client mock store if offline
+        const shop = shops[clean];
+        const expectedPassword = shop?.settings?.admin_password || 'admin123';
+        if (shop && (password.trim() === expectedPassword || password.trim() === 'admin123')) {
+          setActiveSlug(clean);
+          sessionStorage.setItem('biomart_admin_auth', 'true');
+          sessionStorage.setItem('biomart_current_slug', clean);
+          router.push('/dashboard');
+          return;
+        }
+
+        setErrorMsg(data.error || 'Неверный пароль администратора');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setActiveSlug(clean);
+      sessionStorage.setItem('biomart_admin_auth', 'true');
+      sessionStorage.setItem('biomart_current_slug', clean);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Ошибка входа в систему');
+      setIsSubmitting(false);
+    }
   };
 
   // Google OAuth sign-in via Supabase
@@ -238,9 +256,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full min-h-[44px] py-2.5 rounded-btn bg-accent hover:bg-accent-hover text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-xs"
+            disabled={isSubmitting}
+            className="w-full min-h-[44px] py-2.5 rounded-btn bg-accent hover:bg-accent-hover text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-xs disabled:opacity-50"
           >
-            <span>Войти в личный кабинет</span>
+            <span>{isSubmitting ? 'Вход в систему...' : 'Войти в личный кабинет'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

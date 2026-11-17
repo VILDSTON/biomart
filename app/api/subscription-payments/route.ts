@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { FOUNDER_TELEGRAM_ID } from '@/lib/constants';
+import { escapeTelegramHtml } from '@/lib/security';
 
 export interface SubscriptionPaymentOrder {
   id: string;
@@ -105,15 +106,15 @@ async function notifyFounderNewPayment(payment: SubscriptionPaymentOrder) {
 
   const planTitle = payment.plan === 'pro' ? '🚀 PRO ($8 / ~99 000 сум)' : '⭐ PLUS ($4 / ~59 000 сум)';
   const formattedAmount = `${new Intl.NumberFormat('ru-RU').format(payment.amountUzs)} сум`;
-  const cleanSender = payment.senderPhoneOrTg.replace(/[^\d+]/g, '');
+  const senderContact = (payment.senderPhoneOrTg || '').trim();
 
   const text = `💰 <b>НОВАЯ ОПЛАТА ТАРИФА BIOMART</b>
 ━━━━━━━━━━━━━━━━━━━━━
-🏪 <b>Магазин:</b> ${payment.storeName} (<code>/${payment.storeSlug}</code>)
-📦 <b>Тариф:</b> ${planTitle}
-💵 <b>Сумма:</b> <b>${formattedAmount}</b>
-💳 <b>Метод:</b> ${payment.paymentMethod.toUpperCase()}
-${payment.transactionRef ? `🔢 <b>Номер перевода / чек:</b> <code>${payment.transactionRef}</code>\n` : ''}👤 <b>Контакт отправителя:</b> <code>${payment.senderPhoneOrTg}</code>
+🏪 <b>Магазин:</b> ${escapeTelegramHtml(payment.storeName)} (<code>/${escapeTelegramHtml(payment.storeSlug)}</code>)
+📦 <b>Тариф:</b> ${escapeTelegramHtml(planTitle)}
+💵 <b>Сумма:</b> <b>${escapeTelegramHtml(formattedAmount)}</b>
+💳 <b>Метод:</b> ${escapeTelegramHtml(payment.paymentMethod.toUpperCase())}
+${payment.transactionRef ? `🔢 <b>Номер перевода / чек:</b> <code>${escapeTelegramHtml(payment.transactionRef)}</code>\n` : ''}👤 <b>Контакт отправителя:</b> <code>${escapeTelegramHtml(payment.senderPhoneOrTg)}</code>
 ━━━━━━━━━━━━━━━━━━━━━
 ⏳ <i>Статус: ожидает проверки в админ-панели</i>`;
 
@@ -124,11 +125,19 @@ ${payment.transactionRef ? `🔢 <b>Номер перевода / чек:</b> <c
     ],
   ];
 
-  if (cleanSender.length >= 9) {
+  if (senderContact.startsWith('@')) {
+    const tgUsername = senderContact.replace(/^@/, '');
     inlineKeyboard.push([
-      { text: '📞 Позвонить продавцу', url: `tel:${cleanSender}` },
-      { text: '💬 Чат в WhatsApp', url: `https://wa.me/${cleanSender.replace('+', '')}` },
+      { text: `💬 Чат в Telegram (@${tgUsername})`, url: `https://t.me/${tgUsername}` },
     ]);
+  } else {
+    const digits = senderContact.replace(/\D/g, '');
+    if (digits.length >= 7) {
+      inlineKeyboard.push([
+        { text: '💬 Чат в Telegram', url: `https://t.me/+${digits}` },
+        { text: '📞 Позвонить продавцу', url: `tel:+${digits}` },
+      ]);
+    }
   }
 
   try {

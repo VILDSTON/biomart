@@ -81,14 +81,16 @@ export async function POST(req: NextRequest) {
     if (cleanContact.startsWith('@')) {
       const username = cleanContact.replace('@', '');
       inlineKeyboard.push([
-        { text: `💬 Написать @${username}`, url: `https://t.me/${username}` },
+        { text: `💬 Чат в Telegram (@${username})`, url: `https://t.me/${username}` },
       ]);
-    } else if (cleanContact.startsWith('+') || /^\d+$/.test(cleanContact.replace(/\s+/g, ''))) {
-      const digits = cleanContact.replace(/[^\d+]/g, '');
-      inlineKeyboard.push([
-        { text: `📞 Позвонить ${cleanContact}`, url: `tel:${digits}` },
-        { text: `💬 Написать в WhatsApp`, url: `https://wa.me/${digits.replace('+', '')}` },
-      ]);
+    } else {
+      const digits = cleanContact.replace(/\D/g, '');
+      if (digits.length >= 7) {
+        inlineKeyboard.push([
+          { text: `💬 Чат в Telegram`, url: `https://t.me/+${digits}` },
+          { text: `📞 Позвонить ${cleanContact}`, url: `tel:+${digits}` },
+        ]);
+      }
     }
 
     if (cleanSlug) {

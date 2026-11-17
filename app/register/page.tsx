@@ -341,10 +341,9 @@ export default function RegisterPage() {
           custom_links: [],
         };
         document.cookie = `biomart_contacts_${trimmedSlug}=${encodeURIComponent(JSON.stringify(contactsPayload))}; path=/; max-age=31536000; SameSite=Lax`;
-        document.cookie = `biomart_seller_auth_${trimmedSlug}=true; path=/; max-age=2592000; SameSite=Lax`;
       } catch {}
 
-      // 2. Persist to Supabase if configured
+      // 2. Persist to Supabase and receive cryptographically signed HttpOnly seller auth cookie
       try {
         await fetch('/api/stores', {
           method: 'POST',

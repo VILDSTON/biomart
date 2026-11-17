@@ -388,28 +388,32 @@ export default function DashboardPage() {
     }
   }, [categories, newCategoryId]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanPass = passwordInput.trim();
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: activeSlug, password: cleanPass }),
+      });
+      if (res.ok) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('biomart_admin_auth', 'true');
+        setAuthError('');
+        return;
+      }
+    } catch {}
+
     const expectedPassword = currentShop?.settings?.admin_password || 'admin123';
-    if (passwordInput.trim() === expectedPassword || passwordInput.trim() === 'admin123') {
+    if (cleanPass === expectedPassword || cleanPass === 'admin123') {
       setIsAuthenticated(true);
       sessionStorage.setItem('biomart_admin_auth', 'true');
-      try {
-        document.cookie = `biomart_seller_auth_${activeSlug}=true; path=/; max-age=2592000; SameSite=Lax`;
-      } catch {}
       setAuthError('');
     } else {
       setAuthError('Неверный пароль администратора');
     }
   };
-
-  useEffect(() => {
-    if (isAuthenticated && activeSlug) {
-      try {
-        document.cookie = `biomart_seller_auth_${activeSlug}=true; path=/; max-age=2592000; SameSite=Lax`;
-      } catch {}
-    }
-  }, [isAuthenticated, activeSlug]);
 
   // Admin Password Change State
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
@@ -463,7 +467,14 @@ export default function DashboardPage() {
     setTimeout(() => setPasswordChangeSuccess(false), 4000);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: activeSlug }),
+      });
+    } catch {}
     sessionStorage.removeItem('biomart_admin_auth');
     setIsAuthenticated(false);
     router.push('/login');
@@ -2907,19 +2918,14 @@ export default function DashboardPage() {
                             )}
 
                             <a
-                              href={`https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(
-                                order.status === 'completed'
-                                  ? `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» успешно выполнен. Спасибо за покупку!`
-                                  : order.status === 'cancelled'
-                                  ? `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» был отменен.`
-                                  : `Здравствуйте, ${order.customer_name}! Ваш заказ №${order.id} в магазине «${settingsForm.store_name || settings.store_name || 'BioMart'}» принят в обработку и передан курьеру. Ожидайте доставку!`
-                              )}`}
+                              href={`https://t.me/+${cleanPhone.replace(/\D/g, '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 px-2 py-1 rounded-[6px] border border-emerald-200 dark:border-emerald-800 hover:brightness-95"
-                              title="Написать клиенту в WhatsApp"
+                              className="flex items-center gap-1 text-[11px] font-medium bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 px-2 py-1 rounded-[6px] border border-sky-200 dark:border-sky-800 hover:brightness-95"
+                              title="Написать клиенту в Telegram по номеру телефона"
                             >
-                              <span>WhatsApp</span>
+                              <Send className="w-3 h-3 text-sky-600" />
+                              <span>Telegram</span>
                             </a>
 
                             {order.address && (

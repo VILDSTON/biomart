@@ -402,12 +402,19 @@ ${itemsFormatted}
         ]);
       }
 
-      inlineButtons.push([
-        {
-          text: '💬 WhatsApp клиента',
-          url: `https://wa.me/${cleanPhone.replace('+', '')}`,
-        },
-      ]);
+      const phoneDigits = cleanPhone.replace(/\D/g, '');
+      if (phoneDigits) {
+        inlineButtons.push([
+          {
+            text: '💬 Чат в Telegram',
+            url: `https://t.me/+${phoneDigits}`,
+          },
+          {
+            text: '📞 Позвонить клиенту',
+            url: `tel:+${phoneDigits}`,
+          },
+        ]);
+      }
 
       if (delivery_type === 'delivery' && yandexMapsUrl) {
         inlineButtons.push([

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (!authCheck.authorized) {
       return NextResponse.json(
         { error: authCheck.reason || 'Доступ запрещён: требуется авторизация владельца магазина' },
-        { status: 403 }
+        { status: 401 }
       );
     }
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (id && !id.startsWith('prod-')) {
-      // Update existing UUID product
+      // Update existing UUID product: enforce ownership directly in the database query
       const { data: updated, error } = await supabaseAdmin
         .from('products')
         .update({
@@ -60,9 +60,28 @@ export async function POST(req: NextRequest) {
         .eq('id', id)
         .eq('store_id', store.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      // Verify a row was actually updated; return 403 if it belongs to another store, or 404 if not found
+      if (!updated) {
+        const { data: existingProd } = await supabaseAdmin
+          .from('products')
+          .select('id, store_id')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (existingProd && existingProd.store_id !== store.id) {
+          return NextResponse.json(
+            { error: 'Доступ запрещён: товар принадлежит другому магазину' },
+            { status: 403 }
+          );
+        }
+
+        return NextResponse.json({ error: 'Товар не найден' }, { status: 404 });
+      }
+
       return NextResponse.json({ success: true, product: updated });
     } else {
       // Check catalog size limit to prevent database ballooning (max 50 products per store on trial)
@@ -130,7 +149,7 @@ export async function DELETE(req: NextRequest) {
     if (!authCheck.authorized) {
       return NextResponse.json(
         { error: authCheck.reason || 'Доступ запрещён: требуется авторизация владельца магазина' },
-        { status: 403 }
+        { status: 401 }
       );
     }
 
@@ -145,28 +164,35 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Магазин не найден' }, { status: 404 });
     }
 
-    const { data: product, error: prodErr } = await supabaseAdmin
-      .from('products')
-      .select('id, store_id')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (prodErr || !product) {
-      return NextResponse.json({ error: 'Товар не найден' }, { status: 404 });
-    }
-
-    if (product.store_id !== store.id) {
-      return NextResponse.json({ error: 'Доступ запрещён: товар принадлежит другому магазину' }, { status: 403 });
-    }
-
-    const { error } = await supabaseAdmin
+    // Enforce ownership directly in the database delete query
+    const { data: deleted, error: delErr } = await supabaseAdmin
       .from('products')
       .delete()
       .eq('id', id)
-      .eq('store_id', store.id);
+      .eq('store_id', store.id)
+      .select()
+      .maybeSingle();
 
-    if (error) throw error;
-    return NextResponse.json({ success: true });
+    if (delErr) throw delErr;
+
+    if (!deleted) {
+      const { data: existingProd } = await supabaseAdmin
+        .from('products')
+        .select('id, store_id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (existingProd && existingProd.store_id !== store.id) {
+        return NextResponse.json(
+          { error: 'Доступ запрещён: товар принадлежит другому магазину' },
+          { status: 403 }
+        );
+      }
+
+      return NextResponse.json({ error: 'Товар не найден' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, deleted_id: id });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

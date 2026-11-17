@@ -136,11 +136,20 @@ ${complaint.productTitle ? `📦 <b>Товар:</b> ${escapeTelegramHtml(complai
     ],
   ];
 
-  if (cleanContact.length >= 9) {
+  const rawContact = (complaint.reporterContact || '').trim();
+  if (rawContact.startsWith('@')) {
+    const username = rawContact.replace(/^@/, '');
     inlineButtons.push([
-      { text: '📞 Позвонить заявителю', url: `tel:${cleanContact}` },
-      { text: '💬 Написать в Telegram', url: `https://t.me/${cleanContact.replace('+', '')}` },
+      { text: `💬 Написать в Telegram (@${username})`, url: `https://t.me/${username}` },
     ]);
+  } else {
+    const digits = rawContact.replace(/\D/g, '');
+    if (digits.length >= 7) {
+      inlineButtons.push([
+        { text: '💬 Написать в Telegram', url: `https://t.me/+${digits}` },
+        { text: '📞 Позвонить заявителю', url: `tel:+${digits}` },
+      ]);
+    }
   }
 
   for (const chatId of targetIds) {
