@@ -4,6 +4,7 @@ import path from 'path';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { FOUNDER_TELEGRAM_ID } from '@/lib/constants';
 import { escapeTelegramHtml } from '@/lib/security';
+import { verifyAdminRequest } from '@/lib/seller-auth';
 
 export interface SubscriptionPaymentOrder {
   id: string;
@@ -89,17 +90,6 @@ function savePayments(payments: SubscriptionPaymentOrder[]) {
   }
 }
 
-function isAuthorizedAdmin(req: NextRequest): boolean {
-  const cookieVal = req.cookies.get('biomart_admin_super')?.value;
-  if (cookieVal === 'true') return true;
-
-  const headerKey = req.headers.get('x-admin-key')?.trim();
-  const expectedKey = (process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY || 'admin2026').trim();
-  if (headerKey && headerKey === expectedKey) return true;
-
-  return false;
-}
-
 async function notifyFounderNewPayment(payment: SubscriptionPaymentOrder) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || process.env.TG_BOT_TOKEN?.trim();
   if (!botToken || !FOUNDER_TELEGRAM_ID) return;
@@ -158,7 +148,11 @@ ${payment.transactionRef ? `🔢 <b>Номер перевода / чек:</b> <c
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Strictly verify admin authority before returning subscription payment orders
+  if (!verifyAdminRequest(req)) {
+    return NextResponse.json({ error: 'Доступ запрещён: требуется авторизация администратора' }, { status: 401 });
+  }
   const payments = loadPayments();
   return NextResponse.json({ payments });
 }
@@ -213,8 +207,8 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     // Strictly verify admin authority before updating payment statuses
-    if (!isAuthorizedAdmin(req)) {
-      return NextResponse.json({ error: 'Доступ запрещён: требуется авторизация администратора' }, { status: 403 });
+    if (!verifyAdminRequest(req)) {
+      return NextResponse.json({ error: 'Доступ запрещён: требуется авторизация администратора' }, { status: 401 });
     }
 
     const body = await req.json();

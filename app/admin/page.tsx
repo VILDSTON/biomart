@@ -9,7 +9,6 @@ import {
   XCircle,
   Clock,
   Eye,
-  Lock,
   Flag,
   CreditCard,
   Ban,
@@ -26,9 +25,6 @@ import { Complaint, BannedEntity, INITIAL_BANS } from '@/lib/moderation';
 import { SubscriptionPaymentOrder } from '@/app/api/subscription-payments/route';
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [authError, setAuthError] = useState('');
   const [activeTab, setActiveTab] = useState<'moderation' | 'complaints' | 'bans' | 'payments'>('moderation');
 
   // Stores from Zustand + local persistence
@@ -45,15 +41,6 @@ export default function AdminPage() {
   // Comment Modal state for "needs_changes"
   const [commentModalStore, setCommentModalStore] = useState<string | null>(null);
   const [moderatorComment, setModeratorComment] = useState('');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('biomart_admin_super');
-      if (auth === 'true') {
-        setIsAuthenticated(true);
-      }
-    }
-  }, []);
 
   const loadData = async () => {
     try {
@@ -75,20 +62,19 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
-    }
-  }, [isAuthenticated]);
+    loadData();
+  }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminPassword === 'admin2026' || adminPassword === 'admin123') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('biomart_admin_super', 'true');
-      setAuthError('');
-    } else {
-      setAuthError('Неверный ключ администратора');
-    }
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logout' }),
+      });
+    } catch {}
+    sessionStorage.removeItem('biomart_admin_super');
+    window.location.reload();
   };
 
   const handleApproveStore = (slug: string) => {
@@ -147,47 +133,6 @@ export default function AdminPage() {
     });
   };
 
-  // If not logged in
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-page text-content-primary flex items-center justify-center p-4">
-        <div className="max-w-sm w-full bg-surface border border-border rounded-[20px] p-6 sm:p-8 shadow-card space-y-5 text-center">
-          <div className="w-12 h-12 rounded-full bg-accent-soft text-accent flex items-center justify-center mx-auto">
-            <Lock className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-content-primary">Панель управления BioMart</h1>
-            <p className="text-xs text-content-secondary mt-1">
-              Вход для администраторов и модераторов безопасности
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-3">
-            <input
-              type="password"
-              required
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Пароль администратора (admin2026)"
-              className="w-full px-3.5 py-2.5 rounded-[10px] text-xs bg-page border border-border text-content-primary focus:outline-none focus:border-accent text-center font-mono"
-            />
-            {authError && <p className="text-xs text-danger font-medium">{authError}</p>}
-            <button
-              type="submit"
-              className="w-full py-2.5 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-all shadow-xs active:scale-95"
-            >
-              Войти в админку
-            </button>
-          </form>
-
-          <Link href="/" className="text-xs text-content-secondary hover:underline inline-block">
-            ← Назад на сайт
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   const storesList = Object.values(shops);
 
   return (
@@ -211,17 +156,14 @@ export default function AdminPage() {
               type="button"
               onClick={loadData}
               title="Обновить данные"
-              className="p-1.5 rounded-[8px] border border-border bg-page hover:bg-surface text-content-secondary transition-colors"
+              className="p-1.5 rounded-[8px] border border-border bg-page hover:bg-surface text-content-secondary transition-colors cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
-              onClick={() => {
-                sessionStorage.removeItem('biomart_admin_super');
-                setIsAuthenticated(false);
-              }}
-              className="text-xs font-semibold text-content-secondary hover:text-content-primary transition-colors"
+              onClick={handleLogout}
+              className="text-xs font-semibold text-content-secondary hover:text-content-primary transition-colors cursor-pointer"
             >
               Выйти
             </button>

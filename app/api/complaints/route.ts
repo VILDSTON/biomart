@@ -5,17 +5,7 @@ import { Complaint } from '@/lib/moderation';
 import { escapeTelegramHtml } from '@/lib/security';
 import { FOUNDER_TELEGRAM_ID, ADMIN_TELEGRAM_IDS } from '@/lib/constants';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-
-function isAuthorizedAdmin(req: NextRequest): boolean {
-  const cookieVal = req.cookies.get('biomart_admin_super')?.value;
-  if (cookieVal === 'true') return true;
-
-  const headerKey = req.headers.get('x-admin-key')?.trim();
-  const expectedKey = (process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY || 'admin2026').trim();
-  if (headerKey && headerKey === expectedKey) return true;
-
-  return false;
-}
+import { verifyAdminRequest } from '@/lib/seller-auth';
 
 const COMPLAINTS_FILE = path.join(process.cwd(), 'data', 'complaints.json');
 
@@ -173,7 +163,11 @@ ${complaint.productTitle ? `📦 <b>Товар:</b> ${escapeTelegramHtml(complai
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Strictly verify admin authority before returning customer complaints
+  if (!verifyAdminRequest(req)) {
+    return NextResponse.json({ error: 'Доступ запрещён: требуется авторизация администратора' }, { status: 401 });
+  }
   const complaints = loadComplaints();
   return NextResponse.json({ complaints });
 }
@@ -227,8 +221,8 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    if (!isAuthorizedAdmin(req)) {
-      return NextResponse.json({ error: 'Доступ запрещён: требуется авторизация администратора' }, { status: 403 });
+    if (!verifyAdminRequest(req)) {
+      return NextResponse.json({ error: 'Доступ запрещён: требуется авторизация администратора' }, { status: 401 });
     }
 
     const body = await req.json();

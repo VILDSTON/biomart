@@ -128,6 +128,47 @@ export function setAdminSessionCookie(response: NextResponse): void {
 }
 
 /**
+ * Clears admin session cookie on logout.
+ */
+export function clearAdminSessionCookie(response: NextResponse): void {
+  response.cookies.set('biomart_admin_super', '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 0,
+  });
+}
+
+/**
+ * Authoritatively verifies that the incoming request has a valid, signed biomart_admin_super cookie
+ * or a valid x-admin-key header.
+ */
+export function verifyAdminRequest(req: NextRequest): boolean {
+  // 1. Check signed HttpOnly biomart_admin_super cookie
+  const adminCookie = req.cookies.get('biomart_admin_super')?.value;
+  if (adminCookie) {
+    const payload = verifySessionToken(adminCookie);
+    if (payload && payload.role === 'admin') {
+      return true;
+    }
+  }
+
+  // 2. Check x-admin-key header with timing-safe comparison
+  const adminHeader = req.headers.get('x-admin-key')?.trim();
+  const expectedKey = (process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY || 'admin2026').trim();
+  if (adminHeader && adminHeader.length === expectedKey.length) {
+    try {
+      if (crypto.timingSafeEqual(Buffer.from(adminHeader), Buffer.from(expectedKey))) {
+        return true;
+      }
+    } catch {}
+  }
+
+  return false;
+}
+
+/**
  * Authoritative Server-Side Seller Verification
  * Verifies that the client possesses valid cryptographic credentials or sessions to manage the store.
  */
