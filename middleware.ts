@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
-  // Protect /admin and all sub-routes with strict IP verification
+  // Handle /admin and all sub-routes
   if (pathname.startsWith('/admin')) {
     const forwarded = request.headers.get('x-forwarded-for');
     const clientIp = forwarded
@@ -18,23 +18,27 @@ export function middleware(request: NextRequest) {
       clientIp === 'localhost' ||
       clientIp.startsWith('::ffff:127.0.0.1');
 
-    // Check configured ALLOWED_IPS (defaults to localhost loopback if not explicitly set in env)
-    const rawAllowed = process.env.ADMIN_ALLOWED_IPS || process.env.ALLOWED_ADMIN_IPS || '127.0.0.1,::1,localhost';
-    const allowedIps = rawAllowed
-      .split(',')
-      .map((ip) => ip.trim())
-      .filter(Boolean);
+    // Optional IP Whitelist:
+    // Only enforced IF ADMIN_ALLOWED_IPS or ALLOWED_ADMIN_IPS is explicitly configured with specific IPs in environment.
+    // If not configured (or '*'), dynamic access is open to all IPs and strictly protected by
+    // the Server-Side Gate in app/admin/layout.tsx and 2FA Telegram OTP in app/api/admin/auth/route.ts.
+    const rawAllowed = (process.env.ADMIN_ALLOWED_IPS || process.env.ALLOWED_ADMIN_IPS || '').trim();
 
-    // Passkey authentication bypass (?key=... or cookie biomart_admin_super)
-    const expectedKey = (process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY || 'admin2026').trim();
-    const queryKey = searchParams.get('key')?.trim();
-    const cookieKey = request.cookies.get('biomart_admin_super')?.value;
-    const hasValidKey = (queryKey && queryKey === expectedKey) || cookieKey === 'true';
+    if (rawAllowed && rawAllowed !== '*' && !isLocalhost) {
+      const allowedIps = rawAllowed
+        .split(',')
+        .map((ip) => ip.trim())
+        .filter(Boolean);
 
-    // If client is external, not in allowed list, and has no passkey, block with 403
-    if (!isLocalhost && !allowedIps.includes(clientIp) && !hasValidKey) {
-      return new NextResponse(
-        `<!DOCTYPE html>
+      const cookieVal = request.cookies.get('biomart_admin_super')?.value;
+      const expectedKey = (process.env.ADMIN_PASSKEY || process.env.ADMIN_SECRET_KEY || 'admin2026').trim();
+      const queryKey = searchParams.get('key')?.trim();
+      const hasBypass = (queryKey && queryKey === expectedKey) || Boolean(cookieVal && cookieVal.length > 10);
+
+      // Block only if IP whitelist is explicitly configured, client is not on list, and has no bypass
+      if (allowedIps.length > 0 && !allowedIps.includes(clientIp) && !hasBypass) {
+        return new NextResponse(
+          `<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -52,29 +56,17 @@ export function middleware(request: NextRequest) {
 <body>
   <div class="card">
     <h1>🛡 Доступ к /admin ограничен по IP</h1>
-    <p>В целях безопасности доступ к панели управления платформы разрешён только с доверенных IP-адресов администраторов.<br><br>Ваш текущий IP: <span class="badge">${clientIp}</span></p>
+    <p>В конфигурации платформы включён строгий белый список IP-адресов.<br><br>Ваш текущий IP: <span class="badge">${clientIp}</span></p>
     <a href="/">На главную BioMart</a>
   </div>
 </body>
 </html>`,
-        {
-          status: 403,
-          headers: { 'Content-Type': 'text/html; charset=utf-8' },
-        }
-      );
-    }
-
-    // If accessed with valid passkey, persist authorization cookie
-    if (queryKey && queryKey === expectedKey) {
-      const response = NextResponse.next();
-      response.cookies.set('biomart_admin_super', 'true', {
-        httpOnly: true,
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-      });
-      return response;
+          {
+            status: 403,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          }
+        );
+      }
     }
   }
 
