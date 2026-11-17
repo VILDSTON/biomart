@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { FOUNDER_TELEGRAM_ID } from '@/lib/constants';
+import { FOUNDER_TELEGRAM_ID, TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 import { escapeTelegramHtml } from '@/lib/security';
 import { verifyAdminRequest } from '@/lib/seller-auth';
 
@@ -91,7 +91,7 @@ function savePayments(payments: SubscriptionPaymentOrder[]) {
 }
 
 async function notifyFounderNewPayment(payment: SubscriptionPaymentOrder) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || process.env.TG_BOT_TOKEN?.trim();
+  const botToken = TELEGRAM_BOT_TOKEN;
   if (!botToken || !FOUNDER_TELEGRAM_ID) return;
 
   const planTitle = payment.plan === 'pro' ? '🚀 PRO ($8 / ~99 000 сум)' : '⭐ PLUS ($4 / ~59 000 сум)';

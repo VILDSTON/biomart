@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
-import { FOUNDER_TELEGRAM_ID, ADMIN_TELEGRAM_IDS, SITE_URL } from '@/lib/constants';
+import { FOUNDER_TELEGRAM_ID, ADMIN_TELEGRAM_IDS, SITE_URL, TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 import {
   setStoreVerifiedInFile,
   isStoreVerifiedInFile,
@@ -124,7 +124,7 @@ async function answerCallbackQuery(botToken: string, callbackQueryId: string, te
 }
 
 export async function POST(req: Request) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || process.env.TG_BOT_TOKEN?.trim();
+  const botToken = TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN not configured' }, { status: 500 });
   }
@@ -451,7 +451,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || process.env.TG_BOT_TOKEN?.trim();
+  const botToken = TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN not configured' }, { status: 500 });
   }

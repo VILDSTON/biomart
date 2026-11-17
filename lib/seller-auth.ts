@@ -169,6 +169,39 @@ export function verifyAdminRequest(req: NextRequest): boolean {
 }
 
 /**
+ * Signs a stateless, tamper-proof 2FA challenge token for Serverless verification across lambda instances.
+ */
+export function signAdmin2FAChallenge(code: string, expiresAt: number): string {
+  const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+  const payload = JSON.stringify({ h: codeHash, exp: expiresAt });
+  const data = Buffer.from(payload).toString('base64url');
+  const sig = crypto.createHmac('sha256', AUTH_SECRET).update(data).digest('base64url');
+  return `${data}.${sig}`;
+}
+
+/**
+ * Cryptographically verifies a 2FA challenge token.
+ */
+export function verifyAdmin2FAChallenge(token: string | undefined | null): { h: string; exp: number } | null {
+  if (!token || typeof token !== 'string' || !token.includes('.')) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [data, signature] = parts;
+  try {
+    const expectedSig = crypto.createHmac('sha256', AUTH_SECRET).update(data).digest('base64url');
+    const sigBuf = Buffer.from(signature);
+    const expBuf = Buffer.from(expectedSig);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString('utf8'));
+    if (!payload.h || !payload.exp) return null;
+    if (Date.now() > payload.exp) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Authoritative Server-Side Seller Verification
  * Verifies that the client possesses valid cryptographic credentials or sessions to manage the store.
  */

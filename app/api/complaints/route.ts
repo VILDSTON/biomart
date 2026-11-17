@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Complaint } from '@/lib/moderation';
 import { escapeTelegramHtml } from '@/lib/security';
-import { FOUNDER_TELEGRAM_ID, ADMIN_TELEGRAM_IDS } from '@/lib/constants';
+import { FOUNDER_TELEGRAM_ID, ADMIN_TELEGRAM_IDS, TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { verifyAdminRequest } from '@/lib/seller-auth';
 
@@ -84,7 +84,7 @@ function saveComplaints(complaints: Complaint[]) {
 }
 
 async function sendTelegramComplaintNotification(complaint: Complaint) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || process.env.TG_BOT_TOKEN?.trim();
+  const botToken = TELEGRAM_BOT_TOKEN;
   if (!botToken) return;
 
   // Resolve target chat IDs: Strictly Founder & Platform Admins (Never regular store owners!)

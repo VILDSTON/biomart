@@ -17,6 +17,13 @@ const extraAdmins = (process.env.EXTRA_ADMIN_TELEGRAM_IDS || '')
   .filter(Boolean);
 export const ADMIN_TELEGRAM_IDS = Array.from(new Set([FOUNDER_TELEGRAM_ID, ...extraAdmins]));
 
+// Official BioMart Telegram Bot (@BioMartAssistant_bot)
+export const DEFAULT_TELEGRAM_BOT_TOKEN = '9023083705:AAGCrWm3TUcNndHlIBzjDSmdoTc6Z3twlA0';
+export const TELEGRAM_BOT_TOKEN =
+  process.env.TELEGRAM_BOT_TOKEN?.trim() ||
+  process.env.TG_BOT_TOKEN?.trim() ||
+  DEFAULT_TELEGRAM_BOT_TOKEN;
+
 export const PLAN_LIMITS = {
   start: {
     maxProducts: 10,

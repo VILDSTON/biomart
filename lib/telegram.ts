@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { FOUNDER_TELEGRAM_ID, SITE_URL } from '@/lib/constants';
+import { FOUNDER_TELEGRAM_ID, SITE_URL, TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -60,9 +60,7 @@ export async function sendTelegramMessage(
   text: string,
   replyMarkup?: any
 ): Promise<boolean> {
-  const botToken =
-    process.env.TELEGRAM_BOT_TOKEN?.trim() ||
-    process.env.TG_BOT_TOKEN?.trim();
+  const botToken = TELEGRAM_BOT_TOKEN;
 
   if (!botToken || !chatId) {
     console.warn('[Telegram] Cannot send message: botToken or chatId missing');

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { FOUNDER_TELEGRAM_ID, TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 
 function escapeTelegramHtml(text: string): string {
   if (!text) return '';
@@ -32,11 +33,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Укажите ваш контакт (Telegram или телефон) для связи' }, { status: 400 });
     }
 
-    // Owner Telegram ID specified by founder
-    const FOUNDER_TELEGRAM_ID = '5504101440';
-    const botToken =
-      process.env.TELEGRAM_BOT_TOKEN?.trim() ||
-      process.env.TG_BOT_TOKEN?.trim();
+    const targetChatId = FOUNDER_TELEGRAM_ID;
+    const botToken = TELEGRAM_BOT_TOKEN;
 
     // Map category
     const categoryLabels: Record<string, string> = {

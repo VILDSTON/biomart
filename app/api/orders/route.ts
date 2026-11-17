@@ -7,6 +7,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { createOrderSchema, escapeTelegramHtml } from '@/lib/security';
 import { MOCK_PRODUCTS, MOCK_STORE_SETTINGS } from '@/lib/mock-data';
 import { OrderItem } from '@/types';
+import { TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 
 interface StoreMetaCache {
   id?: string;
@@ -382,9 +383,7 @@ ${itemsFormatted}
 <b>ИТОГО К ОПЛАТЕ: ${formatPrice(authoritativeTotalPrice)}</b>`;
 
     // 7. Resolve Seller Telegram Chat ID (Multi-tenant with Username / Chat ID mapping)
-    const botToken =
-      process.env.TELEGRAM_BOT_TOKEN?.trim() ||
-      process.env.TG_BOT_TOKEN?.trim();
+    const botToken = TELEGRAM_BOT_TOKEN;
     const targetChatId = await resolveSellerChatId(seller_chat_id, seller_username, shop_slug, storeRecord);
     let telegramSent = false;
     let telegramError = null;
