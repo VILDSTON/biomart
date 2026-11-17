@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ExternalLink, Sparkles, ShoppingBag } from 'lucide-react';
+import { ArrowRight, ExternalLink, Sparkles, ShoppingBag, Star, ShieldCheck } from 'lucide-react';
 
 interface ShowcaseItem {
   id: string;
@@ -11,6 +11,8 @@ interface ShowcaseItem {
   tagline: string;
   itemCount: number;
   highlight: string;
+  href?: string;
+  isReal?: boolean;
 }
 
 const DEMO_STORES: ShowcaseItem[] = [
@@ -41,6 +43,31 @@ const DEMO_STORES: ShowcaseItem[] = [
 ];
 
 export const ShowcaseSection: React.FC = () => {
+  const [featuredStores, setFeaturedStores] = useState<ShowcaseItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/stores/featured')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.featured && data.featured.length > 0) {
+          const mapped: ShowcaseItem[] = data.featured.map((f: any) => ({
+            id: f.slug,
+            name: f.store_name,
+            category: 'Реальный магазин BioMart',
+            tagline: f.description || 'Успешная витрина в Instagram и Telegram на платформе BioMart',
+            itemCount: 1,
+            highlight: 'Проверено платформой',
+            href: `/${f.slug}`,
+            isReal: true,
+          }));
+          setFeaturedStores(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const displayStores = featuredStores.length > 0 ? featuredStores.slice(0, 3) : DEMO_STORES;
+
   return (
     <section className="py-16 sm:py-24 px-4 border-b border-border bg-surface transition-colors">
       <div className="max-w-5xl mx-auto space-y-10">
@@ -58,57 +85,59 @@ export const ShowcaseSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {DEMO_STORES.map((demo) => (
-            <Link
-              key={demo.id}
-              href={`/demo?store=${demo.id}`}
-              className="group bg-page border border-border hover:border-accent/50 rounded-[14px] p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-[0_4px_16px_rgba(26,26,26,0.03)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-all hover:-translate-y-0.5"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold tracking-wider uppercase text-accent bg-accent-soft px-2 py-0.5 rounded-full">
-                    Демо
-                  </span>
-                  <span className="text-[11px] font-mono text-content-secondary">
-                    {demo.itemCount} товаров
-                  </span>
-                </div>
+          {displayStores.map((demo) => {
+            const linkHref = demo.href || `/demo?store=${demo.id}`;
+            return (
+              <Link
+                key={demo.id}
+                href={linkHref}
+                target={demo.isReal ? '_blank' : undefined}
+                className="group bg-page border border-border hover:border-accent/50 rounded-[14px] p-5 sm:p-6 flex flex-col justify-between space-y-4 shadow-[0_4px_16px_rgba(26,26,26,0.03)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-all hover:-translate-y-0.5"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    {demo.isReal ? (
+                      <span className="text-[10px] font-semibold tracking-wider uppercase text-amber-700 dark:text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                        <span>Кейс BioMart</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold tracking-wider uppercase text-accent bg-accent-soft px-2 py-0.5 rounded-full">
+                        Демо
+                      </span>
+                    )}
+                    <span className="text-[11px] font-mono text-content-secondary">
+                      {demo.isReal ? 'Активная витрина' : `${demo.itemCount} товаров`}
+                    </span>
+                  </div>
 
-                <div>
-                  <h3 className="text-base font-bold text-content-primary group-hover:text-accent transition-colors">
-                    {demo.name}
-                  </h3>
-                  <p className="text-[11px] text-content-secondary font-medium mt-0.5">
-                    {demo.category}
+                  <div>
+                    <h3 className="text-base font-bold text-content-primary group-hover:text-accent transition-colors">
+                      {demo.name}
+                    </h3>
+                    <p className="text-[11px] text-content-secondary font-medium mt-0.5">
+                      {demo.category}
+                    </p>
+                  </div>
+
+                  <p className="text-xs text-content-secondary leading-relaxed line-clamp-3">
+                    {demo.tagline}
                   </p>
                 </div>
 
-                <p className="text-xs text-content-secondary leading-relaxed">
-                  {demo.tagline}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-border flex items-center justify-between text-xs">
-                <span className="text-[11px] font-medium text-content-primary">
-                  {demo.highlight}
-                </span>
-                <span className="text-accent group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-semibold">
-                  <span>Открыть</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        <div className="text-center pt-2">
-          <Link
-            href="/demo"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-accent hover:text-accent-hover transition-colors"
-          >
-            <span>Попробовать оформление заказа на демо-витрине</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
+                <div className="pt-3 border-t border-border flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-medium text-content-primary flex items-center gap-1">
+                    {demo.isReal && <ShieldCheck className="w-3.5 h-3.5 text-accent" />}
+                    <span>{demo.highlight}</span>
+                  </span>
+                  <span className="text-accent group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-semibold">
+                    <span>Открыть</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

@@ -6,6 +6,7 @@ import { escapeTelegramHtml } from '@/lib/security';
 import { FOUNDER_TELEGRAM_ID, ADMIN_TELEGRAM_IDS, TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { verifyAdminRequest } from '@/lib/seller-auth';
+import { logAdminAction } from '@/lib/admin-audit';
 
 const COMPLAINTS_FILE = path.join(process.cwd(), 'data', 'complaints.json');
 
@@ -231,6 +232,13 @@ export async function PATCH(req: NextRequest) {
     let complaints = loadComplaints();
     complaints = complaints.map((c) => (c.id === id ? { ...c, status } : c));
     saveComplaints(complaints);
+
+    await logAdminAction({
+      action: 'update_complaint_status',
+      target_type: 'complaint',
+      target_id: id,
+      details: { status },
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

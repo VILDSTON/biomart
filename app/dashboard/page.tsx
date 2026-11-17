@@ -59,6 +59,7 @@ import {
   Sparkles,
   Percent,
   Search,
+  Megaphone,
 } from 'lucide-react';
 import { compressImage } from '@/lib/image-compress';
 import { useBioMartStore } from '@/store/useStore';
@@ -381,6 +382,21 @@ export default function DashboardPage() {
       })
       .catch(() => null);
   }, [activeSlug]);
+
+  // Global Platform Announcement Banner
+  const [globalBanner, setGlobalBanner] = useState<{ is_active: boolean; text: string; link?: string } | null>(null);
+  const [isBannerDismissed, setIsBannerDismissed] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/platform/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.settings?.global_banner?.is_active && d.settings.global_banner.text) {
+          setGlobalBanner(d.settings.global_banner);
+        }
+      })
+      .catch(() => null);
+  }, []);
 
   useEffect(() => {
     if (categories.length > 0 && !newCategoryId) {
@@ -1511,6 +1527,32 @@ export default function DashboardPage() {
     <div className="min-h-[100dvh] bg-page text-content-primary">
       {/* PC / Laptop Responsive Container: max-w-5xl lg:max-w-6xl */}
       <main className="mx-auto min-h-[100dvh] w-full max-w-5xl lg:max-w-6xl bg-page flex flex-col border-x-0 sm:border-x border-border">
+
+        {/* Global Platform Banner if active */}
+        {globalBanner?.is_active && !isBannerDismissed && (
+          <div className="bg-accent text-white px-3 sm:px-6 py-2 text-xs font-medium flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Megaphone className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{globalBanner.text}</span>
+              {globalBanner.link && (
+                <Link
+                  href={globalBanner.link}
+                  className="underline font-semibold shrink-0 ml-1 hover:text-white/80 transition-colors"
+                >
+                  Подробнее &rarr;
+                </Link>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsBannerDismissed(true)}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors shrink-0 cursor-pointer"
+              title="Скрыть"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Top Header: Clean Light Style */}
         <header className="bg-surface text-content-primary border-b border-border px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sticky top-0 z-30">

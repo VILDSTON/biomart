@@ -5,6 +5,8 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { FOUNDER_TELEGRAM_ID, TELEGRAM_BOT_TOKEN } from '@/lib/constants';
 import { escapeTelegramHtml } from '@/lib/security';
 import { verifyAdminRequest } from '@/lib/seller-auth';
+import { logAdminAction } from '@/lib/admin-audit';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
 export interface SubscriptionPaymentOrder {
   id: string;
@@ -215,10 +217,34 @@ export async function PATCH(req: NextRequest) {
     const { id, status, adminComment } = body;
 
     let payments = loadPayments();
+    const targetPayment = payments.find((p) => p.id === id);
+
     payments = payments.map((p) =>
       p.id === id ? { ...p, status, adminComment } : p
     );
     savePayments(payments);
+
+    // If payment approved, upgrade store plan in Supabase
+    if (status === 'approved' && targetPayment && isSupabaseConfigured && supabaseAdmin) {
+      await supabaseAdmin
+        .from('stores')
+        .update({ plan: targetPayment.plan })
+        .eq('slug', targetPayment.storeSlug);
+    }
+
+    // Record audit log
+    await logAdminAction({
+      action: status === 'approved' ? 'approve_subscription_payment' : 'reject_subscription_payment',
+      target_type: 'payment',
+      target_id: id,
+      details: {
+        storeSlug: targetPayment?.storeSlug,
+        plan: targetPayment?.plan,
+        amountUzs: targetPayment?.amountUzs,
+        status,
+        adminComment,
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

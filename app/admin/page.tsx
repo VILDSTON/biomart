@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Shield,
+  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -19,18 +20,41 @@ import {
   Store,
   RefreshCw,
   TrendingUp,
+  Star,
+  Sparkles,
+  Rocket,
+  HardDrive,
+  FileText,
 } from 'lucide-react';
 import { BioMartLogo } from '@/components/BioMartLogo';
 import { useBioMartStore } from '@/store/useStore';
 import { Complaint, BannedEntity, INITIAL_BANS } from '@/lib/moderation';
 import { SubscriptionPaymentOrder } from '@/app/api/subscription-payments/route';
 import { PlatformAnalytics } from './PlatformAnalytics';
+import { AdminFinanceTab } from './AdminFinanceTab';
+import { AdminZeroWasteMonitor } from './AdminZeroWasteMonitor';
+import { AdminGrowthTools } from './AdminGrowthTools';
+import { AdminAuditTab } from './AdminAuditTab';
+
+type AdminTab =
+  | 'moderation'
+  | 'analytics'
+  | 'finance'
+  | 'growth'
+  | 'system'
+  | 'complaints'
+  | 'payments'
+  | 'audit'
+  | 'bans';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'moderation' | 'analytics' | 'complaints' | 'bans' | 'payments'>('moderation');
+  const [activeTab, setActiveTab] = useState<AdminTab>('moderation');
 
   // Stores from Zustand + local persistence
   const { shops, updateShopSettings } = useBioMartStore();
+
+  // DB stores fetched from Supabase
+  const [dbStores, setDbStores] = useState<any[]>([]);
 
   // Complaints & Payments state
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -46,9 +70,10 @@ export default function AdminPage() {
 
   const loadData = async () => {
     try {
-      const [compRes, payRes] = await Promise.all([
+      const [compRes, payRes, storesRes] = await Promise.all([
         fetch('/api/complaints'),
         fetch('/api/subscription-payments'),
+        fetch('/api/admin/stores'),
       ]);
       if (compRes.ok) {
         const compData = await compRes.json();
@@ -57,6 +82,12 @@ export default function AdminPage() {
       if (payRes.ok) {
         const payData = await payRes.json();
         setPayments(payData.payments || []);
+      }
+      if (storesRes.ok) {
+        const storesData = await storesRes.json();
+        if (storesData.stores && storesData.stores.length > 0) {
+          setDbStores(storesData.stores);
+        }
       }
     } catch (err) {
       console.warn('Failed to fetch admin data', err);
@@ -79,22 +110,87 @@ export default function AdminPage() {
     window.location.reload();
   };
 
-  const handleApproveStore = (slug: string) => {
+  const handleApproveStore = async (slug: string) => {
     updateShopSettings(slug, { status: 'published', moderation_comment: undefined });
+    setDbStores((prev) =>
+      prev.map((s) => (s.slug === slug ? { ...s, status: 'published', moderation_comment: null } : s))
+    );
+    try {
+      await fetch('/api/admin/stores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, status: 'published', moderation_comment: '' }),
+      });
+    } catch {}
   };
 
-  const handleRejectStore = (slug: string) => {
+  const handleRejectStore = async (slug: string) => {
     updateShopSettings(slug, { status: 'rejected' });
+    setDbStores((prev) =>
+      prev.map((s) => (s.slug === slug ? { ...s, status: 'rejected' } : s))
+    );
+    try {
+      await fetch('/api/admin/stores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, status: 'rejected' }),
+      });
+    } catch {}
   };
 
-  const handleSendNeedsChanges = (slug: string) => {
+  const handleSendNeedsChanges = async (slug: string) => {
     if (!moderatorComment.trim()) return;
+    const comment = moderatorComment.trim();
     updateShopSettings(slug, {
       status: 'needs_changes',
-      moderation_comment: moderatorComment.trim(),
+      moderation_comment: comment,
     });
+    setDbStores((prev) =>
+      prev.map((s) => (s.slug === slug ? { ...s, status: 'needs_changes', moderation_comment: comment } : s))
+    );
+    try {
+      await fetch('/api/admin/stores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          status: 'needs_changes',
+          moderation_comment: comment,
+        }),
+      });
+    } catch {}
     setCommentModalStore(null);
     setModeratorComment('');
+  };
+
+  const handleToggleFeatured = async (slug: string, currentVal: boolean) => {
+    const nextVal = !currentVal;
+    updateShopSettings(slug, { is_featured: nextVal });
+    setDbStores((prev) =>
+      prev.map((s) => (s.slug === slug ? { ...s, is_featured: nextVal } : s))
+    );
+    try {
+      await fetch('/api/admin/stores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, is_featured: nextVal }),
+      });
+    } catch {}
+  };
+
+  const handleToggleVerified = async (slug: string, currentVal: boolean) => {
+    const nextVal = !currentVal;
+    updateShopSettings(slug, { is_verified: nextVal });
+    setDbStores((prev) =>
+      prev.map((s) => (s.slug === slug ? { ...s, is_verified: nextVal } : s))
+    );
+    try {
+      await fetch('/api/admin/stores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, is_verified: nextVal }),
+      });
+    } catch {}
   };
 
   const handleAddBan = (e: React.FormEvent) => {
@@ -135,7 +231,57 @@ export default function AdminPage() {
     });
   };
 
-  const storesList = Object.values(shops);
+  // Merge Zustand shops with DB stores from Supabase
+  const storesList = useMemo(() => {
+    const localList = Object.values(shops);
+    if (!dbStores || dbStores.length === 0) return localList;
+
+    const map = new Map<string, any>();
+    localList.forEach((shop) => {
+      map.set(shop.settings.slug, shop);
+    });
+
+    dbStores.forEach((dbs) => {
+      const existing = map.get(dbs.slug);
+      if (existing) {
+        map.set(dbs.slug, {
+          ...existing,
+          settings: {
+            ...existing.settings,
+            ...dbs,
+            store_name: dbs.store_name || existing.settings.store_name,
+            phone: dbs.phone || existing.settings.phone,
+            status: dbs.status || existing.settings.status,
+            plan: dbs.plan || existing.settings.plan,
+            is_verified: dbs.is_verified ?? existing.settings.is_verified,
+            is_featured: dbs.is_featured ?? existing.settings.is_featured,
+            moderation_comment: dbs.moderation_comment ?? existing.settings.moderation_comment,
+          },
+        });
+      } else {
+        map.set(dbs.slug, {
+          settings: {
+            id: dbs.id,
+            slug: dbs.slug,
+            store_name: dbs.store_name || dbs.slug,
+            description: dbs.description || '',
+            phone: dbs.phone || '',
+            telegram_username: dbs.telegram_username || '',
+            status: dbs.status || 'published',
+            plan: dbs.plan || 'start',
+            is_verified: dbs.is_verified || false,
+            is_featured: dbs.is_featured || false,
+            moderation_comment: dbs.moderation_comment,
+            created_at: dbs.created_at,
+          },
+          products: new Array(dbs.products_count || 0).fill({}),
+          orders: [],
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [shops, dbStores]);
 
   return (
     <div className="min-h-screen bg-page text-content-primary pb-16">
@@ -158,14 +304,14 @@ export default function AdminPage() {
               type="button"
               onClick={loadData}
               title="Обновить данные"
-              className="p-1.5 rounded-[8px] border border-border bg-page hover:bg-surface text-content-secondary transition-colors cursor-pointer"
+              className="min-h-[44px] min-w-[44px] p-2 rounded-[10px] border border-border bg-page hover:bg-surface text-content-secondary transition-colors cursor-pointer flex items-center justify-center"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={handleLogout}
-              className="text-xs font-semibold text-content-secondary hover:text-content-primary transition-colors cursor-pointer"
+              className="min-h-[44px] px-3 rounded-[10px] text-xs font-semibold text-content-secondary hover:text-content-primary transition-colors cursor-pointer flex items-center justify-center"
             >
               Выйти
             </button>
@@ -180,15 +326,15 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={() => setActiveTab('moderation')}
-            className={`px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
               activeTab === 'moderation'
                 ? 'bg-accent text-white shadow-xs'
                 : 'text-content-secondary hover:bg-surface hover:text-content-primary'
             }`}
           >
-            <Shield className="w-3.5 h-3.5" />
+            <Shield className="w-4 h-4" />
             <span>Очередь модерации</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20 tabular-nums">
               {storesList.length}
             </span>
           </button>
@@ -196,29 +342,68 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
               activeTab === 'analytics'
                 ? 'bg-accent text-white shadow-xs'
                 : 'text-content-secondary hover:bg-surface hover:text-content-primary'
             }`}
           >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>Аналитика и метрики</span>
+            <TrendingUp className="w-4 h-4" />
+            <span>Аналитика</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('finance')}
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+              activeTab === 'finance'
+                ? 'bg-accent text-white shadow-xs'
+                : 'text-content-secondary hover:bg-surface hover:text-content-primary'
+            }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>Финансы и тарифы</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('growth')}
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+              activeTab === 'growth'
+                ? 'bg-accent text-white shadow-xs'
+                : 'text-content-secondary hover:bg-surface hover:text-content-primary'
+            }`}
+          >
+            <Rocket className="w-4 h-4" />
+            <span>Рост и продажи</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('system')}
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+              activeTab === 'system'
+                ? 'bg-accent text-white shadow-xs'
+                : 'text-content-secondary hover:bg-surface hover:text-content-primary'
+            }`}
+          >
+            <HardDrive className="w-4 h-4" />
+            <span>Zero-Waste & Лимиты</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('complaints')}
-            className={`px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
               activeTab === 'complaints'
                 ? 'bg-accent text-white shadow-xs'
                 : 'text-content-secondary hover:bg-surface hover:text-content-primary'
             }`}
           >
-            <Flag className="w-3.5 h-3.5" />
-            <span>Жалобы покупателей</span>
+            <Flag className="w-4 h-4" />
+            <span>Жалобы</span>
             {complaints.filter((c) => c.status === 'new').length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-red-500 text-white font-bold">
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-red-500 text-white font-bold tabular-nums">
                 {complaints.filter((c) => c.status === 'new').length}
               </span>
             )}
@@ -227,16 +412,16 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={() => setActiveTab('payments')}
-            className={`px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
               activeTab === 'payments'
                 ? 'bg-accent text-white shadow-xs'
                 : 'text-content-secondary hover:bg-surface hover:text-content-primary'
             }`}
           >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>Платежи подписок</span>
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Заявки оплат</span>
             {payments.filter((p) => p.status === 'pending').length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500 text-neutral-900 font-bold">
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500 text-neutral-900 font-bold tabular-nums">
                 {payments.filter((p) => p.status === 'pending').length}
               </span>
             )}
@@ -244,16 +429,29 @@ export default function AdminPage() {
 
           <button
             type="button"
+            onClick={() => setActiveTab('audit')}
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+              activeTab === 'audit'
+                ? 'bg-accent text-white shadow-xs'
+                : 'text-content-secondary hover:bg-surface hover:text-content-primary'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Журнал аудита</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('bans')}
-            className={`px-3 py-1.5 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
+            className={`min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
               activeTab === 'bans'
                 ? 'bg-accent text-white shadow-xs'
                 : 'text-content-secondary hover:bg-surface hover:text-content-primary'
             }`}
           >
-            <Ban className="w-3.5 h-3.5" />
+            <Ban className="w-4 h-4" />
             <span>Черный список</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20 tabular-nums">
               {bans.length}
             </span>
           </button>
@@ -267,7 +465,7 @@ export default function AdminPage() {
                 Витрины на модерации и публикации
               </h2>
               <p className="text-xs text-content-secondary">
-                Проверяйте соответствие товаров и названий правилам платформы перед допуском покупателей
+                Проверяйте соответствие товаров правилам, управляйте бейджами верификации и кейсами на главной
               </p>
             </div>
 
@@ -275,12 +473,15 @@ export default function AdminPage() {
               {storesList.map((shop) => {
                 const s = shop.settings;
                 const status = s.status || 'published';
+                const isFeatured = Boolean(s.is_featured);
+                const isVerified = Boolean(s.is_verified);
+
                 return (
                   <div
                     key={s.slug}
                     className="p-4 sm:p-5 rounded-[16px] bg-surface border border-border shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                   >
-                    <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="space-y-2 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-bold text-content-primary">
                           {s.store_name}
@@ -293,6 +494,8 @@ export default function AdminPage() {
                           <span>biomart.uz/{s.slug}</span>
                           <ExternalLink className="w-3 h-3" />
                         </Link>
+
+                        {/* Status badge */}
                         {status === 'pending' && (
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
                             Ожидает проверки (Pending)
@@ -313,16 +516,33 @@ export default function AdminPage() {
                             Заблокирован (Rejected)
                           </span>
                         )}
+
+                        {/* Badges */}
+                        {isVerified && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 border border-sky-500/20 flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3" />
+                            <span>Верифицирован</span>
+                          </span>
+                        )}
+                        {isFeatured && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 border border-amber-500/30 flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                            <span>В кейсах на главной</span>
+                          </span>
+                        )}
                       </div>
 
                       <p className="text-xs text-content-secondary line-clamp-2">
                         {s.description || 'Описание отсутствует'}
                       </p>
 
-                      <div className="text-[11px] text-content-secondary flex items-center gap-3 pt-1">
-                        <span>Телефон: <b className="text-content-primary">{s.phone}</b></span>
-                        <span>Товаров: <b className="text-content-primary">{shop.products.length}</b></span>
+                      <div className="text-[11px] text-content-secondary flex items-center gap-3 pt-1 flex-wrap">
+                        <span>Телефон: <b className="text-content-primary">{s.phone || 'Не указан'}</b></span>
+                        <span>Товаров: <b className="text-content-primary tabular-nums">{shop.products?.length || 0}</b></span>
                         <span>Тариф: <b className="text-accent uppercase">{s.plan || 'start'}</b></span>
+                        {s.telegram_username && (
+                          <span>TG: <b className="text-content-primary">@{s.telegram_username.replace('@', '')}</b></span>
+                        )}
                       </div>
 
                       {s.moderation_comment && (
@@ -332,22 +552,53 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                    {/* Action buttons with min 44x44px touch targets */}
+                    <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
                       <Link
                         href={`/${s.slug}`}
                         target="_blank"
-                        className="px-3 py-1.5 rounded-[8px] text-xs font-semibold border border-border bg-page hover:bg-surface text-content-primary transition-colors flex items-center gap-1"
+                        className="min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold border border-border bg-page hover:bg-surface text-content-primary transition-colors flex items-center gap-1.5 cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Смотреть</span>
                       </Link>
 
+                      {/* Featured toggle */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFeatured(s.slug, isFeatured)}
+                        title={isFeatured ? 'Убрать с витрины кейсов на главной' : 'Показать в кейсах на главной'}
+                        className={`min-h-[44px] px-3 py-2 rounded-[10px] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                          isFeatured
+                            ? 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300'
+                            : 'bg-page border-border text-content-secondary hover:text-content-primary hover:bg-surface'
+                        }`}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-amber-500 text-amber-500' : ''}`} />
+                        <span>{isFeatured ? 'В кейсах' : '+ В кейсы'}</span>
+                      </button>
+
+                      {/* Verified toggle */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleVerified(s.slug, isVerified)}
+                        title={isVerified ? 'Снять значок проверенного продавца' : 'Выдать значок проверенного магазина'}
+                        className={`min-h-[44px] px-3 py-2 rounded-[10px] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                          isVerified
+                            ? 'bg-sky-500/15 border-sky-500/30 text-sky-700 dark:text-sky-300'
+                            : 'bg-page border-border text-content-secondary hover:text-content-primary hover:bg-surface'
+                        }`}
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
+                        <span>{isVerified ? 'Проверен' : 'Верифицировать'}</span>
+                      </button>
+
+                      {/* Status approvals */}
                       {status !== 'published' && (
                         <button
                           type="button"
                           onClick={() => handleApproveStore(s.slug)}
-                          className="px-3 py-1.5 rounded-[8px] text-xs font-semibold bg-accent hover:bg-accent-hover text-white transition-all shadow-xs flex items-center gap-1"
+                          className="min-h-[44px] px-3.5 py-2 rounded-[10px] text-xs font-semibold bg-accent hover:bg-accent-hover text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Одобрить</span>
@@ -357,7 +608,7 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => setCommentModalStore(s.slug)}
-                        className="px-3 py-1.5 rounded-[8px] text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 transition-colors flex items-center gap-1"
+                        className="min-h-[44px] px-3 py-2 rounded-[10px] text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 transition-colors flex items-center gap-1.5 cursor-pointer"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
                         <span>На правку</span>
@@ -367,7 +618,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => handleRejectStore(s.slug)}
-                          className="px-3 py-1.5 rounded-[8px] text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-600 transition-colors flex items-center gap-1"
+                          className="min-h-[44px] px-3 py-2 rounded-[10px] text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-600 transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
                           <XCircle className="w-3.5 h-3.5" />
                           <span>Блок</span>
@@ -381,12 +632,21 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB: PLATFORM ANALYTICS & METRICS */}
-        {activeTab === 'analytics' && (
-          <PlatformAnalytics />
+        {/* TAB 2: PLATFORM ANALYTICS */}
+        {activeTab === 'analytics' && <PlatformAnalytics />}
+
+        {/* TAB 3: FINANCE & SUBSCRIPTIONS */}
+        {activeTab === 'finance' && (
+          <AdminFinanceTab payments={payments} storesList={storesList} onRefresh={loadData} />
         )}
 
-        {/* TAB 2: COMPLAINTS */}
+        {/* TAB 4: GROWTH & SALES OUTBOUND */}
+        {activeTab === 'growth' && <AdminGrowthTools />}
+
+        {/* TAB 5: ZERO-WASTE MONITOR */}
+        {activeTab === 'system' && <AdminZeroWasteMonitor storesList={storesList} />}
+
+        {/* TAB 6: COMPLAINTS */}
         {activeTab === 'complaints' && (
           <div className="space-y-4">
             <div>
@@ -422,7 +682,7 @@ export default function AdminPage() {
                             (Товар: {c.productTitle})
                           </span>
                         )}
-                        <span className="text-[10px] text-content-secondary">
+                        <span className="text-[10px] text-content-secondary tabular-nums">
                           • {new Date(c.createdAt).toLocaleDateString('ru-RU')}
                         </span>
                       </div>
@@ -444,14 +704,14 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => handleRejectStore(c.storeSlug)}
-                        className="px-3 py-1.5 rounded-[8px] bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-all shadow-xs"
+                        className="min-h-[44px] px-3.5 py-2 rounded-[10px] bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-all shadow-xs cursor-pointer"
                       >
                         Заблокировать витрину
                       </button>
                       <button
                         type="button"
                         onClick={() => handleResolveComplaint(c.id, 'resolved')}
-                        className="px-3 py-1.5 rounded-[8px] bg-page border border-border hover:bg-surface text-content-secondary text-xs font-medium transition-colors"
+                        className="min-h-[44px] px-3.5 py-2 rounded-[10px] bg-page border border-border hover:bg-surface text-content-secondary text-xs font-medium transition-colors cursor-pointer"
                       >
                         Отклонить / Закрыть
                       </button>
@@ -463,7 +723,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB 3: SUBSCRIPTION PAYMENTS */}
+        {/* TAB 7: SUBSCRIPTION PAYMENTS */}
         {activeTab === 'payments' && (
           <div className="space-y-4">
             <div>
@@ -488,7 +748,7 @@ export default function AdminPage() {
                   >
                     <div className="space-y-1.5 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent-soft text-accent uppercase">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent-soft text-accent uppercase tabular-nums">
                           Тариф {p.plan} • {p.amountUzs.toLocaleString('ru-RU')} сум
                         </span>
                         <span className="text-xs font-bold text-content-primary">
@@ -529,7 +789,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => handleApprovePayment(p)}
-                          className="px-4 py-2 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5"
+                          className="min-h-[44px] px-4 py-2 rounded-[10px] bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Подтвердить оплату</span>
@@ -545,7 +805,10 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB 4: BANS */}
+        {/* TAB 8: AUDIT TRAIL */}
+        {activeTab === 'audit' && <AdminAuditTab />}
+
+        {/* TAB 9: BANS */}
         {activeTab === 'bans' && (
           <div className="space-y-4">
             <div>
@@ -564,7 +827,7 @@ export default function AdminPage() {
                 <select
                   value={newBanType}
                   onChange={(e) => setNewBanType(e.target.value as any)}
-                  className="px-3 py-2 rounded-[8px] text-xs bg-page border border-border text-content-primary focus:outline-none"
+                  className="min-h-[44px] px-3 py-2 rounded-[10px] text-xs bg-page border border-border text-content-primary focus:outline-hidden focus:ring-1 focus:ring-accent"
                 >
                   <option value="slug">Адрес витрины (slug)</option>
                   <option value="phone">Номер телефона</option>
@@ -575,19 +838,19 @@ export default function AdminPage() {
                   value={newBanValue}
                   onChange={(e) => setNewBanValue(e.target.value)}
                   placeholder={newBanType === 'slug' ? 'bad_store' : '+998 90 999 99 99'}
-                  className="px-3 py-2 rounded-[8px] text-xs bg-page border border-border text-content-primary focus:outline-none"
+                  className="min-h-[44px] px-3 py-2 rounded-[10px] text-xs bg-page border border-border text-content-primary focus:outline-hidden focus:ring-1 focus:ring-accent"
                 />
                 <input
                   type="text"
                   value={newBanReason}
                   onChange={(e) => setNewBanReason(e.target.value)}
                   placeholder="Причина блокировки"
-                  className="px-3 py-2 rounded-[8px] text-xs bg-page border border-border text-content-primary focus:outline-none"
+                  className="min-h-[44px] px-3 py-2 rounded-[10px] text-xs bg-page border border-border text-content-primary focus:outline-hidden focus:ring-1 focus:ring-accent"
                 />
               </div>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-[8px] bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors"
+                className="min-h-[44px] px-4 py-2 rounded-[10px] bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 Заблокировать
               </button>
@@ -610,7 +873,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => handleRemoveBan(b.id)}
-                    className="text-xs text-red-500 hover:underline"
+                    className="min-h-[44px] px-3 text-xs text-red-500 hover:underline flex items-center cursor-pointer"
                   >
                     Разблокировать
                   </button>
@@ -624,7 +887,7 @@ export default function AdminPage() {
       {/* MODAL: Comments for Needs Changes */}
       {commentModalStore && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-surface border border-border rounded-[18px] max-w-md w-full p-5 space-y-4">
+          <div className="bg-surface border border-border rounded-[18px] max-w-md w-full p-5 space-y-4 shadow-xl">
             <h3 className="text-base font-bold text-content-primary">
               Вернуть витрину на правку
             </h3>
@@ -636,20 +899,20 @@ export default function AdminPage() {
               onChange={(e) => setModeratorComment(e.target.value)}
               rows={3}
               placeholder="Опишите замечания модератора..."
-              className="w-full p-2.5 rounded-[10px] text-xs bg-page border border-border text-content-primary focus:outline-none focus:border-accent"
+              className="w-full p-2.5 rounded-[10px] text-xs bg-page border border-border text-content-primary focus:outline-hidden focus:ring-1 focus:ring-accent"
             />
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setCommentModalStore(null)}
-                className="px-3 py-1.5 rounded-[8px] text-xs text-content-secondary hover:bg-page"
+                className="min-h-[44px] px-3 py-2 rounded-[10px] text-xs text-content-secondary hover:bg-page cursor-pointer"
               >
                 Отмена
               </button>
               <button
                 type="button"
                 onClick={() => handleSendNeedsChanges(commentModalStore)}
-                className="px-4 py-1.5 rounded-[8px] bg-accent text-white text-xs font-semibold hover:bg-accent-hover"
+                className="min-h-[44px] px-4 py-2 rounded-[10px] bg-accent text-white text-xs font-semibold hover:bg-accent-hover cursor-pointer"
               >
                 Отправить замечание
               </button>

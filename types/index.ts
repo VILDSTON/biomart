@@ -126,6 +126,7 @@ export interface StoreSettings {
   announcement_text?: string;
   default_language?: 'ru' | 'uz';
   is_verified?: boolean;
+  is_featured?: boolean;
   is_founding_seller?: boolean;
   founding_number?: number;
   niche?: StoreNiche;
